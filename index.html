@@ -1,0 +1,912 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-pO6xVWYlC1Yoq6A+gy3PFXty+rPZ7D2cL9+FqcyiUu8='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<title></title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
+fieldset{margin:.5rem 0}label{display:block;margin:.3rem 0}
+#aviso{border:1px solid #888;padding:.5rem;background:#f4f4f4}
+pre{white-space:pre-wrap;border:1px solid #ccc;padding:.5rem}
+footer{margin-top:2rem;font-size:.85rem;border-top:1px solid #ccc}
+</style>
+</head>
+<body>
+<h1 id="titulo"></h1>
+<p id="o1"></p>
+<p id="ag1"></p>
+<p id="aviso" role="alert" hidden></p>
+<label><input type="checkbox" id="a1"> <span id="a1-texto"></span></label>
+<section id="form" hidden>
+  <h2>1. Identificação</h2>
+  <label>Identificação do pedido <input type="text" id="pedido" autocomplete="off"></label>
+  <label>4 últimos dígitos do cartão (opcional) <input type="text" id="ultimos4" inputmode="numeric" autocomplete="off"></label>
+  <label>CNPJ (opcional) <input type="text" id="cnpj" autocomplete="off"></label>
+  <label><input type="checkbox" id="p1" disabled> <span id="p1-texto"></span></label>
+  <label>Gateway ou adquirente <select id="gateway"><option value="">(não informar)</option></select></label>
+  <label>Motivo indicado pela adquirente <select id="motivo"></select></label>
+  <p id="fonte-motivo"></p>
+  <p id="secao-motivo" hidden></p>
+  <p id="obs-motivo" hidden></p>
+  <p id="rodape-elo" hidden></p>
+  <p id="rodape-prazos"></p>
+  <h2>2. Cronologia</h2>
+  <p id="a2-texto"></p>
+  <label>Data <input type="date" id="fato-data"></label>
+  <label>Fato <textarea id="fato-desc" rows="3"></textarea></label>
+  <button type="button" id="add-fato">Adicionar fato</button>
+  <ul id="lista-fatos"></ul>
+  <h2>3. Documentos</h2>
+  <input type="file" id="docs" multiple>
+  <h2>4. Evidências do motivo</h2>
+  <div id="vinculos"></div>
+  <button type="button" id="gerar">Gerar dossiê</button>
+  <pre id="previa"></pre>
+  <div id="etapa-d1" hidden>
+    <label><input type="checkbox" id="d1"> <span id="d1-texto"></span></label>
+    <button type="button" id="baixar" disabled>Baixar dossiê</button>
+  </div>
+</section>
+<details><summary>Termos</summary><div id="termos"></div></details>
+<footer><p id="r1"></p><p id="r2"></p></footer>
+<script>"use strict";
+(() => {
+// Gerado/alterado pelo build: PILOTO=true só em build de piloto (node build.mjs --piloto).
+const PILOTO = true;
+// T-7 só aparece quando houver cobrança (CP-06). v0 é grátis.
+const COBRANCA = false;
+
+// Textos literais da seção 6 do escopo v5 (sha256 2634d896...). Não editar à mão.
+const TEXTOS = {
+  "O-1": "Organize as provas da sua disputa de chargeback. Você informa o motivo indicado pela sua adquirente e anexa seus documentos; a ferramenta lista as evidências pedidas para aquele motivo, monta a cronologia e gera um dossiê para você mesmo enviar pelo painel da sua adquirente. Grátis nesta fase. Não acessamos sua conta e não enviamos nada em seu nome. O resultado da disputa é decidido pelo banco emissor do cartão.",
+  "A-1": "Entendi que esta ferramenta organiza documentos e fatos que eu informo, com base em regras públicas das bandeiras e adquirentes na data indicada. Não é assessoria jurídica, não garante resultado e não substitui as instruções da minha adquirente, cujo prazo e cujos requisitos prevalecem.",
+  "A-2": "Descreva apenas fatos que você pode comprovar com documentos. Não use esta ferramenta para contestar compra que você sabe não ter sido entregue ou que foi cancelada.",
+  "A-3": "Removemos um dado de cartão do texto. Nunca informe número completo, código de segurança ou validade do cartão.",
+  "D-1": "Declaro que os fatos e documentos deste dossiê são verdadeiros e não foram alterados, e que sou o responsável pelo seu envio. Sei que apresentar documento falso ou fato inverídico pode configurar crime.",
+  "R-1": "LCM GLOBAL SERVICES, nome fantasia de RODRIGO DE SIMONE MATIOLI LTDA, CNPJ 61.193.879/0001-20. Ferramenta de organização de documentos; não presta serviço jurídico nem representa o usuário perante bandeiras, adquirentes ou bancos. Sem promessa de resultado.",
+  "R-2": "Visa, Mastercard e Elo são marcas de seus titulares, citadas apenas para identificar regras públicas de disputa. A LCM não tem vínculo com elas nem com as adquirentes citadas.",
+  "T-1": "A LCM disponibiliza ferramenta para o usuário organizar documentos e fatos de disputa de chargeback já aberta. A ferramenta não acessa contas, não envia contestações, não contata o portador e não presta consultoria, assessoria ou representação jurídica.",
+  "T-2": "A decisão da disputa cabe ao emissor, à bandeira e à adquirente. A LCM não garante resultado e não informa probabilidade de êxito.",
+  "T-3": "As listas de evidências e prazos vêm de documentos públicos indicados com data. Em divergência, prevalecem as instruções da adquirente do usuário.",
+  "T-4": "A responsabilidade total da LCM perante o Cliente, por qualquer causa relacionada à Ferramenta, fica limitada ao maior valor entre (i) o total efetivamente pago pelo Cliente à LCM nos 12 (doze) meses anteriores ao evento que deu causa ao dano e (ii) R$ 1.000,00 (mil reais). A limitação não se aplica em caso de dolo ou culpa grave da LCM, nem à responsabilidade perante titulares de dados pessoais prevista nos arts. 42 a 45 da Lei nº 13.709/2018. Se a relação com o Cliente for de consumo, aplicam-se integralmente as normas do Código de Defesa do Consumidor, e esta cláusula não se aplica (art. 51, I).",
+  "T-5": "O conteúdo informado é processado no seu navegador e não é armazenado pela LCM. Não pedimos nem aceitamos número completo, código de segurança, validade ou trilha do cartão; quando necessário, usamos só os 4 últimos dígitos. O usuário é controlador dos dados do comprador que inserir e declara ter base legal para usá-los na disputa.",
+  "T-6": "É proibido usar a ferramenta para contestar disputa legítima, inserir fato falso ou documento alterado. A LCM pode suspender o acesso diante de indício de uso indevido e cooperar com autoridades nos termos da lei.",
+  "T-7": "Contratado o serviço pela internet, você pode desistir em até 7 dias da contratação, com devolução imediata e integral do valor pago (CDC art. 49).",
+  "P-1": "Declaro que uso a Ferramenta na atividade profissional ou empresarial do CNPJ informado. Esta declaração não afasta nenhum direito que a lei me garanta."
+};
+const RODAPE_MATRIZ = "Prazos e responsabilidade entre emissor, credenciador e bandeira seguem o regulamento do arranjo, que está em adequação à Resolução BCB nº 522/2025. Confira no painel da sua adquirente; o prazo dela prevalece.";
+const VEDADOS = ["parecer", "assessoria jurídica", "consultoria jurídica", "defesa jurídica", "tese", "fundamento legal", "nos termos do art.", "CDC", "Código de Defesa do Consumidor", "jurisprudência", "súmula", "advogado", "ação judicial", "processo", "Procon", "garantido", "garantia de êxito", "ganhe a disputa", "reverta", "taxa de sucesso", "aumente suas chances", "100%", "sem risco"];
+const TITULO = "Organize as provas da sua disputa de chargeback";
+// CP-08 (revisão do Advogado sobre a v0.1): acréscimo à lista do escopo.
+const VEDADOS_EXTRA = ["advogada"];
+// CP2-03 (revisão do Advogado sobre a v0.2, sha256 60624d65...): literal aprovado por igualdade exata.
+const TEXTOS_REVISAO = { "A-3b": "Atenção: nunca informe número completo, código de segurança ou validade do cartão." };
+
+// GERADO por gerar-matriz.mjs. Não editar. Fonte: fontes/chargeback-S01-matriz-2026-10-15.json sha256 ee178219593727edaffb923ea2aa7e7b0f1814ea8db0a19d24b8045b53fe4fb7
+const S01_SHA256 = "ee178219593727edaffb923ea2aa7e7b0f1814ea8db0a19d24b8045b53fe4fb7";
+const S01_RODAPE_MATRIZ = "Prazos e responsabilidade entre emissor, credenciador e bandeira seguem o regulamento do arranjo, que está em adequação à Resolução BCB nº 522/2025. Confira no painel da sua adquirente; o prazo dela prevalece.";
+const S01_RODAPE_R2 = "Visa, Mastercard e Elo são marcas de seus titulares, citadas apenas para identificar regras públicas de disputa. A LCM não tem vínculo com elas nem com as adquirentes citadas.";
+const S01_RODAPE_ELO = "As regras de disputa da Elo constam de manual não público; os códigos sem lista de evidências devem ser tratados diretamente com a sua adquirente.";
+const S01_RODAPE_PRAZOS = "Esta matriz não informa prazos. O prazo para responder é o informado pela sua adquirente no aviso da disputa; perder o prazo costuma encerrar a defesa.";
+const S01_MOTIVOS = [
+ {
+  "id": "Visa-10.4-0",
+  "bandeira": "Visa",
+  "codigo": "10.4",
+  "motivo": "Outra fraude – compra sem cartão presente",
+  "evidencias": [
+   "Registro de que a compra foi autenticada pelo Visa Secure no momento da autorização (informar à adquirente).",
+   "Ou: dados de 2 ou mais compras anteriores do mesmo portador, liquidadas entre 120 e 365 dias antes da disputa, sem registro de fraude, com pelo menos 2 elementos iguais aos da compra contestada (ID do dispositivo, impressão digital do dispositivo ou endereço IP), descrição do que foi comprado e data da entrega.",
+   "Ou evidências da tabela 'Compelling Evidence' da fonte: e-mail ou foto que ligue quem recebeu ao portador; entrega no endereço com AVS Y ou M; para produto digital: descrição, data e hora do download e 2 ou mais entre IP/localização, ID do dispositivo, nome e e-mail do perfil, perfil verificado antes da compra; entrega em endereço comercial onde o portador trabalhava; pedido assinado (venda por correio ou telefone).",
+   "Comprovante de reembolso ou estorno já feito, com valor e data (se houver).",
+   "Mensagem do portador informando que não contesta mais a compra (se houver)."
+  ],
+  "observacao": "",
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Visa-11.1-1",
+  "bandeira": "Visa",
+  "codigo": "11.1",
+  "motivo": "Boletim de recuperação de cartão",
+  "evidencias": [
+   "Documento de que a compra ocorreu em terminal EMV compatível (quando aplicável).",
+   "Comprovante de reembolso ou estorno já feito, com valor e data (se houver)."
+  ],
+  "observacao": "Geralmente presencial; a adquirente detém o registro.",
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Visa-11.2-2",
+  "bandeira": "Visa",
+  "codigo": "11.2",
+  "motivo": "Autorização recusada",
+  "evidencias": [
+   "Registro da adquirente de que a compra foi autorizada.",
+   "Comprovante de reembolso ou estorno já feito, com valor e data (se houver)."
+  ],
+  "observacao": "Registro de autorização é da adquirente.",
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Visa-11.3-3",
+  "bandeira": "Visa",
+  "codigo": "11.3",
+  "motivo": "Sem autorização / apresentação tardia",
+  "evidencias": [
+   "Registro da adquirente de que a compra foi autorizada, ou documento mostrando a data correta da compra.",
+   "Recibo ou outro registro de que a compra foi concluída dentro do prazo.",
+   "Comprovante de reembolso ou estorno já feito, com valor e data (se houver)."
+  ],
+  "observacao": "",
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Visa-12.2-4",
+  "bandeira": "Visa",
+  "codigo": "12.2",
+  "motivo": "Código de transação incorreto",
+  "evidencias": [
+   "Documento de que a compra foi lançada corretamente como crédito ou débito.",
+   "Comprovante de reembolso ou estorno já feito, com valor e data (se houver)."
+  ],
+  "observacao": "",
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Visa-12.3-5",
+  "bandeira": "Visa",
+  "codigo": "12.3",
+  "motivo": "Moeda incorreta",
+  "evidencias": [
+   "Registro de que o portador escolheu a conversão de moeda (DCC).",
+   "Cópia do comprovante da compra.",
+   "Comprovante de reembolso ou estorno já feito, com valor e data (se houver).",
+   "Mensagem do portador informando que não contesta mais a compra (se houver)."
+  ],
+  "observacao": "",
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Visa-12.4-6",
+  "bandeira": "Visa",
+  "codigo": "12.4",
+  "motivo": "Número de conta incorreto",
+  "evidencias": [
+   "Cópia do comprovante com o mesmo número de cartão da disputa (só os 4 últimos dígitos no dossiê).",
+   "Registro de autorização, quando aplicável.",
+   "Comprovante de reembolso ou estorno já feito, com valor e data (se houver).",
+   "Mensagem do portador informando que não contesta mais a compra (se houver)."
+  ],
+  "observacao": "",
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Visa-12.5-7",
+  "bandeira": "Visa",
+  "codigo": "12.5",
+  "motivo": "Valor incorreto",
+  "evidencias": [
+   "Cópia do comprovante da compra mostrando o valor correto.",
+   "Comprovante de reembolso ou estorno já feito, com valor e data (se houver).",
+   "Mensagem do portador informando que não contesta mais a compra (se houver)."
+  ],
+  "observacao": "",
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Visa-12.6.1-8",
+  "bandeira": "Visa",
+  "codigo": "12.6.1",
+  "motivo": "Processamento duplicado",
+  "evidencias": [
+   "Documentos de que as duas cobranças são compras separadas (dois pedidos, duas notas).",
+   "Comprovante de reembolso ou estorno já feito, com valor e data (se houver).",
+   "Mensagem do portador informando que não contesta mais a compra (se houver)."
+  ],
+  "observacao": "",
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Visa-12.6.2-9",
+  "bandeira": "Visa",
+  "codigo": "12.6.2",
+  "motivo": "Pago por outro meio",
+  "evidencias": [
+   "Registro de venda mostrando que nenhum outro meio de pagamento foi usado, ou que os dois pagamentos foram por itens diferentes.",
+   "Comprovante de reembolso ou estorno já feito, com valor e data (se houver).",
+   "Mensagem do portador informando que não contesta mais a compra (se houver)."
+  ],
+  "observacao": "",
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Visa-12.7-10",
+  "bandeira": "Visa",
+  "codigo": "12.7",
+  "motivo": "Dados inválidos",
+  "evidencias": [
+   "Registro de que a autorização foi pedida com dados válidos.",
+   "Comprovante de reembolso ou estorno já feito, com valor e data (se houver).",
+   "Mensagem do portador informando que não contesta mais a compra (se houver)."
+  ],
+  "observacao": "",
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Visa-13.1-11",
+  "bandeira": "Visa",
+  "codigo": "13.1",
+  "motivo": "Mercadoria ou serviço não recebido",
+  "evidencias": [
+   "Comprovante de que o portador ou pessoa autorizada recebeu a mercadoria ou o serviço como combinado (rastreio com entrega, termo de recebimento).",
+   "Ou: documento com a data de entrega prevista, ainda não vencida.",
+   "Ou: documento de que o portador cancelou antes da data de entrega.",
+   "Para serviço futuro: documento de que o serviço continua disponível.",
+   "Comprovante de reembolso ou estorno já feito, com valor e data (se houver).",
+   "Mensagem do portador informando que não contesta mais a compra (se houver)."
+  ],
+  "observacao": "",
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Visa-13.2-12",
+  "bandeira": "Visa",
+  "codigo": "13.2",
+  "motivo": "Assinatura recorrente cancelada",
+  "evidencias": [
+   "Registro de que o portador usou o serviço depois da data em que retirou a autorização de cobrança e antes da disputa.",
+   "Comprovante de reembolso ou estorno já feito, com valor e data (se houver).",
+   "Mensagem do portador informando que não contesta mais a compra (se houver)."
+  ],
+  "observacao": "",
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Visa-13.3-13",
+  "bandeira": "Visa",
+  "codigo": "13.3",
+  "motivo": "Diferente do descrito ou defeituoso",
+  "evidencias": [
+   "Nota fiscal, contrato e descrição do anúncio que respondam, ponto a ponto, ao que o portador alegou.",
+   "Registro de que a devolução não foi recebida ou não houve tentativa de devolução.",
+   "Opinião de terceiro neutro, quando houver.",
+   "Comprovante de reembolso ou estorno já feito, com valor e data (se houver).",
+   "Mensagem do portador informando que não contesta mais a compra (se houver)."
+  ],
+  "observacao": "",
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Visa-13.4-14",
+  "bandeira": "Visa",
+  "codigo": "13.4",
+  "motivo": "Mercadoria falsificada",
+  "evidencias": [
+   "Notas fiscais e informações que demonstrem a origem e autenticidade do produto.",
+   "Comprovante de reembolso ou estorno já feito, com valor e data (se houver).",
+   "Mensagem do portador informando que não contesta mais a compra (se houver)."
+  ],
+  "observacao": "",
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Visa-13.5-15",
+  "bandeira": "Visa",
+  "codigo": "13.5",
+  "motivo": "Informação enganosa na venda",
+  "evidencias": [
+   "Documento com os termos da venda apresentados ao portador.",
+   "Para período de teste ou oferta: registro de que o portador aceitou expressamente as cobranças futuras e foi avisado pelo menos 7 dias antes da cobrança.",
+   "Comprovante de reembolso ou estorno já feito, com valor e data (se houver).",
+   "Mensagem do portador informando que não contesta mais a compra (se houver)."
+  ],
+  "observacao": "",
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Visa-13.6-16",
+  "bandeira": "Visa",
+  "codigo": "13.6",
+  "motivo": "Crédito não processado",
+  "evidencias": [
+   "Documento de que a venda é válida e o crédito não é devido.",
+   "Comprovante de reembolso ou estorno já feito, com valor e data (se houver).",
+   "Mensagem do portador informando que não contesta mais a compra (se houver)."
+  ],
+  "observacao": "",
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Visa-13.7-17",
+  "bandeira": "Visa",
+  "codigo": "13.7",
+  "motivo": "Mercadoria ou serviço cancelado",
+  "evidencias": [
+   "Registro de que a política de devolução ou cancelamento foi exibida e aceita no momento da compra.",
+   "Registro de que o portador não cancelou conforme essa política.",
+   "Registro de que o portador continuou usando o serviço ou não devolveu a mercadoria.",
+   "Comprovante de reembolso ou estorno já feito, com valor e data (se houver).",
+   "Mensagem do portador informando que não contesta mais a compra (se houver)."
+  ],
+  "observacao": "",
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Mastercard-4837-18",
+  "bandeira": "Mastercard",
+  "codigo": "4837",
+  "motivo": "Sem autorização do portador",
+  "evidencias": [
+   "Resposta positiva da verificação de endereço (AVS, código X ou Y) e comprovante de envio para esse mesmo endereço (informar apenas o resultado, nunca dados do cartão).",
+   "Registro de que a transação foi autenticada (3-D Secure / Identity Check) e aprovada pelo emissor.",
+   "Documento assinado pelo portador confirmando o recebimento dos bens ou serviços.",
+   "Confirmação escrita do portador de cadastro para receber entrega eletrônica.",
+   "Correspondência trocada com o portador que mostre a participação dele na compra (e-mail, SMS, chat).",
+   "Se o comprador tinha cadastro com senha ou outro método de autenticação: compras anteriores ou posteriores não contestadas, compra feita de dispositivo e IP cadastrados, e-mail usado na entrega digital ou registro de uso do produto. Não vale para compra como visitante.",
+   "Assinatura ou parcelamento: descrição do serviço, data de início e registro de que o portador aceitou os termos da recorrência."
+  ],
+  "observacao": "Fonte: Mastercard, Chargeback Guide – Merchant Edition, versão de 13 May 2025, conferido em 15/10/2026. Resumo em português, não é tradução oficial. Confira no painel da sua adquirente; o prazo dela prevalece.",
+  "rodape_linha": "Fonte: Mastercard, Chargeback Guide – Merchant Edition, versão de 13 May 2025, conferido em 15/10/2026. Resumo em português, não é tradução oficial. Confira no painel da sua adquirente; o prazo dela prevalece.",
+  "secao_pagina": "No Cardholder Authorization (4837), Acquirer Second Presentment: AVS (p. 423), Authenticated transaction (p. 424), Compelling evidence (p. 425-428)"
+ },
+ {
+  "id": "Mastercard-4853 (antigo 4855)-19",
+  "bandeira": "Mastercard",
+  "codigo": "4853 (antigo 4855)",
+  "motivo": "Serviço não prestado / mercadoria não recebida",
+  "evidencias": [
+   "Explicação do lojista e comprovante de que o cliente, ou pessoa autorizada por ele, recebeu a mercadoria: foto da entrega no endereço indicado, recibo ou comprovante de entrega assinado.",
+   "Para ingressos ou serviços: registro de que foram usados ou prestados."
+  ],
+  "observacao": "Fonte: Mastercard, Chargeback Guide – Merchant Edition, versão de 13 May 2025, conferido em 15/10/2026. Resumo em português, não é tradução oficial. Confira no painel da sua adquirente; o prazo dela prevalece.",
+  "rodape_linha": "Fonte: Mastercard, Chargeback Guide – Merchant Edition, versão de 13 May 2025, conferido em 15/10/2026. Resumo em português, não é tradução oficial. Confira no painel da sua adquirente; o prazo dela prevalece.",
+  "secao_pagina": "Cardholder Dispute (4853), Goods or Services Not Provided, Acquirer Second Presentment, Goods or services were provided (p. 153)"
+ },
+ {
+  "id": "Mastercard-4853 (antigo 4841)-20",
+  "bandeira": "Mastercard",
+  "codigo": "4853 (antigo 4841)",
+  "motivo": "Assinatura recorrente cancelada",
+  "evidencias": [
+   "Registro de que a cobrança não era recorrente (por exemplo, parcelamento).",
+   "Termos da recorrência informados ao portador e aceitos por ele.",
+   "Contrato com as regras de cancelamento que o portador não cumpriu.",
+   "Registro de que o serviço continuou sendo prestado e usado depois da data de cancelamento.",
+   "Atenção: a simples declaração de que o portador nunca pediu o cancelamento não basta."
+  ],
+  "observacao": "Fonte: Mastercard, Chargeback Guide – Merchant Edition, versão de 13 May 2025, conferido em 15/10/2026. Resumo em português, não é tradução oficial. Confira no painel da sua adquirente; o prazo dela prevalece.",
+  "rodape_linha": "Fonte: Mastercard, Chargeback Guide – Merchant Edition, versão de 13 May 2025, conferido em 15/10/2026. Resumo em português, não é tradução oficial. Confira no painel da sua adquirente; o prazo dela prevalece.",
+  "secao_pagina": "Cardholder Dispute (4853), Cardholder Dispute of a Recurring Transaction, Acquirer Second Presentment (p. 262-263)"
+ },
+ {
+  "id": "Mastercard-4853-21",
+  "bandeira": "Mastercard",
+  "codigo": "4853",
+  "motivo": "Diferente do descrito / defeituoso",
+  "evidencias": [
+   "Explicação do lojista e documento de que o item foi consertado ou substituído.",
+   "Documento de que os bens ou serviços da nota, contrato ou acordo escrito foram entregues como descritos, sem dano ou defeito (por exemplo, recibo assinado pelo portador confirmando o bom estado).",
+   "Se o portador juntou laudo de especialista: documento que sustente a explicação do lojista."
+  ],
+  "observacao": "Fonte: Mastercard, Chargeback Guide – Merchant Edition, versão de 13 May 2025, conferido em 15/10/2026. Resumo em português, não é tradução oficial. Confira no painel da sua adquirente; o prazo dela prevalece.",
+  "rodape_linha": "Fonte: Mastercard, Chargeback Guide – Merchant Edition, versão de 13 May 2025, conferido em 15/10/2026. Resumo em português, não é tradução oficial. Confira no painel da sua adquirente; o prazo dela prevalece.",
+  "secao_pagina": "Cardholder Dispute (4853), Goods or Services Were Either Not as Described or Defective, Acquirer Second Presentment (p. 135-136)"
+ },
+ {
+  "id": "Mastercard-4853-22",
+  "bandeira": "Mastercard",
+  "codigo": "4853",
+  "motivo": "Mercadoria falsificada",
+  "evidencias": [
+   "Explicação do lojista e documentos que provem que a mercadoria não era falsificada."
+  ],
+  "observacao": "Fonte: Mastercard, Chargeback Guide – Merchant Edition, versão de 13 May 2025, conferido em 15/10/2026. Resumo em português, não é tradução oficial. Confira no painel da sua adquirente; o prazo dela prevalece.",
+  "rodape_linha": "Fonte: Mastercard, Chargeback Guide – Merchant Edition, versão de 13 May 2025, conferido em 15/10/2026. Resumo em português, não é tradução oficial. Confira no painel da sua adquirente; o prazo dela prevalece.",
+  "secao_pagina": "Cardholder Dispute (4853), Counterfeit Goods, Acquirer Second Presentment, Goods were not counterfeit (p. 247)"
+ },
+ {
+  "id": "Mastercard-4853 (antigo 4860)-23",
+  "bandeira": "Mastercard",
+  "codigo": "4853 (antigo 4860)",
+  "motivo": "Crédito não processado",
+  "evidencias": [
+   "Explicação de por que o reembolso não era devido.",
+   "Termos específicos informados e aceitos pelo portador (em venda online, imagem da caixa de aceite e do texto dos termos).",
+   "Se o reembolso já foi feito: comprovante (no cartão Mastercard não precisa de documento; por outro meio, prova de que foi feito)."
+  ],
+  "observacao": "Fonte: Mastercard, Chargeback Guide – Merchant Edition, versão de 13 May 2025, conferido em 15/10/2026. Resumo em português, não é tradução oficial. Confira no painel da sua adquirente; o prazo dela prevalece.",
+  "rodape_linha": "Fonte: Mastercard, Chargeback Guide – Merchant Edition, versão de 13 May 2025, conferido em 15/10/2026. Resumo em português, não é tradução oficial. Confira no painel da sua adquirente; o prazo dela prevalece.",
+  "secao_pagina": "Cardholder Dispute (4853), Refund Not Processed, Acquirer Second Presentment (p. 231-233)"
+ },
+ {
+  "id": "Mastercard-4834-24",
+  "bandeira": "Mastercard",
+  "codigo": "4834",
+  "motivo": "Cobrado mais de uma vez / pago por outro meio",
+  "evidencias": [
+   "Documentos de duas transações válidas e separadas (recibos, comprovantes, notas, contrato).",
+   "Explicação do lojista quando os documentos não mostrarem com clareza que eram duas transações.",
+   "Se o reembolso já foi feito: comprovante."
+  ],
+  "observacao": "Fonte: Mastercard, Chargeback Guide – Merchant Edition, versão de 13 May 2025, conferido em 15/10/2026. Resumo em português, não é tradução oficial. Confira no painel da sua adquirente; o prazo dela prevalece.",
+  "rodape_linha": "Fonte: Mastercard, Chargeback Guide – Merchant Edition, versão de 13 May 2025, conferido em 15/10/2026. Resumo em português, não é tradução oficial. Confira no painel da sua adquirente; o prazo dela prevalece.",
+  "secao_pagina": "Point-of-Interaction Error (4834), Cardholder Debited More than Once for the Same Goods or Services (\"paid by other means\"), Acquirer Second Presentment (p. 597-601)"
+ },
+ {
+  "id": "Mastercard-4834 (valor; Adyen indica 4831)-25",
+  "bandeira": "Mastercard",
+  "codigo": "4834 (valor; Adyen indica 4831)",
+  "motivo": "Valor da transação diverge",
+  "evidencias": [
+   "Explicação do lojista e documentos de que o portador foi cobrado no valor correto.",
+   "Se o reembolso já foi feito: comprovante."
+  ],
+  "observacao": "Fonte: Mastercard, Chargeback Guide – Merchant Edition, versão de 13 May 2025, conferido em 15/10/2026. Resumo em português, não é tradução oficial. Confira no painel da sua adquirente; o prazo dela prevalece. Algumas adquirentes usam o código 4831 para este motivo.",
+  "rodape_linha": "Fonte: Mastercard, Chargeback Guide – Merchant Edition, versão de 13 May 2025, conferido em 15/10/2026. Resumo em português, não é tradução oficial. Confira no painel da sua adquirente; o prazo dela prevalece. Algumas adquirentes usam o código 4831 para este motivo.",
+  "secao_pagina": "Point-of-Interaction Error (4834), Transaction Amount Differs, Acquirer Second Presentment, Correct amount billed (p. 606-609). O código 4831 não consta do guia; o motivo está no 4834."
+ },
+ {
+  "id": "Elo-83-26",
+  "bandeira": "Elo",
+  "codigo": "83",
+  "motivo": "Fraude em compra sem cartão presente",
+  "evidencias": [
+   "Nota fiscal.",
+   "Conversa por e-mail com o portador.",
+   "Comprovante de entrega assinado e AVS compatível.",
+   "Compras anteriores não contestadas.",
+   "Para produto digital: e-mail de confirmação, data e hora do download, IP e localização, ID do dispositivo, nome e e-mail do perfil, perfil verificado antes da compra.",
+   "Para serviço: comprovante da prestação, data de início do uso, uso anterior."
+  ],
+  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente.",
+  "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Elo-30-27",
+  "bandeira": "Elo",
+  "codigo": "30",
+  "motivo": "Serviço não prestado",
+  "evidencias": [
+   "Descrição da mercadoria.",
+   "Comprovante de entrega assinado e AVS compatível.",
+   "Mensagem em que o portador confirma o recebimento.",
+   "Explicação do atraso, se houver.",
+   "Para produto digital: e-mail de confirmação, data e hora da compra e do download."
+  ],
+  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente.",
+  "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Elo-41-28",
+  "bandeira": "Elo",
+  "codigo": "41",
+  "motivo": "Assinatura recorrente cancelada pelo portador",
+  "evidencias": [
+   "Política de cancelamento exibida e aceita na compra.",
+   "Aviso da próxima cobrança enviado 10 dias antes.",
+   "Uso do serviço entre a cobrança e o cancelamento.",
+   "Registro de que o portador não tentou contato para cancelar."
+  ],
+  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente.",
+  "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Elo-53-29",
+  "bandeira": "Elo",
+  "codigo": "53",
+  "motivo": "Defeituoso / diferente do descrito",
+  "evidencias": [
+   "Fotos ou registros de que o produto correspondia ao anúncio.",
+   "Comprovante de entrega do item substituído, se houver.",
+   "Conversas e acordos com o portador.",
+   "Registro de que o portador não tentou contato nem devolveu."
+  ],
+  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente.",
+  "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Elo-82-30",
+  "bandeira": "Elo",
+  "codigo": "82",
+  "motivo": "Processamento duplicado",
+  "evidencias": [
+   "Notas de dois pedidos separados, ou registro de que cada cobrança foi processada à parte.",
+   "Se houve só uma compra: prova de que não houve outra cobrança.",
+   "Comprovante de reembolso ou estorno já feito, com valor e data (se houver)."
+  ],
+  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente.",
+  "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Elo-85-31",
+  "bandeira": "Elo",
+  "codigo": "85",
+  "motivo": "Crédito não processado",
+  "evidencias": [
+   "Registro de que o crédito emitido não foi considerado pelo emissor.",
+   "Registro de que o portador não devolveu ou não tentou devolver.",
+   "Registro de que a devolução não seguiu a política escrita."
+  ],
+  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente.",
+  "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Elo-71-32",
+  "bandeira": "Elo",
+  "codigo": "71",
+  "motivo": "Sem autorização / portador não reconhece",
+  "evidencias": [],
+  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente. A fonte não lista evidências nem prazo para este código; confira com a sua adquirente.",
+  "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Elo-72-33",
+  "bandeira": "Elo",
+  "codigo": "72",
+  "motivo": "Autorização recusada",
+  "evidencias": [],
+  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente. A fonte não lista evidências nem prazo para este código; confira com a sua adquirente.",
+  "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Elo-74-34",
+  "bandeira": "Elo",
+  "codigo": "74",
+  "motivo": "Apresentação tardia",
+  "evidencias": [],
+  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente. A fonte não lista evidências nem prazo para este código; confira com a sua adquirente.",
+  "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Elo-77-35",
+  "bandeira": "Elo",
+  "codigo": "77",
+  "motivo": "Número de conta não confere",
+  "evidencias": [],
+  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente. A fonte não lista evidências nem prazo para este código; confira com a sua adquirente.",
+  "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
+ },
+ {
+  "id": "Elo-80-36",
+  "bandeira": "Elo",
+  "codigo": "80",
+  "motivo": "Erro de processamento",
+  "evidencias": [],
+  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente. A fonte não lista evidências nem prazo para este código; confira com a sua adquirente.",
+  "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
+ }
+];
+
+// GERADO por gerar-matriz.mjs. Não editar. Fonte: fontes/chargeback-C3-quadro-gateways-2026-10-15.md sha256 67745fea151d99bde2b6a9a7d2039b525e3f0d38f04d124e8d615bb397dbff7e
+const C3_SHA256 = "67745fea151d99bde2b6a9a7d2039b525e3f0d38f04d124e8d615bb397dbff7e";
+const AG1 = "Esta ferramenta funciona só no seu navegador: nada do que você digitar é enviado à LCM nem guardado por ela. Os dados do comprador continuam sob sua responsabilidade. Use-os apenas para responder à disputa junto ao seu gateway ou adquirente, e confira no contrato dele as regras de sigilo antes de compartilhar o dossiê com qualquer outra pessoa.";
+const GATEWAYS = ["Mercado Pago","PagBank (PagSeguro)","Stripe","Pagar.me","Hotmart","Eduzz","Kiwify"];
+
+// Matriz motivo x evidência (S-01 real), gerada de fontes/ por gerar-matriz.mjs.
+
+const ID_EXEMPLO = 'EXEMPLO-SINTETICO';
+const MATRIZ = S01_MOTIVOS;
+const RODAPE_ELO = S01_RODAPE_ELO;
+const RODAPE_PRAZOS = S01_RODAPE_PRAZOS;
+
+// Linha de fonte: literal da S-01 (rodape_linha), sem montagem.
+function linhaFonte(m) { return m.rodape_linha; }
+// Rótulo nominativo (CB-04): "motivo 13.1 da Visa".
+function rotuloMotivo(m) { return `Motivo ${m.codigo} da ${m.bandeira}: ${m.motivo}`; }
+
+function matrizTemExemplo(matriz = MATRIZ) {
+  return matriz.some((m) => m.id === ID_EXEMPLO);
+}
+
+
+
+
+function luhn(d) {
+  let s = 0, dbl = false;
+  for (let i = d.length - 1; i >= 0; i--) {
+    let n = d.charCodeAt(i) - 48;
+    if (dbl) { n *= 2; if (n > 9) n -= 9; }
+    s += n; dbl = !dbl;
+  }
+  return s % 10 === 0;
+}
+
+// CB-07: sequências de 13 a 19 dígitos (separadores espaço, hífen ou ponto, CP-02)
+// que passam no Luhn viram "**** **** **** últimos 4".
+// CP-01: só é chamada no paste, no blur/change e antes de gerar o dossiê.
+function mascararCartao(texto) {
+  let removido = false;
+  const out = texto.replace(/(?<![\d.])\d(?:[ .-]?\d){12,18}(?![\d])/g, (m) => {
+    const d = m.replace(/[ .-]/g, '');
+    if (d.length < 13 || d.length > 19 || !luhn(d)) return m;
+    removido = true;
+    return `**** **** **** ${d.slice(-4)}`;
+  });
+  return { texto: out, removido };
+}
+
+const ENTRE = '(?:\\s+\\S+){0,3}?\\s*[:=]?\\s*';           // até 3 palavras (CP-02), só fora do CVV
+// CP2-01 (literal da revisão v0.2): só palavras de ligação entre o termo e o número.
+const ENTRE_CVV = '(?:\\s+(?:é|e|era|foi|do|da|de|o|a|meu|seu|cart[aã]o|informado|digitado|:)){0,3}\\s*[:=]?\\s*';
+const T_CVV = '(?:cvv2?|cvc2?|c[oó]d(?:igo|\\.)?\\s+de\\s+seguran[cç]a|c[oó]d(?:igo|\\.)?\\s+verificador)';
+const MMAA = '(?:0[1-9]|1[0-2])\\s*[\\/-]\\s*(?:\\d{4}|\\d{2})(?!\\d)';
+const CARTAO = 'cart[aã]o';
+const T_VENCE = '(?:vence|venc\\.|vencimento|expira(?:[cç][aã]o)?)';
+
+const CVV_VALOR = new RegExp(`(?<![\\p{L}\\d])${T_CVV}(?![\\p{L}\\d])${ENTRE_CVV}\\d{3,4}(?![\\d/.,-]\\d)(?!\\d)`, 'iu');
+// Valor de cartão: o campo é limpo (CB-07).
+const VALOR = [
+  CVV_VALOR,
+  new RegExp(`\\bcid\\s+(?:d[oe]\\s+)?${CARTAO}${ENTRE}\\d{3,4}(?!\\d)`, 'i'),
+  new RegExp(`\\b(?:exp|v[aá]lido\\s+at[eé])${ENTRE}${MMAA}`, 'i'),
+  new RegExp(`\\b${CARTAO}\\b[^\\n]{0,40}?\\bval(?:idade|\\.)?${ENTRE}${MMAA}`, 'i'),
+  new RegExp(`\\bval(?:idade|\\.)?\\s+(?:d[oe]\\s+)?${CARTAO}${ENTRE}${MMAA}`, 'i'),
+  /%B\d{12,19}\^/,            // trilha 1
+  /;\d{12,19}=\d{4,}/          // trilha 2
+];
+// CP2-02: vence/expira MM/AA só limpa com "cartão" a até 40 caracteres, CVV com valor ou PAN no mesmo campo.
+const VENCE = new RegExp(`\\b${T_VENCE}${ENTRE}${MMAA}`, 'i');
+const VENCE_CARTAO = [
+  new RegExp(`\\b${CARTAO}\\b[^\\n]{0,40}?\\b${T_VENCE}${ENTRE}${MMAA}`, 'i'),
+  new RegExp(`\\b${T_VENCE}${ENTRE}${MMAA}[^\\n]{0,40}?\\b${CARTAO}\\b`, 'i')
+];
+// Mera menção ou caso ambíguo: mantém o texto e só alerta (CP-03, CP2-02).
+const MENCAO = [
+  new RegExp(`\\b${T_CVV}\\b`, 'i'),
+  new RegExp(`\\bvalidade${ENTRE}${MMAA}`, 'i'),
+  VENCE,
+  /\bcid\s*[:=]?\s*\d{3,4}(?!\d)/i
+];
+
+function temPAN(texto) { return mascararCartao(texto).removido; }
+function temValorDeCartao(texto) {
+  if (VALOR.some((r) => r.test(texto))) return true;
+  if (VENCE.test(texto) && (VENCE_CARTAO.some((r) => r.test(texto)) || temPAN(texto) || CVV_VALOR.test(texto))) return true;
+  return false;
+}
+function temMencao(texto) { return MENCAO.some((r) => r.test(texto)); }
+
+// Saneamento completo (paste, blur, antes do dossiê).
+// A-3 quando há remoção ou máscara; A-3b quando o texto é mantido (CP2-03).
+function sanear(texto) {
+  if (temValorDeCartao(texto)) return { texto: '', aviso: TEXTOS['A-3'], limpo: true };
+  const m = mascararCartao(texto);
+  if (m.removido) return { texto: m.texto, aviso: TEXTOS['A-3'], limpo: false };
+  return { texto: m.texto, aviso: temMencao(m.texto) ? TEXTOS_REVISAO['A-3b'] : null, limpo: false };
+}
+
+// Controlador de campo (CP-01): digitar não altera o valor; paste, blur e
+// geração do dossiê saneiam.
+function controladorCampo() {
+  return {
+    aoDigitar: (v) => ({ texto: v, aviso: null }),
+    aoColar: (v) => sanear(v),
+    aoSair: (v) => sanear(v)
+  };
+}
+
+function validarUltimos4(v) { return v === '' || /^\d{4}$/.test(v); }
+
+// CP-05: CNPJ com dígitos verificadores válidos.
+function validarCNPJ(v) {
+  const d = String(v).replace(/\D/g, '');
+  if (d.length !== 14 || /^(\d)\1{13}$/.test(d)) return false;
+  const dv = (n) => {
+    const pesos = n === 12 ? [5,4,3,2,9,8,7,6,5,4,3,2] : [6,5,4,3,2,9,8,7,6,5,4,3,2];
+    const s = pesos.reduce((a, p, i) => a + p * Number(d[i]), 0);
+    const r = s % 11; return r < 2 ? 0 : 11 - r;
+  };
+  return dv(12) === Number(d[12]) && dv(13) === Number(d[13]);
+}
+
+function norm(s) { return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+const TODOS_VEDADOS = [...VEDADOS, ...VEDADOS_EXTRA];
+function encontrarVedados(texto) {
+  const t = norm(texto);
+  return TODOS_VEDADOS.filter((v) => {
+    const e = norm(v).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`(^|[^a-z0-9])${e}(?=$|[^a-z0-9])`).test(t);
+  });
+}
+
+// CP-07: allowlist por igualdade exata da string inteira.
+function allowlist(matriz) {
+  return new Set([...Object.values(TEXTOS), ...Object.values(TEXTOS_REVISAO), AG1, RODAPE_MATRIZ, RODAPE_ELO, RODAPE_PRAZOS,
+    ...GATEWAYS, ...matriz.map(linhaFonte), ...matriz.map((m) => m.secao_pagina).filter(Boolean), ...matriz.map((m) => m.observacao).filter(Boolean),
+    ...matriz.flatMap((m) => m.evidencias), ...matriz.map((m) => m.motivo)]);
+}
+function vedadosNaPagina(textos, matriz) {
+  const ok = allowlist(matriz);
+  return textos.filter((t) => !ok.has(t) && encontrarVedados(t).length).map((t) => ({ texto: t, vedados: encontrarVedados(t) }));
+}
+
+// Dossiê (CB-02). P-1 não entra (CP-09).
+function montarDossie({ pedido, ultimos4, cnpj, gateway, motivo, fatos, documentos, vinculos }) {
+  const ordenados = [...fatos].sort((a, b) => a.data.localeCompare(b.data));
+  const L = [];
+  L.push('DOSSIÊ DE DISPUTA DE CHARGEBACK', '', '1. Identificação do pedido');
+  L.push(`Pedido: ${pedido}`);
+  if (ultimos4) L.push(`Cartão: **** **** **** ${ultimos4}`);
+  if (cnpj) L.push(`CNPJ do lojista: ${cnpj}`);
+  if (gateway) L.push(`Gateway ou adquirente: ${gateway}`);
+  L.push(`Motivo informado: ${rotuloMotivo(motivo)}`, '', '2. Cronologia');
+  for (const f of ordenados) L.push(`${f.data}: ${f.descricao}`);
+  L.push('', '3. Documentos anexados pelo lojista');
+  documentos.forEach((d, i) => L.push(`D${i + 1}. ${d.nome} (${d.tamanho} bytes)`));
+  L.push('', '4. Correspondência documento x requisito de evidência');
+  motivo.evidencias.forEach((ev, i) => {
+    const ds = (vinculos[i] || []).map((k) => `D${k + 1}`);
+    L.push(`${ev}: ${ds.length ? ds.join(', ') : 'nenhum documento anexado'}`);
+  });
+  if (motivo.observacao && motivo.observacao !== linhaFonte(motivo)) L.push(motivo.observacao);
+  L.push(linhaFonte(motivo));
+  if (motivo.secao_pagina) L.push(motivo.secao_pagina);
+  L.push(RODAPE_MATRIZ, RODAPE_PRAZOS);
+  if (motivo.bandeira === 'Elo') L.push(RODAPE_ELO);
+  const texto = L.join('\n') + '\n';
+  return { texto, vedados: encontrarVedados(texto) };
+}
+
+// CP-04: em build de piloto, a linha de exemplo bloqueia o dossiê.
+function dossieBloqueadoPorExemplo(piloto, matriz) { return piloto === true && matrizTemExemplo(matriz); }
+
+function podeBaixar({ a1, d1, vedados, bloqueado = false }) {
+  return a1 === true && d1 === true && vedados.length === 0 && !bloqueado;
+}
+
+
+
+
+
+
+const $ = (id) => document.getElementById(id);
+const estado = { documentos: [], fatos: [], dossie: null };
+
+function txt(id, t) { $(id).textContent = t; }
+function aviso(msg) { const a = $('aviso'); a.textContent = msg || ''; a.hidden = !msg; }
+
+function iniciar() {
+  document.title = TITULO;
+  txt('titulo', TITULO);
+  txt('o1', TEXTOS['O-1']);
+  txt('ag1', AG1);
+  txt('rodape-prazos', RODAPE_PRAZOS);
+  txt('a1-texto', TEXTOS['A-1']);
+  txt('a2-texto', TEXTOS['A-2']);
+  txt('d1-texto', TEXTOS['D-1']);
+  txt('p1-texto', TEXTOS['P-1']);
+  txt('r1', TEXTOS['R-1']);
+  txt('r2', TEXTOS['R-2']);
+  const termos = $('termos');
+  const termosVisiveis = ['T-1', 'T-2', 'T-3', 'T-4', 'T-5', 'T-6'].concat(COBRANCA ? ['T-7'] : []); // CP-06
+  for (const k of termosVisiveis) {
+    const p = document.createElement('p'); p.textContent = TEXTOS[k]; termos.appendChild(p);
+  }
+  const sel = $('motivo');
+  MATRIZ.forEach((m, i) => {
+    const o = document.createElement('option'); o.value = String(i);
+    o.textContent = rotuloMotivo(m); sel.appendChild(o);
+  });
+  const gsel = $('gateway');
+  GATEWAYS.forEach((g) => { const o = document.createElement('option'); o.value = g; o.textContent = g; gsel.appendChild(o); });
+
+  $('a1').addEventListener('change', () => { $('form').hidden = !$('a1').checked; });
+
+  // CP-01: digitar não saneia; paste, saída do campo e geração do dossiê saneiam.
+  document.querySelectorAll('input[type=text], textarea').forEach((el) => {
+    if (el.id === 'ultimos4') return;
+    const aplicar = () => { const r = sanear(el.value); if (r.aviso) aviso(r.aviso); if (r.texto !== el.value) el.value = r.texto; };
+    el.addEventListener('paste', () => setTimeout(aplicar, 0));
+    el.addEventListener('blur', aplicar);
+    el.addEventListener('change', aplicar);
+  });
+
+  // CP-05: P-1 só com CNPJ válido; continua opcional e desmarcado.
+  const atualizarP1 = () => { const ok = validarCNPJ($('cnpj').value); $('p1').disabled = !ok; if (!ok) $('p1').checked = false; };
+  $('cnpj').addEventListener('input', atualizarP1);
+  $('cnpj').addEventListener('change', atualizarP1);
+  atualizarP1();
+
+  // Só os 4 últimos dígitos: mais de 4 dígitos (PAN digitado ou colado) limpa o campo + A-3.
+  const ultimos4 = () => {
+    const el = $('ultimos4'); const d = el.value.replace(/\D/g, '');
+    if (d.length > 4) { el.value = ''; aviso(TEXTOS['A-3']); } else if (el.value !== d) el.value = d;
+  };
+  $('ultimos4').addEventListener('input', ultimos4);
+  $('ultimos4').addEventListener('paste', () => setTimeout(ultimos4, 0));
+
+  $('docs').addEventListener('change', (e) => {
+    // Só nome e tamanho; o conteúdo do arquivo não é lido.
+    estado.documentos = [...e.target.files].map((f) => ({ nome: sanear(f.name).texto || '[nome removido]', tamanho: f.size }));
+    renderVinculos();
+  });
+  $('motivo').addEventListener('change', renderVinculos);
+
+  $('add-fato').addEventListener('click', () => {
+    const data = $('fato-data').value;
+    const desc = sanear($('fato-desc').value);
+    if (desc.aviso) aviso(desc.aviso);
+    $('fato-desc').value = desc.texto;
+    if (!data || !desc.texto.trim()) return;
+    estado.fatos.push({ data, descricao: desc.texto.trim() });
+    $('fato-desc').value = '';
+    renderFatos();
+  });
+
+  $('gerar').addEventListener('click', gerar);
+  $('d1').addEventListener('change', atualizarBaixar);
+  $('baixar').addEventListener('click', baixar);
+  renderVinculos();
+}
+
+function renderFatos() {
+  const ul = $('lista-fatos'); ul.textContent = '';
+  [...estado.fatos].sort((a, b) => a.data.localeCompare(b.data)).forEach((f) => {
+    const li = document.createElement('li'); li.textContent = `${f.data}: ${f.descricao}`; ul.appendChild(li);
+  });
+}
+
+function renderVinculos() {
+  const m = MATRIZ[Number($('motivo').value) || 0];
+  txt('fonte-motivo', linhaFonte(m));
+  const sp = $('secao-motivo'); sp.textContent = m.secao_pagina || ''; sp.hidden = !sp.textContent;
+  const obs = $('obs-motivo'); obs.textContent = m.observacao && m.observacao !== linhaFonte(m) ? m.observacao : ''; obs.hidden = !obs.textContent;
+  const elo = $('rodape-elo'); elo.textContent = m.bandeira === 'Elo' ? RODAPE_ELO : ''; elo.hidden = !elo.textContent;
+  const box = $('vinculos'); box.textContent = '';
+  m.evidencias.forEach((ev, i) => {
+    const fs = document.createElement('fieldset');
+    const lg = document.createElement('legend'); lg.textContent = ev; fs.appendChild(lg);
+    estado.documentos.forEach((d, k) => {
+      const l = document.createElement('label');
+      const c = document.createElement('input'); c.type = 'checkbox'; c.dataset.ev = String(i); c.dataset.doc = String(k);
+      l.appendChild(c); l.append(` D${k + 1}. ${d.nome}`); fs.appendChild(l);
+    });
+    box.appendChild(fs);
+  });
+}
+
+function gerar() {
+  aviso('');
+  if (dossieBloqueadoPorExemplo(PILOTO, MATRIZ)) return aviso('Build de piloto com linha de exemplo na matriz: dossiê bloqueado.');
+  let alerta = null;
+  for (const id of ['pedido', 'cnpj']) { const r = sanear($(id).value); $(id).value = r.texto; if (r.aviso) alerta = r.aviso; }
+  if (alerta) aviso(alerta);
+  const pedido = $('pedido').value.trim();
+  const u4 = $('ultimos4').value;
+  if (!pedido) return aviso('Informe a identificação do pedido.');
+  if (!validarUltimos4(u4)) return aviso('Informe exatamente os 4 últimos dígitos, ou deixe em branco.');
+  const motivo = MATRIZ[Number($('motivo').value) || 0];
+  const vinculos = motivo.evidencias.map(() => []);
+  document.querySelectorAll('#vinculos input:checked').forEach((c) => vinculos[Number(c.dataset.ev)].push(Number(c.dataset.doc)));
+  const d = montarDossie({
+    pedido, ultimos4: u4, cnpj: $('cnpj').value.trim(), gateway: $('gateway').value,
+    motivo, fatos: estado.fatos, documentos: estado.documentos, vinculos
+  });
+  estado.dossie = d;
+  $('previa').textContent = d.texto;
+  if (d.vedados.length) aviso(`Remova os termos não permitidos no dossiê: ${d.vedados.join(', ')}.`);
+  $('etapa-d1').hidden = false;
+  atualizarBaixar();
+}
+
+function atualizarBaixar() {
+  $('baixar').disabled = !(estado.dossie && podeBaixar({ a1: $('a1').checked, d1: $('d1').checked, vedados: estado.dossie.vedados, bloqueado: dossieBloqueadoPorExemplo(PILOTO, MATRIZ) }));
+}
+
+function baixar() {
+  if ($('baixar').disabled) return;
+  const blob = new Blob([estado.dossie.texto], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'dossie-chargeback.txt';
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+document.addEventListener('DOMContentLoaded', iniciar);
+
+})();
+</script>
+</body>
+</html>
