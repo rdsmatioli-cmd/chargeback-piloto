@@ -1,0 +1,5 @@
+# App do piloto (formulário, painel, envio) fica fora: via noindex na página (sem Disallow, para o robô ler o noindex). Blog indexável (decisão do CEO, 16/10).
+User-agent: *
+Allow: /
+
+Sitemap: https://chargeback.contacertabr.com.br/sitemap.xml
