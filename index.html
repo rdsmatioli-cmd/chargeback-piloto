@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-N8IRvshryjBUGH4CS4ahtYii0/j3t5SWU19KcODrhz8='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-sVQVmWFdi3K0utc/FFcMJ2iQCyDU/QCKxjgBhtVWmvk='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
 body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
@@ -688,12 +688,13 @@ function sanear(texto) {
 }
 
 // Controlador de campo (CP-01): digitar não altera o valor; paste, blur e
-// geração do dossiê saneiam.
-function controladorCampo() {
+// geração do dossiê saneiam. CB-01: recebe o id do campo, para a exceção de CNPJ
+// (sanearCampo) valer no mesmo caminho que a página usa.
+function controladorCampo(id) {
   return {
     aoDigitar: (v) => ({ texto: v, aviso: null }),
-    aoColar: (v) => sanear(v),
-    aoSair: (v) => sanear(v)
+    aoColar: (v) => sanearCampo(id, v),
+    aoSair: (v) => sanearCampo(id, v)
   };
 }
 
@@ -815,10 +816,11 @@ function iniciar() {
   // CP-01: digitar não saneia; paste, saída do campo e geração do dossiê saneiam.
   document.querySelectorAll('input[type=text], textarea').forEach((el) => {
     if (el.id === 'ultimos4') return;
-    const aplicar = () => { const r = sanearCampo(el.id, el.value); if (r.aviso) aviso(r.aviso); if (r.texto !== el.value) el.value = r.texto; };
-    el.addEventListener('paste', () => setTimeout(aplicar, 0));
-    el.addEventListener('blur', aplicar);
-    el.addEventListener('change', aplicar);
+    const ctl = controladorCampo(el.id);
+    const aplicar = (fn) => { const r = fn(el.value); if (r.aviso) aviso(r.aviso); if (r.texto !== el.value) el.value = r.texto; };
+    el.addEventListener('paste', () => setTimeout(() => aplicar(ctl.aoColar), 0));
+    el.addEventListener('blur', () => aplicar(ctl.aoSair));
+    el.addEventListener('change', () => aplicar(ctl.aoSair));
   });
 
   // CP-05: P-1 só com CNPJ válido; continua opcional e desmarcado.
