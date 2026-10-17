@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-pO6xVWYlC1Yoq6A+gy3PFXty+rPZ7D2cL9+FqcyiUu8='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
-<title></title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-T6i96GeV6Qk5+Pt6lPn1Fa6VyPYnqB2o3TsnSRVc1to='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<title>Organize as provas da sua disputa de chargeback</title>
 <style>
 body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
 fieldset{margin:.5rem 0}label{display:block;margin:.3rem 0}
@@ -15,7 +15,7 @@ footer{margin-top:2rem;font-size:.85rem;border-top:1px solid #ccc}
 </style>
 </head>
 <body>
-<h1 id="titulo"></h1>
+<h1 id="titulo">Organize as provas da sua disputa de chargeback</h1>
 <p id="o1"></p>
 <p id="ag1"></p>
 <p id="aviso" role="alert" hidden></p>
@@ -615,14 +615,22 @@ function luhn(d) {
   return s % 10 === 0;
 }
 
+// CB-01: só conta como cartão a sequência que começa por 3, 4, 5 ou 6, ou por 2221 a 2720
+// (Mastercard série 2). Pedidos iniciados por 0, 1, 7, 8, 9 ou 2000-2220 não são mascarados.
+function prefixoDeCartao(d) {
+  if (/^[3-6]/.test(d)) return true;
+  const p = Number(d.slice(0, 4));
+  return p >= 2221 && p <= 2720;
+}
+
 // CB-07: sequências de 13 a 19 dígitos (separadores espaço, hífen ou ponto, CP-02)
-// que passam no Luhn viram "**** **** **** últimos 4".
+// com prefixo de cartão (CB-01) que passam no Luhn viram "**** **** **** últimos 4".
 // CP-01: só é chamada no paste, no blur/change e antes de gerar o dossiê.
 function mascararCartao(texto) {
   let removido = false;
   const out = texto.replace(/(?<![\d.])\d(?:[ .-]?\d){12,18}(?![\d])/g, (m) => {
     const d = m.replace(/[ .-]/g, '');
-    if (d.length < 13 || d.length > 19 || !luhn(d)) return m;
+    if (d.length < 13 || d.length > 19 || !prefixoDeCartao(d) || !luhn(d)) return m;
     removido = true;
     return `**** **** **** ${d.slice(-4)}`;
   });
@@ -680,12 +688,13 @@ function sanear(texto) {
 }
 
 // Controlador de campo (CP-01): digitar não altera o valor; paste, blur e
-// geração do dossiê saneiam.
-function controladorCampo() {
+// geração do dossiê saneiam. CB-01: recebe o id do campo, para a exceção de CNPJ
+// (sanearCampo) valer no mesmo caminho que a página usa.
+function controladorCampo(id) {
   return {
     aoDigitar: (v) => ({ texto: v, aviso: null }),
-    aoColar: (v) => sanear(v),
-    aoSair: (v) => sanear(v)
+    aoColar: (v) => sanearCampo(id, v),
+    aoSair: (v) => sanearCampo(id, v)
   };
 }
 
@@ -701,6 +710,14 @@ function validarCNPJ(v) {
     const r = s % 11; return r < 2 ? 0 : 11 - r;
   };
   return dv(12) === Number(d[12]) && dv(13) === Number(d[13]);
+}
+
+// CB-01: no campo CNPJ, um CNPJ válido (só dígitos e pontuação de CNPJ) não é tratado
+// como cartão; 14 dígitos com DV válido podem passar no Luhn. Qualquer outro valor é saneado.
+const FORMATO_CNPJ = /^\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}$/;
+function sanearCampo(id, texto) {
+  if (id === 'cnpj' && FORMATO_CNPJ.test(texto.trim()) && validarCNPJ(texto)) return { texto, aviso: null, limpo: false };
+  return sanear(texto);
 }
 
 function norm(s) { return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
@@ -799,10 +816,11 @@ function iniciar() {
   // CP-01: digitar não saneia; paste, saída do campo e geração do dossiê saneiam.
   document.querySelectorAll('input[type=text], textarea').forEach((el) => {
     if (el.id === 'ultimos4') return;
-    const aplicar = () => { const r = sanear(el.value); if (r.aviso) aviso(r.aviso); if (r.texto !== el.value) el.value = r.texto; };
-    el.addEventListener('paste', () => setTimeout(aplicar, 0));
-    el.addEventListener('blur', aplicar);
-    el.addEventListener('change', aplicar);
+    const ctl = controladorCampo(el.id);
+    const aplicar = (fn) => { const r = fn(el.value); if (r.aviso) aviso(r.aviso); if (r.texto !== el.value) el.value = r.texto; };
+    el.addEventListener('paste', () => setTimeout(() => aplicar(ctl.aoColar), 0));
+    el.addEventListener('blur', () => aplicar(ctl.aoSair));
+    el.addEventListener('change', () => aplicar(ctl.aoSair));
   });
 
   // CP-05: P-1 só com CNPJ válido; continua opcional e desmarcado.
@@ -827,11 +845,18 @@ function iniciar() {
   $('motivo').addEventListener('change', renderVinculos);
 
   $('add-fato').addEventListener('click', () => {
+    // CB-02: o blur do campo roda antes do clique e já mascarou o cartão e mostrou o A-3;
+    // aqui o texto chega mascarado e sanear() não devolve mais o A-3.
+    const a3Visivel = !$('aviso').hidden && $('aviso').textContent.startsWith(TEXTOS['A-3']);
     const data = $('fato-data').value;
     const desc = sanear($('fato-desc').value);
     if (desc.aviso) aviso(desc.aviso);
     $('fato-desc').value = desc.texto;
     if (!data || !desc.texto.trim()) return;
+    // CB-02: fato com termo vedado não entra; o texto fica no campo para edição.
+    // A recusa se soma ao A-3 que estava visível, em vez de substituí-lo.
+    const vedados = encontrarVedados(desc.texto);
+    if (vedados.length) return aviso([a3Visivel ? TEXTOS['A-3'] : desc.aviso, `Remova os termos não permitidos no fato: ${vedados.join(', ')}.`].filter(Boolean).join(' '));
     estado.fatos.push({ data, descricao: desc.texto.trim() });
     $('fato-desc').value = '';
     renderFatos();
@@ -845,8 +870,23 @@ function iniciar() {
 
 function renderFatos() {
   const ul = $('lista-fatos'); ul.textContent = '';
-  [...estado.fatos].sort((a, b) => a.data.localeCompare(b.data)).forEach((f) => {
-    const li = document.createElement('li'); li.textContent = `${f.data}: ${f.descricao}`; ul.appendChild(li);
+  const ordenados = [...estado.fatos].sort((a, b) => a.data.localeCompare(b.data));
+  ordenados.forEach((f, i) => {
+    const li = document.createElement('li'); li.textContent = `${f.data}: ${f.descricao} `;
+    // CB-02: remover o fato invalida o dossiê já gerado, que ainda o contém.
+    const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remover';
+    // Nome próprio por botão: data do fato e, se houver mais de um no dia, a ordem.
+    const doDia = ordenados.filter((g) => g.data === f.data);
+    rm.setAttribute('aria-label', `Remover fato de ${f.data}` + (doDia.length > 1 ? ` (${doDia.indexOf(f) + 1}º do dia)` : ''));
+    rm.addEventListener('click', () => {
+      estado.fatos.splice(estado.fatos.indexOf(f), 1);
+      estado.dossie = null; $('previa').textContent = ''; $('etapa-d1').hidden = true; atualizarBaixar(); aviso('');
+      renderFatos();
+      // O botão focado foi recriado: foco no Remover seguinte, ou no anterior; sem fatos, no campo do fato.
+      const bs = $('lista-fatos').querySelectorAll('button');
+      (bs[i] || bs[i - 1] || $('fato-desc')).focus();
+    });
+    li.appendChild(rm); ul.appendChild(li);
   });
 }
 
@@ -873,7 +913,7 @@ function gerar() {
   aviso('');
   if (dossieBloqueadoPorExemplo(PILOTO, MATRIZ)) return aviso('Build de piloto com linha de exemplo na matriz: dossiê bloqueado.');
   let alerta = null;
-  for (const id of ['pedido', 'cnpj']) { const r = sanear($(id).value); $(id).value = r.texto; if (r.aviso) alerta = r.aviso; }
+  for (const id of ['pedido', 'cnpj']) { const r = sanearCampo(id, $(id).value); $(id).value = r.texto; if (r.aviso) alerta = r.aviso; }
   if (alerta) aviso(alerta);
   const pedido = $('pedido').value.trim();
   const u4 = $('ultimos4').value;
