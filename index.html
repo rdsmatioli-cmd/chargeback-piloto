@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-8vSbDMp0EzRNgz/6HVC9/sq1CjD/M3vw6dDSuEipigY='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-T6i96GeV6Qk5+Pt6lPn1Fa6VyPYnqB2o3TsnSRVc1to='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
 body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
@@ -870,14 +870,21 @@ function iniciar() {
 
 function renderFatos() {
   const ul = $('lista-fatos'); ul.textContent = '';
-  [...estado.fatos].sort((a, b) => a.data.localeCompare(b.data)).forEach((f) => {
+  const ordenados = [...estado.fatos].sort((a, b) => a.data.localeCompare(b.data));
+  ordenados.forEach((f, i) => {
     const li = document.createElement('li'); li.textContent = `${f.data}: ${f.descricao} `;
     // CB-02: remover o fato invalida o dossiê já gerado, que ainda o contém.
     const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remover';
+    // Nome próprio por botão: data do fato e, se houver mais de um no dia, a ordem.
+    const doDia = ordenados.filter((g) => g.data === f.data);
+    rm.setAttribute('aria-label', `Remover fato de ${f.data}` + (doDia.length > 1 ? ` (${doDia.indexOf(f) + 1}º do dia)` : ''));
     rm.addEventListener('click', () => {
       estado.fatos.splice(estado.fatos.indexOf(f), 1);
       estado.dossie = null; $('previa').textContent = ''; $('etapa-d1').hidden = true; atualizarBaixar(); aviso('');
       renderFatos();
+      // O botão focado foi recriado: foco no Remover seguinte, ou no anterior; sem fatos, no campo do fato.
+      const bs = $('lista-fatos').querySelectorAll('button');
+      (bs[i] || bs[i - 1] || $('fato-desc')).focus();
     });
     li.appendChild(rm); ul.appendChild(li);
   });
