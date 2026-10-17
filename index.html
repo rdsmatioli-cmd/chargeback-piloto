@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-sVQVmWFdi3K0utc/FFcMJ2iQCyDU/QCKxjgBhtVWmvk='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-8vSbDMp0EzRNgz/6HVC9/sq1CjD/M3vw6dDSuEipigY='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
 body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
@@ -845,14 +845,18 @@ function iniciar() {
   $('motivo').addEventListener('change', renderVinculos);
 
   $('add-fato').addEventListener('click', () => {
+    // CB-02: o blur do campo roda antes do clique e já mascarou o cartão e mostrou o A-3;
+    // aqui o texto chega mascarado e sanear() não devolve mais o A-3.
+    const a3Visivel = !$('aviso').hidden && $('aviso').textContent.startsWith(TEXTOS['A-3']);
     const data = $('fato-data').value;
     const desc = sanear($('fato-desc').value);
     if (desc.aviso) aviso(desc.aviso);
     $('fato-desc').value = desc.texto;
     if (!data || !desc.texto.trim()) return;
     // CB-02: fato com termo vedado não entra; o texto fica no campo para edição.
+    // A recusa se soma ao A-3 que estava visível, em vez de substituí-lo.
     const vedados = encontrarVedados(desc.texto);
-    if (vedados.length) return aviso([desc.aviso, `Remova os termos não permitidos no fato: ${vedados.join(', ')}.`].filter(Boolean).join(' '));
+    if (vedados.length) return aviso([a3Visivel ? TEXTOS['A-3'] : desc.aviso, `Remova os termos não permitidos no fato: ${vedados.join(', ')}.`].filter(Boolean).join(' '));
     estado.fatos.push({ data, descricao: desc.texto.trim() });
     $('fato-desc').value = '';
     renderFatos();
