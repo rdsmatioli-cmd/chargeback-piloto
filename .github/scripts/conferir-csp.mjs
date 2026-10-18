@@ -15,7 +15,9 @@
 // - exige o hash no script-src (ou script-src-elem) de cada CSP do <head>; 'unsafe-inline' não basta;
 // - acusa hash do script-src que não corresponde a nenhum script inline da página (sobra);
 // - acusa script inline sem CSP, CSP fora do <head>, script antes da CSP e atributo on* (onclick...),
-//   que a CSP com hash bloqueia: use addEventListener no script.
+//   que a CSP com hash bloqueia: use addEventListener no script. O <head> acaba, como no navegador,
+//   em </head>, numa tag que não é de <head> ou em texto que não é só espaço (fora de title, style,
+//   noscript e script); a CSP que vem depois disso é ignorada pelo navegador.
 // Blocos de dados (type="application/ld+json" e outros) ficam de fora: o navegador não os executa
 // e a CSP não se aplica a eles; <script></script> vazio também (o navegador nem o executa).
 // SVG/MathML com "<script" dentro (até em <style>, comentário ou CDATA) é erro: lá o navegador
@@ -23,7 +25,8 @@
 // SVG/MathML sem script não atrapalha (só se leem as tags dele, para on* e CSP).
 // Limites: scripts externos (src) não são conferidos; <script nomodule> e <script> dentro de
 // <template> são conferidos como se rodassem (o navegador nem os executa: erro a mais, nunca a
-// menos); hash sem o "=" final é acusado, mesmo que o Chromium o aceite (o --corrigir grava o valor
+// menos); texto ou tag de corpo dentro de <template> no <head> conta como fim do <head> (idem);
+// hash sem o "=" final é acusado, mesmo que o Chromium o aceite (o --corrigir grava o valor
 // completo, que todo navegador aceita).
 //
 // --corrigir: reescreve só os hashes do script-src (ou script-src-elem) da CSP do index.html da raiz
@@ -189,6 +192,8 @@ function analisar(t) {
   while (i < n) {
     const lt = t.indexOf('<', i);
     if (lt < 0) break;
+    // Texto que não é só espaço fecha o <head>, como no navegador (o BOM do início não conta).
+    if (noHead && aparar(decodificar(t.slice(i === 0 && t[0] === '﻿' ? 1 : i, lt))) !== '') noHead = false;
     i = lt;
     const c1 = t[i + 1] ?? '';
     if (t.startsWith('<!--', i)) { i = fimComentario(t, i + 4); continue; }
@@ -209,7 +214,7 @@ function analisar(t) {
       }
       continue;
     }
-    if (!ALFA.test(c1)) { i++; continue; }
+    if (!ALFA.test(c1)) { noHead = false; i++; continue; } // "<" solto é texto
     const tag = lerTag(t, i + 1);
     if (!tag) break;
     if (!DO_HEAD.has(tag.nome)) noHead = false;
