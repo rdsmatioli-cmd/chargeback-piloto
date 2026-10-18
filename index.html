@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-T6i96GeV6Qk5+Pt6lPn1Fa6VyPYnqB2o3TsnSRVc1to='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-CfQsX8X5GSjIaU8kGvTbnDWn3DXYDrbLbmnhOG+OjC8='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
 body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
@@ -15,6 +15,7 @@ footer{margin-top:2rem;font-size:.85rem;border-top:1px solid #ccc}
 </style>
 </head>
 <body>
+<main hidden>
 <h1 id="titulo">Organize as provas da sua disputa de chargeback</h1>
 <p id="o1"></p>
 <p id="ag1"></p>
@@ -51,7 +52,8 @@ footer{margin-top:2rem;font-size:.85rem;border-top:1px solid #ccc}
   </div>
 </section>
 <details><summary>Termos</summary><div id="termos"></div></details>
-<footer><p id="r1"></p><p id="r2"></p></footer>
+</main>
+<footer hidden><p id="r1"></p><p id="r2"></p></footer>
 <script>"use strict";
 (() => {
 // Gerado/alterado pelo build: PILOTO=true só em build de piloto (node build.mjs --piloto).
@@ -803,6 +805,10 @@ function iniciar() {
   for (const k of termosVisiveis) {
     const p = document.createElement('p'); p.textContent = TEXTOS[k]; termos.appendChild(p);
   }
+  // main e footer saem do HTML com hidden e só aparecem com os textos já preenchidos. Pintados
+  // vazios (HTML em mais de um pedaço), o aceite A-1 descia quando os textos entravam (CLS 0,19).
+  document.querySelector('main').hidden = false;
+  document.querySelector('footer').hidden = false;
   const sel = $('motivo');
   MATRIZ.forEach((m, i) => {
     const o = document.createElement('option'); o.value = String(i);

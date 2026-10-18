@@ -14,3 +14,20 @@ jobs:
           node-version: '22'
       - name: html-validate
         run: find . -name '*.html' -not -path './.git/*' -print0 | xargs -0 npx --yes html-validate@9.7.1 --max-warnings 0 -c .htmlvalidate.json
+
+  # Lighthouse 13.5.0 (versão fixa, sem @lhci/cli) com o repositório servido localmente.
+  # Metas: blog SEO >= 0,90, Acessibilidade >= 0,95, CLS < 0,1, robots.txt e llms.txt válidos;
+  # app (/) só Acessibilidade e CLS, porque é noindex de propósito. Chrome: o do runner.
+  # O servidor manda o HTML em pedaços (14.600 bytes a cada 200 ms), para o CLS refletir a rede real.
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: '22'
+      - name: Lighthouse 13.5.0 (blog, posts e app)
+        run: node .github/scripts/lighthouse.mjs
