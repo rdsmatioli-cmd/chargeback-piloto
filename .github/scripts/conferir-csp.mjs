@@ -18,7 +18,13 @@
 //   que a CSP com hash bloqueia: use addEventListener no script.
 // Blocos de dados (type="application/ld+json" e outros) ficam de fora: o navegador não os executa
 // e a CSP não se aplica a eles; <script></script> vazio também (o navegador nem o executa).
-// Scripts externos (src), <svg><script> e <template> não são conferidos.
+// SVG/MathML com "<script" dentro (até em <style>, comentário ou CDATA) é erro: lá o navegador
+// decodifica entidades e CDATA antes do hash e <style> não esconde tags; confira essa página à mão.
+// SVG/MathML sem script não atrapalha (só se leem as tags dele, para on* e CSP).
+// Limites: scripts externos (src) não são conferidos; <script nomodule> e <script> dentro de
+// <template> são conferidos como se rodassem (o navegador nem os executa: erro a mais, nunca a
+// menos); hash sem o "=" final é acusado, mesmo que o Chromium o aceite (o --corrigir grava o valor
+// completo, que todo navegador aceita).
 //
 // --corrigir: reescreve só os hashes do script-src (ou script-src-elem) da CSP do index.html da raiz
 // com os valores certos, sem tocar no resto da CSP nem do arquivo, e confere tudo de novo.
@@ -77,9 +83,11 @@ function lerTag(t, j) {
   const nome = minusculas(t.slice(j, k));
   const attrs = new Map();
   for (;;) {
+    const s = k;
     while (k < n && (ESPACO.test(t[k]) || t[k] === '/')) k++;
     if (k >= n) return null;
-    if (t[k] === '>') return { nome, attrs, fim: k + 1 };
+    // autoFechada: "/" logo antes do ">", fora de nome ou valor de atributo (<svg/>, <svg a="b"/>).
+    if (t[k] === '>') return { nome, attrs, fim: k + 1, autoFechada: k > s && t[k - 1] === '/' };
     const a = k;
     if (t[k] === '=') k++;
     while (k < n && !ESPACO.test(t[k]) && t[k] !== '/' && t[k] !== '>' && t[k] !== '=') k++;
@@ -160,12 +168,22 @@ function executavel(attrs) {
 }
 
 // Lê a página: scripts inline, metas de CSP e atributos on*.
+// SVG/MathML (do <svg> ou <math> até o fechamento correspondente, contando os aninhados) segue
+// outras regras: <style> e <title> não são texto cru e o <script> tem entidades e CDATA decodificados
+// antes do hash. Lá dentro só se leem tags (on*, CSP); um "<script" qualquer na região vai para
+// `estrangeiros` e a página precisa ser conferida à mão.
 function analisar(t) {
   const scripts = [];
   const csps = [];
   const manipuladores = [];
+  const estrangeiros = [];
   let blocosDeDados = 0;
   let noHead = true;
+  let prof = 0; // profundidade de SVG/MathML
+  let iniEstrangeiro = 0;
+  const fecharEstrangeiro = (fim) => {
+    if (/<script[\t\n\f\r />]/i.test(t.slice(iniEstrangeiro, fim))) estrangeiros.push({ pos: iniEstrangeiro });
+  };
   let i = 0;
   const n = t.length;
   while (i < n) {
@@ -174,6 +192,7 @@ function analisar(t) {
     i = lt;
     const c1 = t[i + 1] ?? '';
     if (t.startsWith('<!--', i)) { i = fimComentario(t, i + 4); continue; }
+    if (prof && t.startsWith('<![CDATA[', i)) { const f = t.indexOf(']]>', i + 9); i = f < 0 ? n : f + 3; continue; }
     if (c1 === '!' || c1 === '?') { const g = t.indexOf('>', i); i = g < 0 ? n : g + 1; continue; }
     if (c1 === '/') {
       if (ALFA.test(t[i + 2] ?? '')) {
@@ -181,6 +200,7 @@ function analisar(t) {
         if (!tag) break;
         if (tag.nome === 'head') noHead = false;
         i = tag.fim;
+        if (prof && (tag.nome === 'svg' || tag.nome === 'math') && --prof === 0) fecharEstrangeiro(i);
       } else if (t[i + 2] === '>') {
         i += 3;
       } else {
@@ -195,12 +215,16 @@ function analisar(t) {
     if (!DO_HEAD.has(tag.nome)) noHead = false;
     for (const [nome] of tag.attrs) if (/^on[a-z]/.test(nome)) manipuladores.push({ nome, pos: lt });
     i = tag.fim;
-    if (tag.nome === 'meta') {
+    if (tag.nome === 'svg' || tag.nome === 'math') {
+      if (!tag.autoFechada && prof++ === 0) iniEstrangeiro = lt;
+    } else if (tag.nome === 'meta') {
       const equiv = tag.attrs.get('http-equiv');
       const conteudo = tag.attrs.get('content');
       if (equiv && minusculas(aparar(equiv.valor)) === 'content-security-policy' && conteudo && conteudo.valor !== '') {
         csps.push({ pos: lt, noHead, attr: conteudo, politica: lerPolitica(conteudo.valor) });
       }
+    } else if (prof) {
+      // dentro de SVG/MathML: nem script nem texto cru (ver fecharEstrangeiro)
     } else if (tag.nome === 'script') {
       const fim = fimScript(t, i);
       const texto = t.slice(i, fim).replace(/\r\n?/g, '\n').replace(/\0/g, '�');
@@ -218,7 +242,8 @@ function analisar(t) {
       i = n;
     }
   }
-  return { scripts, csps, manipuladores, blocosDeDados };
+  if (prof) fecharEstrangeiro(n);
+  return { scripts, csps, manipuladores, blocosDeDados, estrangeiros };
 }
 
 // ---------- CSP ----------
@@ -257,9 +282,12 @@ function linhaDe(t, pos) {
 }
 
 function conferirPagina(t) {
-  const { scripts, csps, manipuladores, blocosDeDados } = analisar(t);
+  const { scripts, csps, manipuladores, blocosDeDados, estrangeiros } = analisar(t);
   const problemas = [];
   const linha = (pos) => linhaDe(t, pos);
+  for (const e of estrangeiros) {
+    problemas.push(`SVG/MathML na linha ${linha(e.pos)} com <script> dentro: o navegador lê esse script com outras regras (entidades, CDATA, <style> que não esconde tags) e o conferir-csp não calcula o hash dele; confira a CSP desta página à mão.`);
+  }
   for (const c of csps) {
     if (!c.noHead) problemas.push(`CSP na linha ${linha(c.pos)} fora do <head>: o navegador a ignora.`);
   }
@@ -284,7 +312,8 @@ function conferirPagina(t) {
         problemas.push(`script inline na linha ${ls} tem hash ${fonte(s)}, que não está no ${dir.nome} da CSP (linha ${lc})${via}: o navegador bloqueia o script.`);
       }
     }
-    if (dir && dir.nome !== 'default-src') {
+    // Com script em SVG/MathML não dá para saber se um hash sobra: ele pode ser desse script.
+    if (dir && dir.nome !== 'default-src' && !estrangeiros.length) {
       for (const f of dir.fontes) {
         const h = lerHash(f.texto);
         if (h && !depois.some((s) => casa(h, s))) {
@@ -333,7 +362,8 @@ async function corrigirIndex() {
     return true;
   }
   if (!Buffer.from(t, 'utf8').equals(bytes)) return falha('o arquivo não é UTF-8 válido; corrija à mão.');
-  const { scripts, csps } = analisar(t);
+  const { scripts, csps, estrangeiros } = analisar(t);
+  if (estrangeiros.length) return falha('há <script> dentro de SVG/MathML, cujo hash o conferir-csp não calcula; corrija à mão.');
   const politicas = csps.filter((c) => c.noHead);
   if (politicas.length !== 1) return falha(politicas.length ? 'há mais de uma CSP no <head>; corrija à mão.' : 'não há CSP no <head>; inclua à mão.');
   const csp = politicas[0];
