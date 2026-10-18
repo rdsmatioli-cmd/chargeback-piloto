@@ -6,7 +6,12 @@
 // Fica em .github/ para não ser publicado no site (o Jekyll do Pages ignora pastas com ponto).
 // Pede Node >= 22.19 (exigência do lighthouse@13.5.0).
 // Variáveis opcionais: CHROME_PATH (Chromium a usar), LH_FORMATOS (padrão "mobile,desktop"),
-// LH_SAIDA (pasta dos relatórios JSON; padrão: pasta temporária nova).
+// LH_SAIDA (pasta dos relatórios JSON; padrão: pasta temporária nova), LH_HTML_PEDACO_BYTES e
+// LH_HTML_INTERVALO_MS (HTML em pedaços, ver abaixo; LH_HTML_INTERVALO_MS=0 manda tudo de uma vez).
+//
+// O HTML sai em pedaços de 14.600 bytes (a janela inicial do TCP), com 200 ms entre eles, como
+// numa rede real. Com o arquivo inteiro de uma vez, o CLS do app sai 0 mesmo quando, na rede real,
+// o navegador pinta o markup antes de o script chegar e o conteúdo desce depois.
 //
 // Metas (saída 1 se alguma falhar):
 // - blog (/blog/ e cada /blog/<post>/): SEO >= 0,90; Acessibilidade >= 0,95; CLS < 0,1;
@@ -21,6 +26,11 @@ import { tmpdir } from 'node:os';
 const LIGHTHOUSE = 'lighthouse@13.5.0';
 const raiz = resolve(process.argv[2] || '.');
 const formatos = (process.env.LH_FORMATOS || 'mobile,desktop').split(',').map((f) => f.trim()).filter(Boolean);
+const numero = (v, padrao) => (v === undefined || v === '' ? padrao : Number(v));
+const PEDACO_BYTES = numero(process.env.LH_HTML_PEDACO_BYTES, 14600);
+const INTERVALO_MS = numero(process.env.LH_HTML_INTERVALO_MS, 200);
+if (!(PEDACO_BYTES >= 1) || !(INTERVALO_MS >= 0)) throw new Error('LH_HTML_PEDACO_BYTES deve ser >= 1 e LH_HTML_INTERVALO_MS >= 0');
+const espera = (ms) => new Promise((ok) => setTimeout(ok, ms));
 
 const TIPOS = {
   '.html': 'text/html; charset=utf-8',
@@ -53,9 +63,18 @@ function servidor() {
       if (!info?.isFile()) return fim(404, 'não encontrado');
       const corpo = await readFile(arq);
       res.writeHead(200, { 'Content-Type': TIPOS[extname(arq)] || 'application/octet-stream', 'Content-Length': corpo.length });
-      res.end(req.method === 'HEAD' ? undefined : corpo);
+      if (req.method === 'HEAD') return res.end();
+      if (extname(arq) !== '.html' || !INTERVALO_MS) return res.end(corpo);
+      // HTML em pedaços, com intervalo entre eles (ver o cabeçalho).
+      for (let i = 0; i < corpo.length; i += PEDACO_BYTES) {
+        if (i) await espera(INTERVALO_MS);
+        if (res.destroyed) return;
+        res.write(corpo.subarray(i, i + PEDACO_BYTES));
+      }
+      res.end();
     } catch (e) {
-      fim(500, String(e && e.message));
+      if (res.headersSent) res.destroy();
+      else fim(500, String(e && e.message));
     }
   });
 }
@@ -116,7 +135,7 @@ await mkdir(dir, { recursive: true });
 const srv = servidor();
 await new Promise((ok) => srv.listen(0, '127.0.0.1', ok));
 const base = `http://127.0.0.1:${srv.address().port}`;
-console.log(`Servindo ${raiz} em ${base}; relatórios em ${dir}`);
+console.log(`Servindo ${raiz} em ${base} (HTML em pedaços de ${PEDACO_BYTES} bytes a cada ${INTERVALO_MS} ms); relatórios em ${dir}`);
 
 const linhas = [];
 let falhas = 0;

@@ -18,6 +18,7 @@ jobs:
   # Lighthouse 13.5.0 (versão fixa, sem @lhci/cli) com o repositório servido localmente.
   # Metas: blog SEO >= 0,90, Acessibilidade >= 0,95, CLS < 0,1, robots.txt e llms.txt válidos;
   # app (/) só Acessibilidade e CLS, porque é noindex de propósito. Chrome: o do runner.
+  # O servidor manda o HTML em pedaços (14.600 bytes a cada 200 ms), para o CLS refletir a rede real.
   lighthouse:
     runs-on: ubuntu-latest
     timeout-minutes: 20
