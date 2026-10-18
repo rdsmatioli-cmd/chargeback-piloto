@@ -32,3 +32,7 @@ Ele reescreve só os hashes do `script-src` do `index.html` e confere todas as p
   ```
 
 - `lighthouse`: Lighthouse 13.5.0 com o site servido localmente. Blog: SEO >= 0,90, acessibilidade >= 0,95, CLS < 0,1, robots.txt e llms.txt lidos e válidos. App: acessibilidade e CLS (é noindex de propósito). Local, da raiz: `node .github/scripts/lighthouse.mjs` (Node >= 22.19, rede para o `npx` e Chrome instalado ou em `CHROME_PATH`; as outras opções estão no cabeçalho do script).
+
+## Dependabot (`.github/dependabot.yml`)
+
+Só os SHAs das actions do `ci.yml`: no máximo um PR agrupado por mês (dia 1, 06:00 de Brasília), com versões publicadas há pelo menos 14 dias; o html-validate e o Lighthouse, fixados no próprio comando, ficam de fora. Os alertas e as atualizações de segurança são opção do repositório, em Settings > Advanced Security.
