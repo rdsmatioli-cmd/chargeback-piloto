@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-CNRtQ5SgmjcruGYYA1ZCWeeJvx/rGQxxVT3XDHZeDMw='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-T6i96GeV6Qk5+Pt6lPn1Fa6VyPYnqB2o3TsnSRVc1to='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
 body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
@@ -946,9 +946,7 @@ function baixar() {
   a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
-// O script fica no fim do body: iniciar() direto preenche os textos antes da primeira pintura.
-// Com DOMContentLoaded o navegador podia pintar antes, sem eles, e o conteúdo descia (CLS 0,19).
-iniciar();
+document.addEventListener('DOMContentLoaded', iniciar);
 
 })();
 </script>
