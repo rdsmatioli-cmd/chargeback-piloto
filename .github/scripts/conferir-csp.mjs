@@ -2,7 +2,9 @@
 // Confere a CSP (meta http-equiv) de cada .html do repositório contra os scripts inline da página.
 // Sem dependências: só módulos do Node 22.
 //
-// Uso: node .github/scripts/conferir-csp.mjs [--corrigir] [raiz]   (raiz padrão: diretório atual)
+// Uso: node .github/scripts/conferir-csp.mjs [--corrigir] [raiz]
+// A raiz padrão é a do repositório (dois níveis acima deste arquivo), de qualquer pasta em que se
+// rode; o argumento raiz serve para conferir outra cópia (testes).
 // Fica em .github/ para não ser publicado no site (o Jekyll do Pages ignora pastas com ponto).
 //
 // Para cada página (todo .html fora de .git/ e node_modules/):
@@ -21,19 +23,25 @@
 // --corrigir: reescreve só os hashes do script-src (ou script-src-elem) da CSP do index.html da raiz
 // com os valores certos, sem tocar no resto da CSP nem do arquivo, e confere tudo de novo.
 // Saída: 0 sem divergência; 1 com divergência (lista na saída) ou correção impossível; 2 uso errado.
-import { readFile, writeFile, readdir } from 'node:fs/promises';
+import { readFile, writeFile, readdir, stat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { join, resolve, relative, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const COMANDO = 'node .github/scripts/conferir-csp.mjs';
+const USO = `uso: ${COMANDO} [--corrigir] [raiz]`;
 const args = process.argv.slice(2);
 const corrigir = args.includes('--corrigir');
 const posicionais = args.filter((a) => a !== '--corrigir');
 if (posicionais.length > 1 || posicionais.some((a) => a.startsWith('-'))) {
-  console.error(`uso: ${COMANDO} [--corrigir] [raiz]`);
+  console.error(USO);
   process.exit(2);
 }
-const raiz = resolve(posicionais[0] || '.');
+const raiz = posicionais.length ? resolve(posicionais[0]) : resolve(fileURLToPath(new URL('../..', import.meta.url)));
+if (!(await stat(raiz).then((s) => s.isDirectory(), () => false))) {
+  console.error(`raiz não encontrada ou não é pasta: ${raiz}\n${USO}`);
+  process.exit(2);
+}
 
 // ---------- leitura do HTML (o necessário do tokenizador do HTML5) ----------
 
