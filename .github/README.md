@@ -24,15 +24,20 @@ Ele reescreve só os hashes do `script-src` do `index.html` e confere todas as p
 
 ## CI (`.github/workflows/ci.yml`)
 
-- `check`: html-validate 9.7.1 (regras em `.htmlvalidate.json`) em todo `.html`, e o `conferir-csp.mjs`. Local, da raiz:
+- `check`: html-validate 9.7.1 (regras em `.htmlvalidate.json`) em todo `.html`, o `conferir-csp.mjs` e o zizmor 1.30.1 (modo offline) nos workflows e no `dependabot.yml`, que falha o job em qualquer achado, como action sem SHA ou credencial persistida no checkout. Local, da raiz:
 
   ```
   find . -name '*.html' -not -path './.git/*' -print0 | xargs -0 npx --yes html-validate@9.7.1 --max-warnings 0 -c .htmlvalidate.json
   node .github/scripts/conferir-csp.mjs
+  uvx zizmor@1.30.1 --offline .github
   ```
 
 - `lighthouse`: Lighthouse 13.5.0 com o site servido localmente. Blog: SEO >= 0,90, acessibilidade >= 0,95, CLS < 0,1, robots.txt e llms.txt lidos e válidos. App: acessibilidade e CLS (é noindex de propósito). Local, da raiz: `node .github/scripts/lighthouse.mjs` (Node >= 22.19, rede para o `npx` e Chrome instalado ou em `CHROME_PATH`; as outras opções estão no cabeçalho do script).
 
 ## Dependabot (`.github/dependabot.yml`)
 
-Só os SHAs das actions do `ci.yml`: no máximo um PR agrupado por mês (dia 1, 06:00 de Brasília), com versões publicadas há pelo menos 14 dias; o html-validate e o Lighthouse, fixados no próprio comando, ficam de fora. Os alertas e as atualizações de segurança são opção do repositório, em Settings > Advanced Security.
+Só os SHAs das actions do `ci.yml`, todas num PR agrupado, com versões publicadas há pelo menos 14 dias. O html-validate, o Lighthouse e o zizmor, fixados no próprio comando, ficam de fora.
+
+A primeira verificação roda quando este arquivo chega à `main`, sem esperar o dia 1; depois, dia 1 de cada mês às 06:00 de Brasília. O grupo inclui majors, e o checkout e o setup-node já têm v7 publicada há mais de 14 dias: o primeiro PR deve trazer a v7 das duas. Leia as notas de versão e só faça o merge, manual, com o CI verde.
+
+Alertas e atualizações de segurança (Settings > Advanced Security) não cobrem nada aqui: o GitHub só gera alerta de action referenciada por versão, não por SHA, e os pacotes do `npx` e do `pip` não entram no grafo de dependências. A defesa é o PR mensal com cooldown e o merge manual com o CI verde.

@@ -1,9 +1,12 @@
 # Dependabot: só as GitHub Actions do ci.yml (fixadas por SHA com o comentário da versão).
-# Não há package.json: o html-validate (ci.yml) e o Lighthouse (lighthouse.mjs) têm versão fixa
-# no próprio comando e ficam de fora.
-# Mensal (dia 1, 06:00 de Brasília), tudo num grupo só: no máximo um PR por mês, e cada PR roda o CI.
+# Não há package.json: o html-validate e o zizmor (ci.yml) e o Lighthouse (lighthouse.mjs) têm
+# versão fixa no próprio comando e ficam de fora.
+# A primeira verificação roda quando este arquivo chega à main, sem esperar o dia 1; depois, mensal
+# (dia 1, 06:00 de Brasília). Tudo num grupo só, majors inclusive: um PR por execução, e cada PR
+# roda o CI. O primeiro deve trazer checkout e setup-node v7 (ver .github/README.md).
 # cooldown: só propõe versão publicada há pelo menos 14 dias.
-# Alertas e atualizações de segurança não se ligam aqui: Settings > Advanced Security.
+# Alertas e atualizações de segurança (Settings > Advanced Security) não cobrem nada aqui: não há
+# alerta para action fixada por SHA, e os pacotes do npx e do pip não entram no grafo de dependências.
 version: 2
 updates:
   - package-ecosystem: github-actions
