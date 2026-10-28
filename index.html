@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-9kIxnSY16j8TbDvOBSQG4+GUfZxvbnAbNqMgAJthjXw='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-qlwMeS9DkOFzub3J3+uuzOXxVyRhikMZC6yZqujVKL0='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
 body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
@@ -649,6 +649,25 @@ function ehPAN(d, livre) { return tamanhoCompativel(d) && prefixoDeCartao(d, liv
 // - chave e2e de Pix (E + ISPB + data AAAAMMDD...) fica de fora (laudo M-04).
 // Trecho fora da busca: caractere de uso privado, que também corta a cadeia de grupos.
 const FORA = '\uE000';
+// Decisão do CEO (28/10, 02h18): todo número de 13 a 19 dígitos com Luhn válido e prefixo de
+// bandeira é mascarado em qualquer lugar, inclusive após rótulo e dentro de sequências longas.
+// Por isso CPF/CNPJ, telefone, número rotulado (até 22 dígitos) e IMEI só saem da busca se nenhum
+// trecho de 13 a 19 dos seus dígitos for PAN. Continuam fora, por estrutura, os códigos de 44, 47
+// e 48 dígitos (barras, NF-e, boleto, arrecadação), o boleto formatado e a chave e2e de Pix
+// (alfanumérica), que não são "número de 13 a 19 dígitos" nem sequência de 20 a 28.
+function contemPAN(d) {
+  if (d.length < 13) return false;
+  const lj = luhnJanelas(d);
+  for (let p = 0; p + 13 <= d.length; p++) {
+    for (const L of TAMANHOS) {
+      if (p + L > d.length) continue;
+      const w = d.substr(p, L);
+      if (tamanhoCompativel(w) && prefixoDeCartao(w, true) && lj(p, p + L)) return true;
+    }
+  }
+  return false;
+}
+function fora(w) { return contemPAN(w.replace(/\D/g, '')) ? w : FORA.repeat(w.length); }
 const ROTULADO = /(\b(?:protocolo|nsu|n[º°o]\.?|chave|nf-?e|boleto|linha\s+digit[aá]vel)(?:\s+(?:de|do|da|n[º°o]\.?)?\s*\p{L}{0,12}){0,2}\s{0,3}[:#=.-]?\s{0,3})(\d{4}(?: \d{4}){10}|\d{1,22})(?![\p{L}\p{N}]|[^\S\n]?[ .\-/_]?\d)/giu;
 const ZEROS = [0x0660, 0x06F0, 0x0966, 0x09E6, 0xFF10];
 function textoDeAnalise(t) {
@@ -659,10 +678,10 @@ function textoDeAnalise(t) {
   });
   a = a.replace(/(?<![\p{L}\p{N}])(?=[0-9OoIl]*[0-9])[0-9OoIl]+(?![\p{L}\p{N}])/gu, (w) => w.replace(/[Oo]/g, '0').replace(/[Il]/g, '1'));
   // CPF e CNPJ formatados (000.000.000-00, 00.000.000/0000-00) não entram na busca.
-  a = a.replace(/(?<![\p{L}\p{N}])(?:\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2})(?![\p{L}\p{N}])/gu, (w) => (ehPAN(w.replace(/\D/g, ''), false) ? w : FORA.repeat(w.length)));
+  a = a.replace(/(?<![\p{L}\p{N}])(?:\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2})(?![\p{L}\p{N}])/gu, fora);
   // Laudo d8158468 M-04: telefones (+55 11 91234-5678, (11) 98765-4321, 0800 123 4567) também
   // saem, salvo se os dígitos forem PAN.
-  a = a.replace(/(?<![\p{L}\p{N}])(?:\+\d{1,3}[ .-]?\(?\d{2}\)?[ .-]?9?\d{4}[ .-]?\d{4}|\(\d{2}\) ?9?\d{4}[ .-]?\d{4}|0[3589]00[ .-]?\d{3}[ .-]?\d{4})(?![\p{L}\p{N}])/gu, (w) => (ehPAN(w.replace(/\D/g, ''), false) ? w : FORA.repeat(w.length)));
+  a = a.replace(/(?<![\p{L}\p{N}])(?:\+\d{1,3}[ .-]?\(?\d{2}\)?[ .-]?9?\d{4}[ .-]?\d{4}|\(\d{2}\) ?9?\d{4}[ .-]?\d{4}|0[3589]00[ .-]?\d{3}[ .-]?\d{4})(?![\p{L}\p{N}])/gu, fora);
   // Laudo 133315fc A-07: sequência de exatamente 44, 47 ou 48 dígitos sem separador (código de
   // barras, chave NF-e, boleto, arrecadação) e boleto formatado (00000.00000 00000.000000
   // 00000.000000 0 00000000000000) saem da busca.
@@ -672,13 +691,13 @@ function textoDeAnalise(t) {
   // digitável (até 2 palavras entre o rótulo e o número), com até 22 dígitos, sai da busca, salvo se o número inteiro
   // passa no Luhn e tem prefixo de bandeira. Número: dígitos contínuos, chave de 44 em grupos de 4
   // ou boleto formatado.
-  a = a.replace(ROTULADO, (w, r, nn) => r + (ehPAN(nn.replace(/\D/g, ''), true) ? nn : FORA.repeat(nn.length)));
+  a = a.replace(ROTULADO, (w, r, nn) => r + fora(nn));
   // CNPJ sem pontuação (14 dígitos com DV) também sai, salvo se for PAN Diners.
-  a = a.replace(/(?<![\p{L}\p{N}])\d{14}(?![\p{L}\p{N}])/gu, (w) => (validarCNPJ(w) && !ehPAN(w, false) ? FORA.repeat(w.length) : w));
+  a = a.replace(/(?<![\p{L}\p{N}])\d{14}(?![\p{L}\p{N}])/gu, (w) => (validarCNPJ(w) ? fora(w) : w));
   // Linha de arrecadação formatada (8xxxxxxxxxx-d 4 vezes).
   a = a.replace(/(?<![\p{L}\p{N}])8\d{10}[ -]?\d(?:[ .]+\d{11}[ -]?\d){3}(?![\p{L}\p{N}])/gu, (w) => FORA.repeat(w.length));
   // IMEI com o termo antes ('IMEI 356938035643809', 'IMEI: 35-693803-564380-9').
-  a = a.replace(/(?<=\bIMEI\d?\s{0,3}[:#nº.]{0,3}\s{0,3})\d[\d -]{13,18}\d(?![\p{L}\p{N}])/giu, (w) => FORA.repeat(w.length));
+  a = a.replace(/(?<=\bIMEI\d?\s{0,3}[:#nº.]{0,3}\s{0,3})\d[\d -]{13,18}\d(?![\p{L}\p{N}])/giu, fora);
   // Número de 1-2 dígitos entre duas palavras ('os 8 últimos') sai da busca e vira separador.
   a = a.replace(/(\p{L}[^\p{L}\p{N}]{1,6})(\d{1,2})(?=[^\p{L}\p{N}]{1,6}\p{L})/gu, (w, l, d) => l + '#'.repeat(d.length));
   a = a.replace(/(?<![\p{L}\p{N}])E\d{8}20\d{2}[01]\d[0-3]\d[A-Za-z0-9]{8,}(?![\p{L}\p{N}])/gu, (w) => FORA.repeat(w.length));
@@ -711,17 +730,26 @@ const SEP_SIMPLES = /^[^\p{L}\p{N}]+$/u;
 // até 40 caracteres ('4111 0000 e os últimos 0000 0008').
 // Adendo 3, S-01: até 6 palavras de até 20 letras num vão de até 60 caracteres.
 // Laudo 133315fc / adendo 4 B-02: até 10 palavras num vão de até 100 caracteres.
-const SEP_PALAVRAS = /^[^\p{L}\p{N}]*(?:\p{L}{1,20}[^\p{L}\p{N}]+){1,10}$/u;
-function ehSep(t) { return !t.includes(FORA) && (SEP_SIMPLES.test(t) || (t.length <= 100 && SEP_PALAVRAS.test(t))); }
+// Adendo 5 B-04: até 20 palavras num vão de até 160 caracteres.
+const SEP_PALAVRAS = /^[^\p{L}\p{N}]*(?:\p{L}{1,20}[^\p{L}\p{N}]+){1,20}$/u;
+function ehSep(t) { return !t.includes(FORA) && (SEP_SIMPLES.test(t) || (t.length <= 160 && SEP_PALAVRAS.test(t))); }
 const TAMANHOS = [16, 15, 19, 18, 17, 14, 13];
 function mascararCartao(texto, livre = false) {
   const base = textoDeAnalise(texto);
   const re = /\d+/g, g = []; let m;
   while ((m = re.exec(base))) g.push({ i: m.index, f: m.index + m[0].length, d: m[0] });
   const trocas = [];                                   // {i, f, u} em ordem, posições do texto
-  let k = 0;
+  let k = 0, fim = 0;
+  // Adendo 5 B-05: grupo de 3-4 dígitos logo depois do PAN, separado só por um espaço e último da
+  // cadeia (ou seguido de algo que não é espaço), vira '*' ('**** **** **** 0008 ***').
+  const cvvSolto = (t, x) => {
+    const y = x + 1;
+    if (y > fim || g[y].d.length < 3 || g[y].d.length > 4 || base.slice(g[x].f, g[y].i) !== ' ') return;
+    if (y < fim && /^ +$/.test(base.slice(g[y].f, g[y + 1].i))) return;
+    t.u += ' ' + '*'.repeat(g[y].d.length); t.f = g[y].f; t.prox = y + 1;
+  };
   while (k < g.length) {
-    let fim = k;
+    fim = k;
     while (fim + 1 < g.length && ehSep(base.slice(g[fim].f, g[fim + 1].i))) fim++;
     let j = k;
     while (j <= fim) {
@@ -735,7 +763,7 @@ function mascararCartao(texto, livre = false) {
         }
         n -= g[x].d.length;
       }
-      if (achou) { trocas.push(achou); j = achou.prox; continue; }
+      if (achou) { cvvSolto(achou, achou.prox - 1); trocas.push(achou); j = achou.prox; continue; }
       // (b) varre janelas no grupo: 20+ dígitos, ou 14-19 dígitos que não começam com prefixo de
       // bandeira (PAN colado entre outros dígitos, ex. 99 + Amex + 11). Um grupo de 14-19 que já
       // começa como cartão e falhou no Luhn não é varrido por dentro (laudo 20fa739: 8 casos keep).
@@ -763,7 +791,10 @@ function mascararCartao(texto, livre = false) {
           if (L0) {
             // Adendo 4 B-03: até 7 dígitos colados depois do PAN (CVV, validade) viram '*'.
             const resto = dj.length - (p + L0), cauda = resto > 0 && resto <= 7 ? resto : 0;
-            trocas.push({ i: g[j].i + p, f: g[j].i + p + L0 + cauda, u: dj.substr(p + L0 - 4, 4) + '*'.repeat(cauda) });
+            const t = { i: g[j].i + p, f: g[j].i + p + L0 + cauda, u: dj.substr(p + L0 - 4, 4) + '*'.repeat(cauda), prox: j + 1 };
+            if (p + L0 + cauda === dj.length) cvvSolto(t, j);
+            trocas.push(t);
+            if (t.prox > j + 1) { j = t.prox - 1; break; }
             p += L0 + cauda;
           } else p++;
         }

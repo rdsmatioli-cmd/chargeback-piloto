@@ -168,7 +168,7 @@ for (const c of adv4) {
 // A-07: identificadores rotulados ou de 44/47/48 dígitos ficam como estão.
 const nfe = '35261012345678000190550010000012341000123456';
 for (const t of ['Protocolo de atendimento 20261028123456789012', 'protocolo 4111111111111112', 'Protocolo nº 5555555555554443',
-  'NSU 41111111111111119', `chave ${nfe}`, `Chave de acesso: ${nfe.match(/\d{4}/g).join(' ')}`, `NF-e ${nfe.match(/\d{4}/g).join(' ')}`,
+  `chave ${nfe}`, `Chave de acesso: ${nfe.match(/\d{4}/g).join(' ')}`, `NF-e ${nfe.match(/\d{4}/g).join(' ')}`,
   'boleto 34112345678901234567890123456789012345678901234', '34112.34567 89012.345678 90123.456789 0 12345678901234',
   'linha digitável 836000000015123400000001000000000000000000000000', 'nº 4111222233334444', '41112222333344445555666677778888999900001111',
   '41112222333344445555666677778888999900001111222', '+55 11 91234-5678 e +55 21 99876-5432']) {
@@ -180,6 +180,48 @@ for (const t of ['protocolo 4111111111111111', 'NSU 5555555555554444', 'nº 4111
   test(`A-07 rótulo + PAN: ${t}`, () => confereMascara(t, sanearCampo('fato-desc', t).texto, [digitos(t).slice(-16).length === 16 && /378/.test(t) ? '378282246310005' : digitos(t).slice(-16)]));
 }
 test('A-07 rótulo + PAN depois de outro número: protocolo 123 4111 1111 1111 1111', () => { const t = 'protocolo 123 4111 1111 1111 1111'; assert.equal(sanearCampo('fato-desc', t).texto, 'protocolo 123 **** **** **** 1111'); });
+
+// Decisão do CEO (28/10/2026, 02h18): número de 13 a 19 dígitos com Luhn e prefixo de cartão é
+// mascarado em qualquer lugar, inclusive após rótulo ('Protocolo:') e dentro de sequência de 20 a 28.
+// Exemplos do laudo QA 1c76a589 (A-07), com saída exata.
+const CEO = [
+  ['Protocolo: 4653371930137085', 'Protocolo: **** **** **** 7085'],
+  ['protocolo nº 5512345678901234567', 'protocolo nº **** **** **** 3456*'],
+  ['atendimento 20264653371930137085', 'atendimento 20**** **** **** 7085'],
+  ['3526 1062 2995 9100 0172 5500 1530 4116 1113 7018 3939', '3526 1062 2995 9100 0172 5500 1530 **** **** **** 3939'],
+  ['Chave de acesso NF-e: 3526 1062 2995 9100 0172 5500 1530 4116 1113 7018 3939', 'Chave de acesso NF-e: 3526 1062 2995 9100 0172 5500 1530 **** **** **** 3939'],
+  ['NSU 41111111111111119', 'NSU **** **** **** 1111*'],
+  ['protocolo 5555555555554444123', 'protocolo **** **** **** 4444***'],
+];
+for (const [e, s] of CEO) test(`CEO 28/10 02h18 mascara: ${e.slice(0, 50)}`, () => assert.equal(sanearCampo('fato-desc', e).texto, s));
+// Sem Luhn ou sem prefixo de cartão, nada muda (só o que a decisão manda é mascarado).
+for (const e of ['Protocolo: 4653371930137086', 'Protocolo: 9653371930137085', 'atendimento 20264653371930137086', 'protocolo 0000000000000000'])
+  test(`CEO 28/10 02h18 sem Luhn/prefixo fica: ${e}`, () => assert.equal(sanearCampo('fato-desc', e).texto, e));
+// Invariante: toda saída alterada vem de entrada com trecho de 13 a 19 dígitos com Luhn e prefixo.
+test('CEO 28/10 02h18: nada é mascarado sem trecho Luhn + prefixo', () => {
+  const luhn = (w) => { let s = 0; for (let i = 0; i < w.length; i++) { let d = +w[w.length - 1 - i]; if (i % 2) { d *= 2; if (d > 9) d -= 9; } s += d; } return s % 10 === 0; };
+  const pref = /^(4|5[1-5]|2[2-7]|3[0478]|6|1|50|5[6-9])/;
+  let x = 12345;
+  const r = () => (x = (x * 1103515245 + 12345) % 2147483648) % 10;
+  for (let n = 0; n < 3000; n++) {
+    const L = 13 + (n % 16); let d = ''; for (let i = 0; i < L; i++) d += r();
+    const t = `protocolo ${d}`;
+    if (sanearCampo('fato-desc', t).texto === t) continue;
+    let ok = false;
+    for (let p = 0; p + 13 <= L && !ok; p++) for (let k = 13; k <= 19 && p + k <= L; k++) { const w = d.substr(p, k); if (pref.test(w) && luhn(w)) { ok = true; break; } }
+    assert.ok(ok, d);
+  }
+});
+// Adendo 5 do Advogado, B-05: CVV solto separado por um espaço.
+const B05 = [
+  ['4111000000000008 123', '**** **** **** 0008 ***'],
+  ['cartão 4111 0000 0000 0008 123 venceu', 'cartão **** **** **** 0008 *** venceu'],
+  ['4111000000000008 2026', '**** **** **** 0008 ****'],
+];
+for (const [e, s] of B05) test(`B-05 CVV solto: ${e}`, () => assert.equal(sanearCampo('fato-desc', e).texto, s));
+// B-04: PAN partido por 11+ palavras.
+test('B-04 12 palavras entre as metades', () => { const t = '4111 1111 um dois três quatro cinco seis sete oito nove dez onze doze 1111 1111'; confereMascara(t, sanearCampo('fato-desc', t).texto, ['4111111111111111']); });
+test('B-04 prosa com números curtos fica', () => { const t = 'pedido 12 de 2026 entregue em 10 dias úteis com 3 volumes'; assert.equal(sanearCampo('fato-desc', t).texto, t); });
 // A-06: no Pedido, PAN + CVV, PAN + mês e dígito + PAN são mascarados.
 for (const [t, pan] of [['5555555555554444123', '5555555555554444'], ['411111111111111112', '4111111111111111'], ['34111111111111111', '4111111111111111'],
   ['41111111111111110829', '4111111111111111'], ['3782822463100051234', '378282246310005'], ['5555 5555 5555 4444 123', '5555555555554444']]) {
