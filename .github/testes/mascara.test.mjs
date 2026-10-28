@@ -14,7 +14,17 @@ const ctx = { document: { addEventListener() {} }, console };
 vm.createContext(ctx); vm.runInContext(src, ctx);
 const { sanearCampo, sanear, mascararCartao } = ctx.__t;
 
-const ascii = (t) => t.replace(/[\uFF10-\uFF19]/g, (c) => String(c.charCodeAt(0) - 0xFF10));
+const ZEROS_T = [0x0660, 0x06F0, 0x0966, 0x09E6, 0xFF10];
+const ascii = (t) => t.replace(/\p{Nd}/gu, (c) => { const n = c.codePointAt(0); for (const z of ZEROS_T) if (n >= z && n <= z + 9) return String(n - z); return c; });
+// Adendo 2, M-02: caso 'mask' só passa se a saída mudou, tem '**** **** **** dddd' e nenhum PAN
+// aparece nos dígitos puros; o/O -> 0 e I/l -> 1 só dentro de palavra de dígitos e dessas letras.
+const comLetras = (t) => ascii(t).replace(/(?<![\p{L}\p{N}])(?=[0-9OoIl]*[0-9])[0-9OoIl]+(?![\p{L}\p{N}])/gu, (w) => w.replace(/[Oo]/g, '0').replace(/[Il]/g, '1'));
+function confereMascara(entrada, saida, pans) {
+  assert.notEqual(saida, entrada, 'saída igual à entrada');
+  assert.match(saida, /\*\*\*\* \*\*\*\* \*\*\*\* \d{4}/);
+  const puros = ascii(saida).replace(/\D/g, ''), mapeados = comLetras(saida).replace(/\D/g, '');
+  for (const p of pans) { assert.ok(!puros.includes(p), `PAN em claro: ${saida}`); assert.ok(!mapeados.includes(p), `PAN em claro (o/l): ${saida}`); }
+}
 const digitos = (t) => ascii(t).replace(/\D/g, '');
 function luhnCompleta(base) { for (let c = 0; c < 10; c++) { const n = base + c; let s = 0; for (let i = 0; i < n.length; i++) { let x = +n[n.length - 1 - i]; if (i % 2) { x *= 2; if (x > 9) x -= 9; } s += x; } if (s % 10 === 0) return n; } }
 
@@ -24,7 +34,7 @@ for (const c of matriz) {
   test(`QA ${c.id} (${c.esperado})`, () => {
     const r = sanearCampo(c.campo, c.entrada);
     if (c.esperado === 'keep') { assert.equal(r.texto, c.entrada); return; }
-    assert.notEqual(r.texto, c.entrada);
+    confereMascara(c.entrada, r.texto, (ascii(c.entrada).replace(/\D/g, '').match(/\d{13,19}/g) || []).filter((d) => d.length <= 19));
     // nenhuma sequência de 13+ dígitos da entrada sobrevive inteira; os 4 últimos ficam visíveis
     const seq = digitos(c.entrada).match(/\d{13,}/g) || [];
     assert.ok(/\*\*\*\* \*\*\*\* \*\*\*\* \d{4}/.test(r.texto), r.texto);
@@ -71,29 +81,39 @@ for (const c of extra) {
   test(`C-02 ${c.id} (${c.esperado}) ${JSON.stringify(c.entrada).slice(0, 40)}`, () => {
     const r = sanearCampo(c.campo, c.entrada);
     if (c.esperado === 'keep') { assert.equal(r.texto, c.entrada); return; }
-    const so = digitos(r.texto);
-    for (const p of PANS) assert.ok(!so.includes(p), `PAN em claro: ${r.texto}`);
-    assert.match(r.texto, /\*\*\*\* \*\*\*\* \*\*\*\* \d{4}/);
+    confereMascara(c.entrada, r.texto, PANS);
   });
 }
 
 // Laudo QA PR #9 (84c7ce26), C-03 / A-04 / M-04: 33 casos adversariais (24 com PAN, 9 sem).
-// Oráculo do QA: o PAN não pode aparecer nos dígitos da saída, lendo o/O como 0 e l como 1.
 const PANS2 = ['4111000000000008', '5555555555554444', '378282246310005', '6062826786276634', '5067230000000002'];
-const dig2 = (t) => [...t.replace(/[oO]/g, '0').replace(/l/g, '1')].map((c) => {
-  if (/[0-9]/.test(c)) return c; const n = c.codePointAt(0);
-  for (const z of [0x0660, 0x06F0, 0x0966, 0x09E6, 0xFF10]) if (n >= z && n <= z + 9) return String(n - z);
-  return '';
-}).join('');
 const adv2 = JSON.parse(readFileSync(new URL('.github/testes/adv2-qa-pr9-84c7ce26.json', raiz), 'utf8'));
-test('adv2 QA tem 33 casos', () => assert.equal(adv2.length, 33));
+test('adv2 QA tem 33 casos + 1 (fullwidth-16)', () => assert.equal(adv2.length, 34));
 for (const c of adv2) {
   test(`C-03/A-04/M-04 ${c.id} (${c.esperado})`, () => {
     const r = sanearCampo(c.campo, c.entrada);
     if (c.esperado === 'keep') { assert.equal(r.texto, c.entrada); return; }
-    const so = dig2(r.texto);
-    for (const p of PANS2) assert.ok(!so.includes(p), `PAN em claro: ${r.texto}`);
+    confereMascara(c.entrada, r.texto, PANS2);
   });
+}
+
+// Adendo 2 do Advogado (d8158468), M-01 e S-01: PAN separado por palavras ou pontuação.
+const ADENDO2 = ['4111 0000 e os últimos 0000 0008', 'primeiros 4111 0000 e os últimos 0000 0008', '4111 0000 depois disso 0000 0008',
+  '4111 0000 (meio) 0000 0008', '4111 0000. Últimos: 0000 0008', '4111 0000\nlinha\n0000 0008', 'os 8 primeiros 41110000 e os 8 últimos 00000008'];
+for (const t of ADENDO2) {
+  test(`M-01 adendo 2: ${JSON.stringify(t)}`, () => {
+    const r = sanearCampo('fato-desc', t);
+    confereMascara(t, r.texto, ['4111000000000008']);
+    assert.ok(r.texto.includes('**** **** **** 0008'), r.texto);
+  });
+}
+// Sem PAN: frases com vários números e palavras não podem ser mascaradas.
+for (const t of ['Pedido 1234 de 2026 valor 5000 em 3x, NF 000123 série 1 e lote 4455',
+  'Compra em 10/10/2026 às 14:32, pedido 987654, valor R$ 1.234,56, parcela 3 de 12',
+  'tel 11 98765-4321 ou 21 3456-7890, CEP 01310-100, nº 1578 apto 42',
+  'Entrega 2026 lote 3344 caixa 5566 palete 7788 doca 12',
+  'CPF 529.982.247-25 CNPJ 11.222.333/0001-81']) {
+  test(`M-01 sem excesso: ${JSON.stringify(t).slice(0, 50)}`, () => assert.equal(sanearCampo('fato-desc', t).texto, t));
 }
 
 // A-03: mascaramento linear. Cada entrada abaixo em menos de 100 ms (melhor de 5 execuções, para
@@ -106,7 +126,9 @@ const ENTRADAS = [
   ['grupo único de 200.000 dígitos', '4'.repeat(200000)],
   ['"1O" x 50.000', '1O'.repeat(50000)],
   ['5.000 quase-PANs', Array(5000).fill(V.slice(0, -1) + '9').join(' ')],
-  ['5.000 PANs colados', V.repeat(5000)]
+  ['5.000 PANs colados', V.repeat(5000)],
+  ['20.000 grupos com palavras entre eles', Array(20000).fill('4111 e os').join(' ')],
+  ['20.000 números entre palavras', Array(20000).fill('12 casa 3').join(' ')]
 ];
 function melhorDe5(t) { let m = Infinity; for (let i = 0; i < 5; i++) { const t0 = performance.now(); sanearCampo('fato-desc', t); m = Math.min(m, performance.now() - t0); } return m; }
 for (const [nome, big] of ENTRADAS) {

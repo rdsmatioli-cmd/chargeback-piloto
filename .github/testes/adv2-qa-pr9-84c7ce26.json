@@ -93,7 +93,8 @@
   "id": "fullwidth",
   "campo": "fato-desc",
   "entrada": "４１１１００００００００００００８",
-  "esperado": "mask"
+  "esperado": "keep",
+  "nota": "entrada do QA tem 17 dígitos (4111 + 13 zeros + 8), não contém o PAN 4111000000000008 e não passa no Luhn; caso com PAN correto em fullwidth-16"
  },
  {
   "id": "l-minusculo-como-1",
@@ -196,5 +197,11 @@
   "campo": "fato-desc",
   "entrada": "ENTREGA 10 OUT 2026 LOTE 0001 O 0002",
   "esperado": "keep"
+ },
+ {
+  "id": "fullwidth-16",
+  "campo": "fato-desc",
+  "entrada": "４１１１０００００００００００８",
+  "esperado": "mask"
  }
 ]
