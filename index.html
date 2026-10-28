@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-NmXb0lc8eV93Zqk8hNVhcopWA55XbWtz8V9V7IqfV90='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-a6ojsJGfmbvzuq2EYWTBY3XRCx/yMwNbsB1kMOxSLrI='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
 body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
@@ -627,7 +627,8 @@ function prefixoDeCartao(d, livre = false) {
   if (c0 >= 51 && c0 <= 54) return true;                 // 3 a 6
   const p = (c0 - 48) * 1000 + (d.charCodeAt(1) - 48) * 100 + (d.charCodeAt(2) - 48) * 10 + (d.charCodeAt(3) - 48);
   if (p >= 2221 && p <= 2720) return true;
-  return livre && (c0 === 49 || (p >= 2200 && p <= 2220));
+  // Laudo M-04: UATP só com 15 dígitos e Mir só com 16 a 19 (tamanhos dessas redes).
+  return livre && ((c0 === 49 && d.length === 15) || (p >= 2200 && p <= 2220 && d.length >= 16));
 }
 
 // Só a Diners usa PAN de 14 dígitos (30, 36, 38, 39). Laudo M-03: 14 dígitos fora disso
@@ -638,38 +639,62 @@ function tamanhoCompativel(d) {
 }
 function ehPAN(d, livre) { return tamanhoCompativel(d) && prefixoDeCartao(d, livre) && luhn(d); }
 
-// Dígitos de outros sistemas (largos, arábicos etc.) viram 0-9 antes da análise.
-const ZEROS = [0x0660, 0x06F0, 0x0966, 0x09E6, 0xFF10, 0x1D7CE, 0x1D7D8, 0x1D7E2, 0x1D7EC, 0x1D7F6];
-function digitosAscii(t) {
-  return t.replace(/(?![0-9])\p{Nd}/gu, (c) => {
+// Texto de análise com o MESMO comprimento do original (posição a posição), para a máscara
+// trocar só o trecho do PAN no texto original:
+// - dígitos de outros sistemas (largos, arábicos, devanágari, bengali) viram 0-9;
+// - em palavra feita só de dígitos e das letras O/o/I/l com ao menos um dígito, O/o vira 0 e
+//   I/l vira 1 (laudos C-02 e A-04);
+// - chave e2e de Pix (E + ISPB + data AAAAMMDD...) fica de fora (laudo M-04).
+const ZEROS = [0x0660, 0x06F0, 0x0966, 0x09E6, 0xFF10];
+function textoDeAnalise(t) {
+  let a = t.replace(/(?![0-9])\p{Nd}/gu, (c) => {
     const n = c.codePointAt(0);
     for (const z of ZEROS) if (n >= z && n <= z + 9) return String(n - z);
-    return c;
-  }).replace(/(?<=\d)[Oo](?=[Oo]*\d)/g, '0');
+    return c.length === 1 ? 'x' : c;
+  });
+  a = a.replace(/(?<![\p{L}\p{N}])(?=[0-9OoIl]*[0-9])[0-9OoIl]+(?![\p{L}\p{N}])/gu, (w) => w.replace(/[Oo]/g, '0').replace(/[Il]/g, '1'));
+  a = a.replace(/(?<![\p{L}\p{N}])E\d{8}20\d{2}[01]\d[0-3]\d[A-Za-z0-9]{8,}(?![\p{L}\p{N}])/gu, (w) => 'x'.repeat(w.length));
+  return a;
+}
+function digitosAscii(t) { return textoDeAnalise(t); }
+
+// Luhn de qualquer janela de um grupo em O(1), com somas acumuladas por paridade.
+function luhnJanelas(d) {
+  const n = d.length, P = [new Int32Array(n + 1), new Int32Array(n + 1)], D = [new Int32Array(n + 1), new Int32Array(n + 1)];
+  for (let k = 0; k < n; k++) {
+    const v = d.charCodeAt(k) - 48, w = v * 2 > 9 ? v * 2 - 9 : v * 2, q = k & 1;
+    for (const r of [0, 1]) { P[r][k + 1] = P[r][k] + (r === q ? v : 0); D[r][k + 1] = D[r][k] + (r === q ? w : 0); }
+  }
+  // janela [i, f): o último dígito (f-1) não dobra; dobram os de paridade diferente da dele
+  return (i, f) => { const r = (f - 1) & 1, o = r ^ 1; return (P[r][f] - P[r][i] + D[o][f] - D[o][i]) % 10 === 0; };
 }
 
-// CB-07 / laudos C-01 e C-02: o texto vira uma lista de grupos de dígitos. Dois grupos ficam na
-// mesma cadeia quando entre eles só há separadores (qualquer quantidade de qualquer caractere que
-// não é letra nem dígito: espaço, tab, quebra, | : ; – ( ) etc.). Letra O entre dígitos conta como 0.
-// Em cada cadeia, procura PAN (13 a 19 dígitos, prefixo CB-01, Luhn) em dois tipos de trecho:
-// (a) grupos inteiros consecutivos e (b) janelas no início ou no fim de um grupo com 20 ou mais
-// dígitos (PAN colado a outros dígitos). Tempo linear: até 19 grupos por início, 14 janelas por grupo.
-const RE_SEP = /^[^\p{L}\p{N}]+$/u;
-function ehSep(t) { return t.length === 1 ? !/[\p{L}\p{N}]/u.test(t) : RE_SEP.test(t); }
+// CB-07 / laudos C-01, C-02, C-03, A-04: o texto vira uma lista de grupos de dígitos. Dois grupos
+// ficam na mesma cadeia quando entre eles há só separadores (qualquer quantidade de qualquer
+// caractere que não é letra nem dígito) ou uma única letra solta ("4111 0000 e 0000 0008").
+// Em cada cadeia:
+// (a) PAN em grupos inteiros consecutivos (13 a 19 dígitos), o mais longo primeiro;
+// (b) se (a) não achou, grupo com 20 ou mais dígitos, ou com 14 a 19 que não começa com prefixo
+//     de bandeira (PAN colado a outros dígitos, nos dois lados ou dois PANs colados): toda janela de 13 a 19 dígitos em qualquer posição, só com prefixo de bandeira
+//     (CB-01 estrito) e Luhn; achado um PAN, a busca continua depois dele.
+// Tempo linear: até 19 grupos por início em (a); 7 janelas por dígito com Luhn O(1) em (b).
+const SEP_SIMPLES = /^[^\p{L}\p{N}]+$/u;
+const SEP_LETRA = /^[^\p{L}\p{N}]+\p{L}[^\p{L}\p{N}]+$/u;
+function ehSep(t) { return SEP_SIMPLES.test(t) || (t.length <= 12 && SEP_LETRA.test(t)); }
+const TAMANHOS = [16, 15, 19, 18, 17, 14, 13];
 function mascararCartao(texto, livre = false) {
-  const base = digitosAscii(texto);
+  const base = textoDeAnalise(texto);
   const re = /\d+/g, g = []; let m;
   while ((m = re.exec(base))) g.push({ i: m.index, f: m.index + m[0].length, d: m[0] });
-  const trocas = [];                                   // {i, f, ult4} em ordem
+  const trocas = [];                                   // {i, f, u} em ordem, posições do texto
   let k = 0;
   while (k < g.length) {
-    let fim = k;                                       // cadeia g[k..fim]
+    let fim = k;
     while (fim + 1 < g.length && ehSep(base.slice(g[fim].f, g[fim + 1].i))) fim++;
     let j = k;
     while (j <= fim) {
-      let achou = null;
-      // (a) grupos inteiros j..e, o trecho mais longo primeiro
-      let e = j, n = 0;
+      const dj = g[j].d;
+      let achou = null, e = j, n = 0;
       while (e <= fim && n + g[e].d.length <= 19) { n += g[e].d.length; e++; }
       for (let x = e - 1; x >= j && !achou; x--) {
         if (n >= 13) {
@@ -678,27 +703,33 @@ function mascararCartao(texto, livre = false) {
         }
         n -= g[x].d.length;
       }
-      // (b) grupo com 20 ou mais dígitos (PAN colado a outros dígitos): janelas de 13 a 19 dígitos
-      // presas ao início ou ao fim do grupo. Grupos de até 19 dígitos só valem inteiros (a), para
-      // não mascarar pedidos e chaves que por acaso têm uma janela com Luhn válido.
-      if (!achou && g[j].d.length >= 20) {
-        const d = g[j].d;
-        for (const L of [16, 15, 19, 18, 17, 14, 13]) {
-          if (achou || L > d.length) continue;
-          for (const p of [0, d.length - L]) {
-            const w = d.substr(p, L);
-            if (ehPAN(w, livre)) { achou = { i: g[j].i + p, f: g[j].i + p + L, u: w.slice(-4), prox: j + 1 }; break; }
+      if (achou) { trocas.push(achou); j = achou.prox; continue; }
+      // (b) varre janelas no grupo: 20+ dígitos, ou 14-19 dígitos que não começam com prefixo de
+      // bandeira (PAN colado entre outros dígitos, ex. 99 + Amex + 11). Um grupo de 14-19 que já
+      // começa como cartão e falhou no Luhn não é varrido por dentro (laudo 20fa739: 8 casos keep).
+      if (dj.length >= 20 || (dj.length >= 14 && !prefixoDeCartao(dj, false))) {
+        const lj = luhnJanelas(dj);
+        let p = 0;
+        while (p + 13 <= dj.length) {
+          let L0 = 0;
+          const w = dj.substr(p, 4);
+          if (prefixoDeCartao(w, false)) {
+            for (const L of TAMANHOS) {
+              if (p + L > dj.length || (L === 14 && !/^3[0689]/.test(w))) continue;
+              if (lj(p, p + L)) { L0 = L; break; }
+            }
           }
+          if (L0) { trocas.push({ i: g[j].i + p, f: g[j].i + p + L0, u: dj.substr(p + L0 - 4, 4) }); p += L0; } else p++;
         }
       }
-      if (achou) { trocas.push(achou); j = achou.prox; } else j++;
+      j++;
     }
     k = fim + 1;
   }
   if (!trocas.length) return { texto, removido: false };
   let out = '', pos = 0;
-  for (const t of trocas) { out += base.slice(pos, t.i) + `**** **** **** ${t.u}`; pos = t.f; }
-  return { texto: out + base.slice(pos), removido: true };
+  for (const t of trocas) { out += texto.slice(pos, t.i) + `**** **** **** ${t.u}`; pos = t.f; }
+  return { texto: out + texto.slice(pos), removido: true };
 }
 
 const ENTRE = '(?:\\s+\\S+){0,3}?\\s*[:=]?\\s*';           // até 3 palavras (CP-02), só fora do CVV
