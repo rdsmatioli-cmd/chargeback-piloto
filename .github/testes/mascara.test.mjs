@@ -1,0 +1,64 @@
+// Testes da máscara de cartão do app (index.html), sem dependências: node --test .github/testes/
+// Carrega o <script> do próprio index.html num vm e chama sanearCampo/sanear como a página.
+// Matriz: os 171 casos do laudo QA app-retro-20fa739 (2026-10-28); C-01 exige 0 PAN em claro.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+
+const raiz = new URL('../../', import.meta.url);
+const html = readFileSync(new URL('index.html', raiz), 'utf8');
+let src = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+src = src.replace(/\}\)\(\);\s*$/, 'globalThis.__t = { sanearCampo, sanear, mascararCartao };})();');
+const ctx = { document: { addEventListener() {} }, console };
+vm.createContext(ctx); vm.runInContext(src, ctx);
+const { sanearCampo, sanear } = ctx.__t;
+
+const ascii = (t) => t.replace(/[\uFF10-\uFF19]/g, (c) => String(c.charCodeAt(0) - 0xFF10));
+const digitos = (t) => ascii(t).replace(/\D/g, '');
+function luhnCompleta(base) { for (let c = 0; c < 10; c++) { const n = base + c; let s = 0; for (let i = 0; i < n.length; i++) { let x = +n[n.length - 1 - i]; if (i % 2) { x *= 2; if (x > 9) x -= 9; } s += x; } if (s % 10 === 0) return n; } }
+
+const matriz = JSON.parse(readFileSync(new URL('.github/testes/matriz-qa-20fa739.json', raiz), 'utf8'));
+test('matriz QA tem 171 casos', () => assert.equal(matriz.length, 171));
+for (const c of matriz) {
+  test(`QA ${c.id} (${c.esperado})`, () => {
+    const r = sanearCampo(c.campo, c.entrada);
+    if (c.esperado === 'keep') { assert.equal(r.texto, c.entrada); return; }
+    assert.notEqual(r.texto, c.entrada);
+    // nenhuma sequência de 13+ dígitos da entrada sobrevive inteira; os 4 últimos ficam visíveis
+    const seq = digitos(c.entrada).match(/\d{13,}/g) || [];
+    assert.ok(/\*\*\*\* \*\*\*\* \*\*\*\* \d{4}/.test(r.texto), r.texto);
+    // o PAN da entrada (16 dígitos de teste mais comuns da matriz) não sobrevive inteiro
+    for (const d of seq) assert.ok(!digitos(r.texto).includes(d.length <= 19 ? d : '-'), r.texto);
+  });
+}
+test('C-01: dossiê do fluxo real sem PAN (pedido 123 e ano antes)', () => {
+  for (const [campo, t] of [['pedido', 'Pedido 123 4111 0000 0000 0008'], ['fato-desc', 'em 2026 4111 0000 0000 0008']]) {
+    const r = campo === 'pedido' ? sanearCampo(campo, t) : sanear(t);
+    assert.ok(!digitos(r.texto).includes('4111000000000008'), r.texto);
+    assert.ok(r.texto.endsWith('**** **** **** 0008'));
+  }
+});
+
+// Parecer B-01: prefixo 1 (UATP) e 2200-2220 (Mir) mascarados em texto livre; no Pedido seguem como antes.
+const uatp = luhnCompleta('10000000000000');       // 15 dígitos
+const mir = luhnCompleta('220000000000000');       // 16 dígitos
+test('B-01: UATP e Mir em fato são mascarados', () => {
+  for (const p of [uatp, mir]) {
+    const r = sanear(`cartão ${p} usado`);
+    assert.equal(r.texto, `cartão **** **** **** ${p.slice(-4)} usado`);
+  }
+});
+test('B-01: UATP e Mir no Pedido não são mascarados (filtro CB-01 mantido)', () => {
+  for (const p of [uatp, mir]) assert.equal(sanearCampo('pedido', p).texto, p);
+});
+
+// Parecer B-02: exceção de CNPJ no campo CNPJ.
+test('B-02: CNPJ válido comum no campo CNPJ fica em claro', () => {
+  assert.equal(sanearCampo('cnpj', '11.222.333/0001-81').texto, '11.222.333/0001-81');
+  assert.equal(sanearCampo('cnpj', '40000000001935').texto, '40000000001935');
+});
+test('B-02: CNPJ válido que também é PAN Diners (36, Luhn ok) é mascarado no campo CNPJ', () => {
+  assert.equal(sanearCampo('cnpj', '36000000003820').texto, '**** **** **** 3820');
+  assert.equal(sanearCampo('cnpj', '36.000.000/0038-20').texto, '**** **** **** 3820');
+});

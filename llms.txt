@@ -1,8 +1,8 @@
 # Piloto Chargeback
 
-> Guias sobre chargeback e disputas no cartão: como funciona a contestação, os códigos de motivo de Visa, Mastercard e Elo e as provas que o lojista deve guardar.
+> Guias sobre chargeback e disputas no cartão: como funciona a contestação, os códigos de motivo de Visa, Mastercard e Elo e as provas que o lojista pode guardar.
 
 ## Blog
 
 - [Blog do Piloto Chargeback: guias sobre disputas no cartão](https://chargeback.contacertabr.com.br/blog/)
-- [O que é chargeback: como funciona, motivos e como contestar](https://chargeback.contacertabr.com.br/blog/o-que-e-chargeback/): O que é chargeback, como funciona a contestação no cartão, os códigos de motivo de Visa, Mastercard e Elo e as provas que o lojista deve guardar.
+- [O que é chargeback: como funciona, motivos e como contestar](https://chargeback.contacertabr.com.br/blog/o-que-e-chargeback/): O que é chargeback, como funciona a contestação no cartão, os códigos de motivo de Visa, Mastercard e Elo e as provas que o lojista pode guardar.
