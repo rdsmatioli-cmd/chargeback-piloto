@@ -1,0 +1,207 @@
+[
+ {
+  "id": "meio-pedido5+pan+val4",
+  "campo": "fato-desc",
+  "entrada": "1234541110000000000081228",
+  "esperado": "mask"
+ },
+ {
+  "id": "meio-pedido6+pan+val4",
+  "campo": "fato-desc",
+  "entrada": "pedido 98765441110000000000080326",
+  "esperado": "mask"
+ },
+ {
+  "id": "meio-2+pan+2",
+  "campo": "fato-desc",
+  "entrada": "00411100000000000800",
+  "esperado": "mask"
+ },
+ {
+  "id": "meio-pan+cvv+val",
+  "campo": "fato-desc",
+  "entrada": "41110000000000081231226",
+  "esperado": "mask"
+ },
+ {
+  "id": "meio-nsu+pan",
+  "campo": "fato-desc",
+  "entrada": "NSU 1234567890124111000000000008",
+  "esperado": "mask"
+ },
+ {
+  "id": "meio-master",
+  "campo": "fato-desc",
+  "entrada": "778855555555555544442027",
+  "esperado": "mask"
+ },
+ {
+  "id": "meio-amex",
+  "campo": "fato-desc",
+  "entrada": "9937828224631000511",
+  "esperado": "mask"
+ },
+ {
+  "id": "colado-inicio-longo",
+  "campo": "fato-desc",
+  "entrada": "411100000000000800000000",
+  "esperado": "mask"
+ },
+ {
+  "id": "colado-fim-longo",
+  "campo": "fato-desc",
+  "entrada": "20261028000004111000000000008",
+  "esperado": "mask"
+ },
+ {
+  "id": "pedido-campo-colado",
+  "campo": "pedido",
+  "entrada": "1234564111000000000008",
+  "esperado": "mask"
+ },
+ {
+  "id": "pedido-campo-meio",
+  "campo": "pedido",
+  "entrada": "12411100000000000834",
+  "esperado": "mask"
+ },
+ {
+  "id": "letras-coladas",
+  "campo": "fato-desc",
+  "entrada": "cartao4111000000000008fim",
+  "esperado": "mask"
+ },
+ {
+  "id": "X-mascara-parcial",
+  "campo": "fato-desc",
+  "entrada": "4111 XXXX XXXX 0008",
+  "esperado": "keep"
+ },
+ {
+  "id": "zero-largura",
+  "campo": "fato-desc",
+  "entrada": "4111​0000​0000​0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "nbsp-misto",
+  "campo": "fato-desc",
+  "entrada": "4111 0000 0000 0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "fullwidth",
+  "campo": "fato-desc",
+  "entrada": "４１１１００００００００００００８",
+  "esperado": "keep",
+  "nota": "entrada do QA tem 17 dígitos (4111 + 13 zeros + 8), não contém o PAN 4111000000000008 e não passa no Luhn; caso com PAN correto em fullwidth-16"
+ },
+ {
+  "id": "l-minusculo-como-1",
+  "campo": "fato-desc",
+  "entrada": "4lll 0000 0000 0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "o-minusculo",
+  "campo": "fato-desc",
+  "entrada": "4111 o000 0000 0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "url-encoded",
+  "campo": "fato-desc",
+  "entrada": "4111%200000%200000%200008",
+  "esperado": "mask"
+ },
+ {
+  "id": "frase-entre-metades",
+  "campo": "fato-desc",
+  "entrada": "primeiros 4111 0000 e os últimos 0000 0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "palavra-entre-grupos",
+  "campo": "fato-desc",
+  "entrada": "4111 0000 e 0000 0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "hiper",
+  "campo": "fato-desc",
+  "entrada": "cartão 6062826786276634",
+  "esperado": "mask"
+ },
+ {
+  "id": "elo",
+  "campo": "fato-desc",
+  "entrada": "cartão 5067230000000002",
+  "esperado": "mask"
+ },
+ {
+  "id": "dois-pans-colados",
+  "campo": "fato-desc",
+  "entrada": "41110000000000085555555555554444",
+  "esperado": "mask"
+ },
+ {
+  "id": "sem-pan-telefones",
+  "campo": "fato-desc",
+  "entrada": "tel 11 98765-4321 / 11 3456-7890 / 21 99999-0000",
+  "esperado": "keep"
+ },
+ {
+  "id": "sem-pan-datas",
+  "campo": "fato-desc",
+  "entrada": "10/10/2026, 11/10/2026, 12/10/2026, 13/10/2026",
+  "esperado": "keep"
+ },
+ {
+  "id": "sem-pan-valores",
+  "campo": "fato-desc",
+  "entrada": "R$ 1.234,56 + R$ 789,00 + R$ 12,34 frete",
+  "esperado": "keep"
+ },
+ {
+  "id": "sem-pan-rastreio",
+  "campo": "fato-desc",
+  "entrada": "rastreio BR123456789BR NF 000123456 série 1",
+  "esperado": "keep"
+ },
+ {
+  "id": "sem-pan-cpf-cnpj",
+  "campo": "fato-desc",
+  "entrada": "CPF 529.982.247-25 CNPJ 11.222.333/0001-81",
+  "esperado": "keep"
+ },
+ {
+  "id": "sem-pan-boleto",
+  "campo": "fato-desc",
+  "entrada": "23793.38128 60082.677139 76000.063305 9 84410000012345",
+  "esperado": "keep"
+ },
+ {
+  "id": "sem-pan-pix-e2e",
+  "campo": "fato-desc",
+  "entrada": "pix e2e E18236120202610281200s0123456789",
+  "esperado": "keep"
+ },
+ {
+  "id": "sem-pan-pedido-longo",
+  "campo": "pedido",
+  "entrada": "PED-2026-0000123456",
+  "esperado": "keep"
+ },
+ {
+  "id": "sem-pan-O-palavra",
+  "campo": "fato-desc",
+  "entrada": "ENTREGA 10 OUT 2026 LOTE 0001 O 0002",
+  "esperado": "keep"
+ },
+ {
+  "id": "fullwidth-16",
+  "campo": "fato-desc",
+  "entrada": "４１１１０００００００００００８",
+  "esperado": "mask"
+ }
+]

@@ -1,0 +1,191 @@
+{
+ "fonte": "laudo QA app-pr9-133315fc (2026-10-28), evid adv4.py",
+ "casos": [
+  {
+   "id": "email-cvv-val-pan",
+   "campo": "fato-desc",
+   "entrada": "Cartão: 4111111111111111 Val: 12/28 CVV: 123",
+   "esperado": "mask"
+  },
+  {
+   "id": "email-pan-cvv-colado-fato",
+   "campo": "fato-desc",
+   "entrada": "dados 5555555555554444123",
+   "esperado": "mask"
+  },
+  {
+   "id": "pedido-pan-cvv-colado",
+   "campo": "pedido",
+   "entrada": "5555555555554444123",
+   "esperado": "mask"
+  },
+  {
+   "id": "pedido-pan-mes",
+   "campo": "pedido",
+   "entrada": "411111111111111112",
+   "esperado": "mask"
+  },
+  {
+   "id": "pedido-num-pan",
+   "campo": "pedido",
+   "entrada": "34111111111111111",
+   "esperado": "mask"
+  },
+  {
+   "id": "fato-meio-ambos-19",
+   "campo": "fato-desc",
+   "entrada": "3411111111111111112",
+   "esperado": "mask"
+  },
+  {
+   "id": "fato-meio-ambos-18",
+   "campo": "fato-desc",
+   "entrada": "641111111111111111",
+   "esperado": "mask"
+  },
+  {
+   "id": "pix-comprovante",
+   "campo": "fato-desc",
+   "entrada": "Comprovante Pix\nValor R$ 150,00\nID E00000000202610281200abc123XYZ\nPagador cartão ",
+   "esperado": "keep"
+  },
+  {
+   "id": "ifood-chat",
+   "campo": "fato-desc",
+   "entrada": "Entregador: oi\nCliente: paguei com 4012 8888 8888 1881 ok?",
+   "esperado": "mask"
+  },
+  {
+   "id": "sms-banco",
+   "campo": "fato-desc",
+   "entrada": "BANCO: Compra aprovada CARTAO 5067230000000002 R$ 89,90 27/10 14:05",
+   "esperado": "mask"
+  },
+  {
+   "id": "planilha-tab",
+   "campo": "fato-desc",
+   "entrada": "98765\tAna\t5555555555554444\t12/28\t123",
+   "esperado": "mask"
+  },
+  {
+   "id": "json-colado",
+   "campo": "fato-desc",
+   "entrada": "{\"card\":\"4111111111111111\",\"exp\":\"1228\"}",
+   "esperado": "mask"
+  },
+  {
+   "id": "xml-colado",
+   "campo": "fato-desc",
+   "entrada": "<pan>378282246310005</pan><cvv>1234</cvv>",
+   "esperado": "mask"
+  },
+  {
+   "id": "url-query",
+   "campo": "fato-desc",
+   "entrada": "https://loja.com/pagar?cc=6011111111111117&cvv=123",
+   "esperado": "mask"
+  },
+  {
+   "id": "base-espaço-final",
+   "campo": "fato-desc",
+   "entrada": "6062826786276634 ",
+   "esperado": "mask"
+  },
+  {
+   "id": "quebra-a-cada-4",
+   "campo": "fato-desc",
+   "entrada": "4111\n1111\n1111\n1111",
+   "esperado": "mask"
+  },
+  {
+   "id": "separador-ponto-virgula-espaco",
+   "campo": "fato-desc",
+   "entrada": "4111; 1111; 1111; 1111",
+   "esperado": "mask"
+  },
+  {
+   "id": "ditado-voz",
+   "campo": "fato-desc",
+   "entrada": "quatro um um um, 1 1 1 1 11111111",
+   "esperado": "mask"
+  },
+  {
+   "id": "mascara-x-parcial",
+   "campo": "fato-desc",
+   "entrada": "5555 XXXX XXXX 4444",
+   "esperado": "keep"
+  },
+  {
+   "id": "final-apenas",
+   "campo": "fato-desc",
+   "entrada": "cartão final 4444, bandeira Master",
+   "esperado": "keep"
+  },
+  {
+   "id": "bin-apenas",
+   "campo": "fato-desc",
+   "entrada": "BIN 555555 final 4444",
+   "esperado": "keep"
+  },
+  {
+   "id": "dois-cartoes-e-val",
+   "campo": "fato-desc",
+   "entrada": "4111111111111111 12/28 e 5555555555554444 01/27",
+   "esperado": "mask"
+  },
+  {
+   "id": "pan-com-traco-e-espaco",
+   "campo": "fato-desc",
+   "entrada": "2223 - 0031 - 2200 - 3222",
+   "esperado": "mask"
+  },
+  {
+   "id": "nfe-chave-44-espacada",
+   "campo": "fato-desc",
+   "entrada": "Chave de acesso: 3526 1012 3456 7800 0190 5500 1000 0012 3410 0012 3456",
+   "esperado": "keep"
+  },
+  {
+   "id": "nsu-aut-tid",
+   "campo": "fato-desc",
+   "entrada": "NSU 000123456 AUT 654321 TID 10069930690009F2A4C",
+   "esperado": "keep"
+  },
+  {
+   "id": "protocolo-anatel",
+   "campo": "fato-desc",
+   "entrada": "Protocolo de atendimento 2026102812345678901",
+   "esperado": "keep"
+  },
+  {
+   "id": "rastreio-correios",
+   "campo": "fato-desc",
+   "entrada": "Objeto AA123456789BR entregue 25/10",
+   "esperado": "keep"
+  },
+  {
+   "id": "cep-telefone",
+   "campo": "fato-desc",
+   "entrada": "CEP 01310-100, tel (11) 4002-8922",
+   "esperado": "keep"
+  },
+  {
+   "id": "rg-cpf-cru",
+   "campo": "fato-desc",
+   "entrada": "CPF 52998224725 RG 123456789",
+   "esperado": "keep"
+  },
+  {
+   "id": "conta-agencia",
+   "campo": "fato-desc",
+   "entrada": "Ag 1234 CC 56789-0 Banco 341",
+   "esperado": "keep"
+  },
+  {
+   "id": "valor-grande",
+   "campo": "fato-desc",
+   "entrada": "Total R$ 4.111.111.111,11",
+   "esperado": "keep"
+  }
+ ]
+}

@@ -1,0 +1,152 @@
+[
+ {
+  "id": "extra-01",
+  "campo": "fato-desc",
+  "entrada": "12344111000000000008",
+  "esperado": "mask"
+ },
+ {
+  "id": "extra-02",
+  "campo": "fato-desc",
+  "entrada": "41110000000000082026",
+  "esperado": "mask"
+ },
+ {
+  "id": "extra-03",
+  "campo": "fato-desc",
+  "entrada": "pedido12344111000000000008",
+  "esperado": "mask"
+ },
+ {
+  "id": "extra-04",
+  "campo": "fato-desc",
+  "entrada": "4111    0000    0000    0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "extra-05",
+  "campo": "fato-desc",
+  "entrada": "4111\t0000\t0000\t0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "extra-06",
+  "campo": "fato-desc",
+  "entrada": "4111 - 0000 - 0000 - 0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "extra-07",
+  "campo": "fato-desc",
+  "entrada": "4111|0000|0000|0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "extra-08",
+  "campo": "fato-desc",
+  "entrada": "4111:0000:0000:0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "extra-09",
+  "campo": "fato-desc",
+  "entrada": "4111;0000;0000;0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "extra-10",
+  "campo": "fato-desc",
+  "entrada": "4111 0000 0000 0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "extra-11",
+  "campo": "fato-desc",
+  "entrada": "4111–0000–0000–0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "extra-12",
+  "campo": "fato-desc",
+  "entrada": "(4111) 0000 0000 0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "extra-13",
+  "campo": "fato-desc",
+  "entrada": "4 1 1 1 0 0 0 0 0 0 0 0 0 0 0 8",
+  "esperado": "mask"
+ },
+ {
+  "id": "extra-14",
+  "campo": "fato-desc",
+  "entrada": "41110000\n\n\n\n00000008",
+  "esperado": "mask"
+ },
+ {
+  "id": "extra-15",
+  "campo": "fato-desc",
+  "entrada": "٤١١١٠٠٠٠٠٠٠٠٠٠٠٨",
+  "esperado": "mask"
+ },
+ {
+  "id": "extra-16",
+  "campo": "fato-desc",
+  "entrada": "4111000000000008 4111000000000008",
+  "esperado": "mask"
+ },
+ {
+  "id": "extra-17",
+  "campo": "fato-desc",
+  "entrada": "378282246310005",
+  "esperado": "mask"
+ },
+ {
+  "id": "extra-18",
+  "campo": "pedido",
+  "entrada": "122000000000003",
+  "esperado": "keep"
+ },
+ {
+  "id": "extra-19",
+  "campo": "fato-desc",
+  "entrada": "122000000000003",
+  "esperado": "mask"
+ },
+ {
+  "id": "extra-20",
+  "campo": "fato-desc",
+  "entrada": "R$ 4.111.000.000.000.008",
+  "esperado": "mask"
+ },
+ {
+  "id": "extra-21",
+  "campo": "fato-desc",
+  "entrada": "10.10.2026 11.10.2026 12.10.2026",
+  "esperado": "keep"
+ },
+ {
+  "id": "extra-22",
+  "campo": "fato-desc",
+  "entrada": "1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9",
+  "esperado": "keep"
+ },
+ {
+  "id": "extra-23",
+  "campo": "fato-desc",
+  "entrada": "CPF 123.456.789-09 tel 11 98765-4321",
+  "esperado": "keep"
+ },
+ {
+  "id": "extra-24",
+  "campo": "cnpj",
+  "entrada": "30.000.000/0001-91",
+  "esperado": "keep"
+ },
+ {
+  "id": "extra-25",
+  "campo": "fato-desc",
+  "entrada": "4111O000O000O008",
+  "esperado": "mask"
+ }
+]

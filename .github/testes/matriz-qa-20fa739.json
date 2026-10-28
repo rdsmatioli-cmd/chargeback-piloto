@@ -1,0 +1,1030 @@
+[
+ {
+  "id": "Visa16-cru",
+  "campo": "pedido",
+  "entrada": "4111000000000008",
+  "esperado": "mask"
+ },
+ {
+  "id": "Visa16-espacos",
+  "campo": "pedido",
+  "entrada": "4111 0000 0000 0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "Visa16-hifen",
+  "campo": "pedido",
+  "entrada": "4111-0000-0000-0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "Visa16-ponto",
+  "campo": "pedido",
+  "entrada": "4111.0000.0000.0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "Visa16-luhn-invalido",
+  "campo": "pedido",
+  "entrada": "4111000000000009",
+  "esperado": "keep"
+ },
+ {
+  "id": "Visa16-texto",
+  "campo": "fato-desc",
+  "entrada": "Cliente pagou com o cartão 4111 0000 0000 0008 em 10/10.",
+  "esperado": "mask"
+ },
+ {
+  "id": "Visa13-cru",
+  "campo": "pedido",
+  "entrada": "4222000000006",
+  "esperado": "mask"
+ },
+ {
+  "id": "Visa13-espacos",
+  "campo": "pedido",
+  "entrada": "4222 0000 0000 6",
+  "esperado": "mask"
+ },
+ {
+  "id": "Visa13-hifen",
+  "campo": "pedido",
+  "entrada": "4222-0000-0000-6",
+  "esperado": "mask"
+ },
+ {
+  "id": "Visa13-ponto",
+  "campo": "pedido",
+  "entrada": "4222.0000.0000.6",
+  "esperado": "mask"
+ },
+ {
+  "id": "Visa13-luhn-invalido",
+  "campo": "pedido",
+  "entrada": "4222000000007",
+  "esperado": "keep"
+ },
+ {
+  "id": "Visa13-texto",
+  "campo": "fato-desc",
+  "entrada": "Cliente pagou com o cartão 4222 0000 0000 6 em 10/10.",
+  "esperado": "mask"
+ },
+ {
+  "id": "Visa19-cru",
+  "campo": "pedido",
+  "entrada": "4000000000000000006",
+  "esperado": "mask"
+ },
+ {
+  "id": "Visa19-espacos",
+  "campo": "pedido",
+  "entrada": "4000 0000 0000 0000 006",
+  "esperado": "mask"
+ },
+ {
+  "id": "Visa19-hifen",
+  "campo": "pedido",
+  "entrada": "4000-0000-0000-0000-006",
+  "esperado": "mask"
+ },
+ {
+  "id": "Visa19-ponto",
+  "campo": "pedido",
+  "entrada": "4000.0000.0000.0000.006",
+  "esperado": "mask"
+ },
+ {
+  "id": "Visa19-luhn-invalido",
+  "campo": "pedido",
+  "entrada": "4000000000000000007",
+  "esperado": "keep"
+ },
+ {
+  "id": "Visa19-texto",
+  "campo": "fato-desc",
+  "entrada": "Cliente pagou com o cartão 4000 0000 0000 0000 006 em 10/10.",
+  "esperado": "mask"
+ },
+ {
+  "id": "Master51-cru",
+  "campo": "pedido",
+  "entrada": "5105000000000003",
+  "esperado": "mask"
+ },
+ {
+  "id": "Master51-espacos",
+  "campo": "pedido",
+  "entrada": "5105 0000 0000 0003",
+  "esperado": "mask"
+ },
+ {
+  "id": "Master51-hifen",
+  "campo": "pedido",
+  "entrada": "5105-0000-0000-0003",
+  "esperado": "mask"
+ },
+ {
+  "id": "Master51-ponto",
+  "campo": "pedido",
+  "entrada": "5105.0000.0000.0003",
+  "esperado": "mask"
+ },
+ {
+  "id": "Master51-luhn-invalido",
+  "campo": "pedido",
+  "entrada": "5105000000000004",
+  "esperado": "keep"
+ },
+ {
+  "id": "Master51-texto",
+  "campo": "fato-desc",
+  "entrada": "Cliente pagou com o cartão 5105 0000 0000 0003 em 10/10.",
+  "esperado": "mask"
+ },
+ {
+  "id": "Master55-cru",
+  "campo": "pedido",
+  "entrada": "5500000000000004",
+  "esperado": "mask"
+ },
+ {
+  "id": "Master55-espacos",
+  "campo": "pedido",
+  "entrada": "5500 0000 0000 0004",
+  "esperado": "mask"
+ },
+ {
+  "id": "Master55-hifen",
+  "campo": "pedido",
+  "entrada": "5500-0000-0000-0004",
+  "esperado": "mask"
+ },
+ {
+  "id": "Master55-ponto",
+  "campo": "pedido",
+  "entrada": "5500.0000.0000.0004",
+  "esperado": "mask"
+ },
+ {
+  "id": "Master55-luhn-invalido",
+  "campo": "pedido",
+  "entrada": "5500000000000005",
+  "esperado": "keep"
+ },
+ {
+  "id": "Master55-texto",
+  "campo": "fato-desc",
+  "entrada": "Cliente pagou com o cartão 5500 0000 0000 0004 em 10/10.",
+  "esperado": "mask"
+ },
+ {
+  "id": "Master2221-cru",
+  "campo": "pedido",
+  "entrada": "2221000000000009",
+  "esperado": "mask"
+ },
+ {
+  "id": "Master2221-espacos",
+  "campo": "pedido",
+  "entrada": "2221 0000 0000 0009",
+  "esperado": "mask"
+ },
+ {
+  "id": "Master2221-hifen",
+  "campo": "pedido",
+  "entrada": "2221-0000-0000-0009",
+  "esperado": "mask"
+ },
+ {
+  "id": "Master2221-ponto",
+  "campo": "pedido",
+  "entrada": "2221.0000.0000.0009",
+  "esperado": "mask"
+ },
+ {
+  "id": "Master2221-luhn-invalido",
+  "campo": "pedido",
+  "entrada": "2221000000000000",
+  "esperado": "keep"
+ },
+ {
+  "id": "Master2221-texto",
+  "campo": "fato-desc",
+  "entrada": "Cliente pagou com o cartão 2221 0000 0000 0009 em 10/10.",
+  "esperado": "mask"
+ },
+ {
+  "id": "Master2720-cru",
+  "campo": "pedido",
+  "entrada": "2720000000000005",
+  "esperado": "mask"
+ },
+ {
+  "id": "Master2720-espacos",
+  "campo": "pedido",
+  "entrada": "2720 0000 0000 0005",
+  "esperado": "mask"
+ },
+ {
+  "id": "Master2720-hifen",
+  "campo": "pedido",
+  "entrada": "2720-0000-0000-0005",
+  "esperado": "mask"
+ },
+ {
+  "id": "Master2720-ponto",
+  "campo": "pedido",
+  "entrada": "2720.0000.0000.0005",
+  "esperado": "mask"
+ },
+ {
+  "id": "Master2720-luhn-invalido",
+  "campo": "pedido",
+  "entrada": "2720000000000006",
+  "esperado": "keep"
+ },
+ {
+  "id": "Master2720-texto",
+  "campo": "fato-desc",
+  "entrada": "Cliente pagou com o cartão 2720 0000 0000 0005 em 10/10.",
+  "esperado": "mask"
+ },
+ {
+  "id": "Amex15-cru",
+  "campo": "pedido",
+  "entrada": "378200000000000",
+  "esperado": "mask"
+ },
+ {
+  "id": "Amex15-espacos",
+  "campo": "pedido",
+  "entrada": "3782 0000 0000 000",
+  "esperado": "mask"
+ },
+ {
+  "id": "Amex15-hifen",
+  "campo": "pedido",
+  "entrada": "3782-0000-0000-000",
+  "esperado": "mask"
+ },
+ {
+  "id": "Amex15-ponto",
+  "campo": "pedido",
+  "entrada": "3782.0000.0000.000",
+  "esperado": "mask"
+ },
+ {
+  "id": "Amex15-luhn-invalido",
+  "campo": "pedido",
+  "entrada": "378200000000001",
+  "esperado": "keep"
+ },
+ {
+  "id": "Amex15-texto",
+  "campo": "fato-desc",
+  "entrada": "Cliente pagou com o cartão 3782 0000 0000 000 em 10/10.",
+  "esperado": "mask"
+ },
+ {
+  "id": "Amex34-cru",
+  "campo": "pedido",
+  "entrada": "340000000000009",
+  "esperado": "mask"
+ },
+ {
+  "id": "Amex34-espacos",
+  "campo": "pedido",
+  "entrada": "3400 0000 0000 009",
+  "esperado": "mask"
+ },
+ {
+  "id": "Amex34-hifen",
+  "campo": "pedido",
+  "entrada": "3400-0000-0000-009",
+  "esperado": "mask"
+ },
+ {
+  "id": "Amex34-ponto",
+  "campo": "pedido",
+  "entrada": "3400.0000.0000.009",
+  "esperado": "mask"
+ },
+ {
+  "id": "Amex34-luhn-invalido",
+  "campo": "pedido",
+  "entrada": "340000000000000",
+  "esperado": "keep"
+ },
+ {
+  "id": "Amex34-texto",
+  "campo": "fato-desc",
+  "entrada": "Cliente pagou com o cartão 3400 0000 0000 009 em 10/10.",
+  "esperado": "mask"
+ },
+ {
+  "id": "Elo4011-cru",
+  "campo": "pedido",
+  "entrada": "4011780000000006",
+  "esperado": "mask"
+ },
+ {
+  "id": "Elo4011-espacos",
+  "campo": "pedido",
+  "entrada": "4011 7800 0000 0006",
+  "esperado": "mask"
+ },
+ {
+  "id": "Elo4011-hifen",
+  "campo": "pedido",
+  "entrada": "4011-7800-0000-0006",
+  "esperado": "mask"
+ },
+ {
+  "id": "Elo4011-ponto",
+  "campo": "pedido",
+  "entrada": "4011.7800.0000.0006",
+  "esperado": "mask"
+ },
+ {
+  "id": "Elo4011-luhn-invalido",
+  "campo": "pedido",
+  "entrada": "4011780000000007",
+  "esperado": "keep"
+ },
+ {
+  "id": "Elo4011-texto",
+  "campo": "fato-desc",
+  "entrada": "Cliente pagou com o cartão 4011 7800 0000 0006 em 10/10.",
+  "esperado": "mask"
+ },
+ {
+  "id": "Elo5067-cru",
+  "campo": "pedido",
+  "entrada": "5066990000000002",
+  "esperado": "mask"
+ },
+ {
+  "id": "Elo5067-espacos",
+  "campo": "pedido",
+  "entrada": "5066 9900 0000 0002",
+  "esperado": "mask"
+ },
+ {
+  "id": "Elo5067-hifen",
+  "campo": "pedido",
+  "entrada": "5066-9900-0000-0002",
+  "esperado": "mask"
+ },
+ {
+  "id": "Elo5067-ponto",
+  "campo": "pedido",
+  "entrada": "5066.9900.0000.0002",
+  "esperado": "mask"
+ },
+ {
+  "id": "Elo5067-luhn-invalido",
+  "campo": "pedido",
+  "entrada": "5066990000000003",
+  "esperado": "keep"
+ },
+ {
+  "id": "Elo5067-texto",
+  "campo": "fato-desc",
+  "entrada": "Cliente pagou com o cartão 5066 9900 0000 0002 em 10/10.",
+  "esperado": "mask"
+ },
+ {
+  "id": "Elo6362-cru",
+  "campo": "pedido",
+  "entrada": "6363680000000007",
+  "esperado": "mask"
+ },
+ {
+  "id": "Elo6362-espacos",
+  "campo": "pedido",
+  "entrada": "6363 6800 0000 0007",
+  "esperado": "mask"
+ },
+ {
+  "id": "Elo6362-hifen",
+  "campo": "pedido",
+  "entrada": "6363-6800-0000-0007",
+  "esperado": "mask"
+ },
+ {
+  "id": "Elo6362-ponto",
+  "campo": "pedido",
+  "entrada": "6363.6800.0000.0007",
+  "esperado": "mask"
+ },
+ {
+  "id": "Elo6362-luhn-invalido",
+  "campo": "pedido",
+  "entrada": "6363680000000008",
+  "esperado": "keep"
+ },
+ {
+  "id": "Elo6362-texto",
+  "campo": "fato-desc",
+  "entrada": "Cliente pagou com o cartão 6363 6800 0000 0007 em 10/10.",
+  "esperado": "mask"
+ },
+ {
+  "id": "Hiper6062-cru",
+  "campo": "pedido",
+  "entrada": "6062820000000003",
+  "esperado": "mask"
+ },
+ {
+  "id": "Hiper6062-espacos",
+  "campo": "pedido",
+  "entrada": "6062 8200 0000 0003",
+  "esperado": "mask"
+ },
+ {
+  "id": "Hiper6062-hifen",
+  "campo": "pedido",
+  "entrada": "6062-8200-0000-0003",
+  "esperado": "mask"
+ },
+ {
+  "id": "Hiper6062-ponto",
+  "campo": "pedido",
+  "entrada": "6062.8200.0000.0003",
+  "esperado": "mask"
+ },
+ {
+  "id": "Hiper6062-luhn-invalido",
+  "campo": "pedido",
+  "entrada": "6062820000000004",
+  "esperado": "keep"
+ },
+ {
+  "id": "Hiper6062-texto",
+  "campo": "fato-desc",
+  "entrada": "Cliente pagou com o cartão 6062 8200 0000 0003 em 10/10.",
+  "esperado": "mask"
+ },
+ {
+  "id": "Hiper3841-cru",
+  "campo": "pedido",
+  "entrada": "3841000000000000004",
+  "esperado": "mask"
+ },
+ {
+  "id": "Hiper3841-espacos",
+  "campo": "pedido",
+  "entrada": "3841 0000 0000 0000 004",
+  "esperado": "mask"
+ },
+ {
+  "id": "Hiper3841-hifen",
+  "campo": "pedido",
+  "entrada": "3841-0000-0000-0000-004",
+  "esperado": "mask"
+ },
+ {
+  "id": "Hiper3841-ponto",
+  "campo": "pedido",
+  "entrada": "3841.0000.0000.0000.004",
+  "esperado": "mask"
+ },
+ {
+  "id": "Hiper3841-luhn-invalido",
+  "campo": "pedido",
+  "entrada": "3841000000000000005",
+  "esperado": "keep"
+ },
+ {
+  "id": "Hiper3841-texto",
+  "campo": "fato-desc",
+  "entrada": "Cliente pagou com o cartão 3841 0000 0000 0000 004 em 10/10.",
+  "esperado": "mask"
+ },
+ {
+  "id": "Diners36-cru",
+  "campo": "pedido",
+  "entrada": "36000000000008",
+  "esperado": "mask"
+ },
+ {
+  "id": "Diners36-espacos",
+  "campo": "pedido",
+  "entrada": "3600 0000 0000 08",
+  "esperado": "mask"
+ },
+ {
+  "id": "Diners36-hifen",
+  "campo": "pedido",
+  "entrada": "3600-0000-0000-08",
+  "esperado": "mask"
+ },
+ {
+  "id": "Diners36-ponto",
+  "campo": "pedido",
+  "entrada": "3600.0000.0000.08",
+  "esperado": "mask"
+ },
+ {
+  "id": "Diners36-luhn-invalido",
+  "campo": "pedido",
+  "entrada": "36000000000009",
+  "esperado": "keep"
+ },
+ {
+  "id": "Diners36-texto",
+  "campo": "fato-desc",
+  "entrada": "Cliente pagou com o cartão 3600 0000 0000 08 em 10/10.",
+  "esperado": "mask"
+ },
+ {
+  "id": "JCB35-cru",
+  "campo": "pedido",
+  "entrada": "3528000000000007",
+  "esperado": "mask"
+ },
+ {
+  "id": "JCB35-espacos",
+  "campo": "pedido",
+  "entrada": "3528 0000 0000 0007",
+  "esperado": "mask"
+ },
+ {
+  "id": "JCB35-hifen",
+  "campo": "pedido",
+  "entrada": "3528-0000-0000-0007",
+  "esperado": "mask"
+ },
+ {
+  "id": "JCB35-ponto",
+  "campo": "pedido",
+  "entrada": "3528.0000.0000.0007",
+  "esperado": "mask"
+ },
+ {
+  "id": "JCB35-luhn-invalido",
+  "campo": "pedido",
+  "entrada": "3528000000000008",
+  "esperado": "keep"
+ },
+ {
+  "id": "JCB35-texto",
+  "campo": "fato-desc",
+  "entrada": "Cliente pagou com o cartão 3528 0000 0000 0007 em 10/10.",
+  "esperado": "mask"
+ },
+ {
+  "id": "Discover6011-cru",
+  "campo": "pedido",
+  "entrada": "6011000000000004",
+  "esperado": "mask"
+ },
+ {
+  "id": "Discover6011-espacos",
+  "campo": "pedido",
+  "entrada": "6011 0000 0000 0004",
+  "esperado": "mask"
+ },
+ {
+  "id": "Discover6011-hifen",
+  "campo": "pedido",
+  "entrada": "6011-0000-0000-0004",
+  "esperado": "mask"
+ },
+ {
+  "id": "Discover6011-ponto",
+  "campo": "pedido",
+  "entrada": "6011.0000.0000.0004",
+  "esperado": "mask"
+ },
+ {
+  "id": "Discover6011-luhn-invalido",
+  "campo": "pedido",
+  "entrada": "6011000000000005",
+  "esperado": "keep"
+ },
+ {
+  "id": "Discover6011-texto",
+  "campo": "fato-desc",
+  "entrada": "Cliente pagou com o cartão 6011 0000 0000 0004 em 10/10.",
+  "esperado": "mask"
+ },
+ {
+  "id": "Maestro50-cru",
+  "campo": "pedido",
+  "entrada": "5018000000000009",
+  "esperado": "mask"
+ },
+ {
+  "id": "Maestro50-espacos",
+  "campo": "pedido",
+  "entrada": "5018 0000 0000 0009",
+  "esperado": "mask"
+ },
+ {
+  "id": "Maestro50-hifen",
+  "campo": "pedido",
+  "entrada": "5018-0000-0000-0009",
+  "esperado": "mask"
+ },
+ {
+  "id": "Maestro50-ponto",
+  "campo": "pedido",
+  "entrada": "5018.0000.0000.0009",
+  "esperado": "mask"
+ },
+ {
+  "id": "Maestro50-luhn-invalido",
+  "campo": "pedido",
+  "entrada": "5018000000000000",
+  "esperado": "keep"
+ },
+ {
+  "id": "Maestro50-texto",
+  "campo": "fato-desc",
+  "entrada": "Cliente pagou com o cartão 5018 0000 0000 0009 em 10/10.",
+  "esperado": "mask"
+ },
+ {
+  "id": "Maestro6759-cru",
+  "campo": "pedido",
+  "entrada": "6759000000000000005",
+  "esperado": "mask"
+ },
+ {
+  "id": "Maestro6759-espacos",
+  "campo": "pedido",
+  "entrada": "6759 0000 0000 0000 005",
+  "esperado": "mask"
+ },
+ {
+  "id": "Maestro6759-hifen",
+  "campo": "pedido",
+  "entrada": "6759-0000-0000-0000-005",
+  "esperado": "mask"
+ },
+ {
+  "id": "Maestro6759-ponto",
+  "campo": "pedido",
+  "entrada": "6759.0000.0000.0000.005",
+  "esperado": "mask"
+ },
+ {
+  "id": "Maestro6759-luhn-invalido",
+  "campo": "pedido",
+  "entrada": "6759000000000000006",
+  "esperado": "mask",
+  "nota": "Reclassificado (laudo 133315fc A-06): os 16 primeiros dígitos são PAN com Luhn válido e os 3 últimos ficam na posição do CVV; é a mesma forma de pedido-pan-cvv-colado (adv4), que o QA exige mascarar no Pedido."
+ },
+ {
+  "id": "Maestro6759-texto",
+  "campo": "fato-desc",
+  "entrada": "Cliente pagou com o cartão 6759 0000 0000 0000 005 em 10/10.",
+  "esperado": "mask"
+ },
+ {
+  "id": "UnionPay62-cru",
+  "campo": "pedido",
+  "entrada": "62000000000000000",
+  "esperado": "mask"
+ },
+ {
+  "id": "UnionPay62-espacos",
+  "campo": "pedido",
+  "entrada": "6200 0000 0000 0000 0",
+  "esperado": "mask"
+ },
+ {
+  "id": "UnionPay62-hifen",
+  "campo": "pedido",
+  "entrada": "6200-0000-0000-0000-0",
+  "esperado": "mask"
+ },
+ {
+  "id": "UnionPay62-ponto",
+  "campo": "pedido",
+  "entrada": "6200.0000.0000.0000.0",
+  "esperado": "mask"
+ },
+ {
+  "id": "UnionPay62-luhn-invalido",
+  "campo": "pedido",
+  "entrada": "62000000000000001",
+  "esperado": "keep"
+ },
+ {
+  "id": "UnionPay62-texto",
+  "campo": "fato-desc",
+  "entrada": "Cliente pagou com o cartão 6200 0000 0000 0000 0 em 10/10.",
+  "esperado": "mask"
+ },
+ {
+  "id": "prefixo-2220",
+  "campo": "pedido",
+  "entrada": "2220000000000000",
+  "esperado": "keep"
+ },
+ {
+  "id": "prefixo-2221",
+  "campo": "pedido",
+  "entrada": "2221000000000009",
+  "esperado": "mask"
+ },
+ {
+  "id": "prefixo-2720",
+  "campo": "pedido",
+  "entrada": "2720000000000005",
+  "esperado": "mask"
+ },
+ {
+  "id": "prefixo-2721",
+  "campo": "pedido",
+  "entrada": "2721000000000004",
+  "esperado": "keep"
+ },
+ {
+  "id": "prefixo-2000",
+  "campo": "pedido",
+  "entrada": "2000000000000006",
+  "esperado": "keep"
+ },
+ {
+  "id": "inicio-0-luhn-ok",
+  "campo": "pedido",
+  "entrada": "0111000000000006",
+  "esperado": "keep"
+ },
+ {
+  "id": "inicio-1-luhn-ok",
+  "campo": "pedido",
+  "entrada": "1111000000000004",
+  "esperado": "keep"
+ },
+ {
+  "id": "inicio-7-luhn-ok",
+  "campo": "pedido",
+  "entrada": "7111000000000001",
+  "esperado": "keep"
+ },
+ {
+  "id": "inicio-8-luhn-ok",
+  "campo": "pedido",
+  "entrada": "8111000000000009",
+  "esperado": "keep"
+ },
+ {
+  "id": "inicio-9-luhn-ok",
+  "campo": "pedido",
+  "entrada": "9111000000000007",
+  "esperado": "keep"
+ },
+ {
+  "id": "tamanho-12",
+  "campo": "pedido",
+  "entrada": "400000000002",
+  "esperado": "keep"
+ },
+ {
+  "id": "tamanho-13",
+  "campo": "pedido",
+  "entrada": "4000000000006",
+  "esperado": "mask"
+ },
+ {
+  "id": "tamanho-19",
+  "campo": "pedido",
+  "entrada": "4000000000000000006",
+  "esperado": "mask"
+ },
+ {
+  "id": "tamanho-20",
+  "campo": "pedido",
+  "entrada": "40000000000000000002",
+  "esperado": "keep"
+ },
+ {
+  "id": "emb-pedido-prefixo-num",
+  "campo": "pedido",
+  "entrada": "Pedido 123 4111 0000 0000 0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "emb-cvv-depois",
+  "campo": "fato-desc",
+  "entrada": "cartão 4111 0000 0000 0008 123",
+  "esperado": "mask"
+ },
+ {
+  "id": "emb-ponto-antes",
+  "campo": "fato-desc",
+  "entrada": "cartao.4111000000000008",
+  "esperado": "mask"
+ },
+ {
+  "id": "emb-ponto-antes-esp",
+  "campo": "fato-desc",
+  "entrada": "fim da frase.4111 0000 0000 0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "emb-barra",
+  "campo": "fato-desc",
+  "entrada": "4111/0000/0000/0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "emb-espaco-duplo",
+  "campo": "fato-desc",
+  "entrada": "4111  0000  0000  0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "emb-letras-coladas",
+  "campo": "fato-desc",
+  "entrada": "ABC4111000000000008XYZ",
+  "esperado": "mask"
+ },
+ {
+  "id": "emb-hash",
+  "campo": "fato-desc",
+  "entrada": "#4111000000000008",
+  "esperado": "mask"
+ },
+ {
+  "id": "emb-dois-pans",
+  "campo": "fato-desc",
+  "entrada": "4111000000000008 e 5105000000000003",
+  "esperado": "mask"
+ },
+ {
+  "id": "emb-underscore",
+  "campo": "fato-desc",
+  "entrada": "4111_0000_0000_0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "emb-ano-antes",
+  "campo": "fato-desc",
+  "entrada": "em 2026 4111 0000 0000 0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "emb-nbsp",
+  "campo": "fato-desc",
+  "entrada": "4111 0000 0000 0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "emb-quebra-linha",
+  "campo": "fato-desc",
+  "entrada": "4111\n0000\n0000\n0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "emb-virgula",
+  "campo": "fato-desc",
+  "entrada": "4111,0000,0000,0008",
+  "esperado": "mask"
+ },
+ {
+  "id": "emb-digitos-fullwidth",
+  "campo": "fato-desc",
+  "entrada": "４１１１０００００００００００８",
+  "esperado": "mask"
+ },
+ {
+  "id": "emb-pedido-hifen-antes",
+  "campo": "pedido",
+  "entrada": "PED-2026-4111000000000008",
+  "esperado": "mask"
+ },
+ {
+  "id": "emb-grupo-4-6-5",
+  "campo": "pedido",
+  "entrada": "3782 000000 00000",
+  "esperado": "mask"
+ },
+ {
+  "id": "emb-num-depois-hifen",
+  "campo": "pedido",
+  "entrada": "4111-0000-0000-0008-01",
+  "esperado": "mask"
+ },
+ {
+  "id": "cnpj-valido-campo-fmt",
+  "campo": "cnpj",
+  "entrada": "11.222.333/0001-81",
+  "esperado": "keep"
+ },
+ {
+  "id": "cnpj-valido-campo-cru",
+  "campo": "cnpj",
+  "entrada": "11222333000181",
+  "esperado": "keep"
+ },
+ {
+  "id": "cnpj-luhn-campo-cru",
+  "campo": "cnpj",
+  "entrada": "40000000001935",
+  "esperado": "keep"
+ },
+ {
+  "id": "cnpj-luhn-campo-fmt",
+  "campo": "cnpj",
+  "entrada": "40.000.000/0019-35",
+  "esperado": "keep"
+ },
+ {
+  "id": "cnpj-luhn-fora-cru",
+  "campo": "pedido",
+  "entrada": "40000000001935",
+  "esperado": "keep"
+ },
+ {
+  "id": "cnpj-luhn-fora-fmt",
+  "campo": "pedido",
+  "entrada": "40.000.000/0019-35",
+  "esperado": "keep"
+ },
+ {
+  "id": "cnpj-luhn-fato",
+  "campo": "fato-desc",
+  "entrada": "CNPJ 40000000001935",
+  "esperado": "keep"
+ },
+ {
+  "id": "cnpj-invalido-campo",
+  "campo": "cnpj",
+  "entrada": "11.222.333/0001-82",
+  "esperado": "keep"
+ },
+ {
+  "id": "pan-no-campo-cnpj",
+  "campo": "cnpj",
+  "entrada": "4111000000000008",
+  "esperado": "mask"
+ },
+ {
+  "id": "cpf",
+  "campo": "pedido",
+  "entrada": "123.456.789-09",
+  "esperado": "keep"
+ },
+ {
+  "id": "cpf-cru",
+  "campo": "pedido",
+  "entrada": "12345678909",
+  "esperado": "keep"
+ },
+ {
+  "id": "tel",
+  "campo": "pedido",
+  "entrada": "(11) 98765-4321",
+  "esperado": "keep"
+ },
+ {
+  "id": "tel-intl",
+  "campo": "pedido",
+  "entrada": "+55 11 98765 4321",
+  "esperado": "keep"
+ },
+ {
+  "id": "tel-0800",
+  "campo": "pedido",
+  "entrada": "0800 123 4567 890",
+  "esperado": "keep"
+ },
+ {
+  "id": "data",
+  "campo": "fato-desc",
+  "entrada": "10.10.2026 e 11/10/2026",
+  "esperado": "keep"
+ },
+ {
+  "id": "datas-sequencia",
+  "campo": "fato-desc",
+  "entrada": "10.10.2026.11.10.2026",
+  "esperado": "keep"
+ },
+ {
+  "id": "pedido-numerico",
+  "campo": "pedido",
+  "entrada": "4000123412341234567",
+  "esperado": "mask",
+  "nota": "Reclassificado (laudo 133315fc A-06): os 16 primeiros dígitos são PAN com Luhn válido e os 3 últimos ficam na posição do CVV; é a mesma forma de pedido-pan-cvv-colado (adv4), que o QA exige mascarar no Pedido."
+ },
+ {
+  "id": "boleto",
+  "campo": "fato-desc",
+  "entrada": "34191.79001 01043.510047 91020.150008 1 97370000010000",
+  "esperado": "keep"
+ },
+ {
+  "id": "pix-chave-ev",
+  "campo": "fato-desc",
+  "entrada": "E1234567820261028123456789012",
+  "esperado": "keep"
+ }
+]
