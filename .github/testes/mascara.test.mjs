@@ -29,6 +29,7 @@ const digitos = (t) => ascii(t).replace(/\D/g, '');
 function luhnCompleta(base) { for (let c = 0; c < 10; c++) { const n = base + c; let s = 0; for (let i = 0; i < n.length; i++) { let x = +n[n.length - 1 - i]; if (i % 2) { x *= 2; if (x > 9) x -= 9; } s += x; } if (s % 10 === 0) return n; } }
 
 const matriz = JSON.parse(readFileSync(new URL('.github/testes/matriz-qa-20fa739.json', raiz), 'utf8'));
+// Laudo 133315fc A-06: Maestro6759-luhn-invalido e pedido-numerico reclassificados para mask (nota no JSON).
 test('matriz QA tem 171 casos', () => assert.equal(matriz.length, 171));
 for (const c of matriz) {
   test(`QA ${c.id} (${c.esperado})`, () => {
@@ -150,6 +151,54 @@ for (const t of ['IMEI: 35-693803-564380-9', 'IMEI1 356938035643809 IMEI2 356938
   test(`M-04 vizinho sem cartão: ${JSON.stringify(t).slice(0, 50)}`, () => assert.equal(sanearCampo('fato-desc', t).texto, t));
 }
 
+// Laudo QA PR #9 (133315fc), A-06 / A-07: os 31 casos adv4 do QA.
+const PANS4 = ['4111111111111111', '5555555555554444', '378282246310005', '5067230000000002', '6062826786276634', '6011111111111117', '4012888888881881', '2223003122003222'];
+const adv4 = JSON.parse(readFileSync(new URL('.github/testes/adv4-qa-pr9-133315fc.json', raiz), 'utf8')).casos;
+test('adv4 QA tem 31 casos', () => assert.equal(adv4.length, 31));
+for (const c of adv4) {
+  test(`A-06/A-07 adv4 ${c.id} (${c.esperado})`, () => {
+    const r = sanearCampo(c.campo, c.entrada);
+    if (c.esperado === 'keep') { assert.equal(r.texto, c.entrada); return; }
+    if (r.texto === '') { assert.ok(sanear(c.entrada).limpo); return; }   // PAN + validade/CVV: campo limpo (CB-07)
+    const pans = PANS4.filter((p) => digitos(c.entrada).includes(p));
+    if (!pans.length) { assert.equal(r.texto, c.entrada, 'sem PAN completo na entrada (ditado parcial): nada a mascarar'); return; }
+    confereMascara(c.entrada, r.texto, pans);
+  });
+}
+// A-07: identificadores rotulados ou de 44/47/48 dígitos ficam como estão.
+const nfe = '35261012345678000190550010000012341000123456';
+for (const t of ['Protocolo de atendimento 20261028123456789012', 'protocolo 4111111111111112', 'Protocolo nº 5555555555554443',
+  'NSU 41111111111111119', `chave ${nfe}`, `Chave de acesso: ${nfe.match(/\d{4}/g).join(' ')}`, `NF-e ${nfe.match(/\d{4}/g).join(' ')}`,
+  'boleto 34112345678901234567890123456789012345678901234', '34112.34567 89012.345678 90123.456789 0 12345678901234',
+  'linha digitável 836000000015123400000001000000000000000000000000', 'nº 4111222233334444', '41112222333344445555666677778888999900001111',
+  '41112222333344445555666677778888999900001111222', '+55 11 91234-5678 e +55 21 99876-5432']) {
+  test(`A-07 sem excesso: ${JSON.stringify(t).slice(0, 50)}`, () => assert.equal(sanearCampo('fato-desc', t).texto, t));
+}
+// Limite do adendo 4: com rótulo, número que passa no Luhn e tem prefixo de bandeira segue mascarado.
+for (const t of ['protocolo 4111111111111111', 'NSU 5555555555554444', 'nº 4111 1111 1111 1111', 'chave 378282246310005',
+  'nº 4111-1111-1111-1111', 'NSU: 4111.1111.1111.1111', 'boleto 4111 1111 1111 1111', 'chave 4111 0000 e os últimos 0000 0008']) {
+  test(`A-07 rótulo + PAN: ${t}`, () => confereMascara(t, sanearCampo('fato-desc', t).texto, [digitos(t).slice(-16).length === 16 && /378/.test(t) ? '378282246310005' : digitos(t).slice(-16)]));
+}
+test('A-07 rótulo + PAN depois de outro número: protocolo 123 4111 1111 1111 1111', () => { const t = 'protocolo 123 4111 1111 1111 1111'; assert.equal(sanearCampo('fato-desc', t).texto, 'protocolo 123 **** **** **** 1111'); });
+// A-06: no Pedido, PAN + CVV, PAN + mês e dígito + PAN são mascarados.
+for (const [t, pan] of [['5555555555554444123', '5555555555554444'], ['411111111111111112', '4111111111111111'], ['34111111111111111', '4111111111111111'],
+  ['41111111111111110829', '4111111111111111'], ['3782822463100051234', '378282246310005'], ['5555 5555 5555 4444 123', '5555555555554444']]) {
+  test(`A-06 Pedido: ${t}`, () => confereMascara(t, sanearCampo('pedido', t).texto, [pan]));
+}
+// B-03 (adendo 4): dígitos colados depois do PAN (até 7) também viram '*'.
+for (const [t, s] of [['4111000000000008123', '**** **** **** 0008***'], ['41110000000000081231226', '**** **** **** 0008*******'],
+  ['dados 5555555555554444123 ok', 'dados **** **** **** 4444*** ok'], ['5555555555554444123', '**** **** **** 4444***']]) {
+  test(`B-03: ${t}`, () => { assert.equal(sanearCampo('fato-desc', t).texto, s); assert.equal(sanearCampo('pedido', t.replace(/\D/g, '')).texto.replace(/^.*?\*/, '*'), s.replace(/^.*?\*/, '*').replace(/ ok$/, '')); });
+}
+// B-02 (adendo 4): até 10 palavras num vão de até 100 caracteres.
+for (const t of ['4111 0000 e então eu digitei depois os últimos 0000 0008', '4111 0000 e aí o cliente mandou por mensagem os quatro últimos 0000 0008']) {
+  test(`B-02: ${JSON.stringify(t).slice(0, 50)}`, () => confereMascara(t, sanearCampo('fato-desc', t).texto, ['4111000000000008']));
+}
+for (const t of ['Pedido 1234 entregue no dia combinado ao cliente pela transportadora com nota 5678 e lote 9012 e caixa 3456',
+  'tel 11 3456-7890 ramal 12 falar com Ana no setor de compras depois das 14 horas e pedir o número 5566']) {
+  test(`B-02 sem excesso: ${JSON.stringify(t).slice(0, 50)}`, () => assert.equal(sanearCampo('fato-desc', t).texto, t));
+}
+
 // A-03: mascaramento linear. Cada entrada abaixo em menos de 100 ms (melhor de 5 execuções, para
 // não oscilar em runner compartilhado: laudo 84c7ce26 B-04), e o tempo cresce de forma linear.
 const V = '4111000000000008';
@@ -164,6 +213,8 @@ const ENTRADAS = [
   ['20.000 grupos com palavras entre eles', Array(20000).fill('4111 e os').join(' ')],
   ['20.000 números entre palavras', Array(20000).fill('12 casa 3').join(' ')],
   ['5.000 grupos de 17 dígitos com prefixo', Array(5000).fill('34111111111111112').join(' ')],
+  ['5.000 protocolos rotulados', Array(5000).fill('protocolo 4111111111111112 nº 20261028123456789012').join(' ')],
+  ['5.000 PANs no Pedido com CVV', Array(5000).fill('5555555555554444123').join(' ')],
   ['5.000 telefones e boletos', Array(5000).fill('+55 11 91234-5678 34191790010104351004791020150008196610000012345').join(' ')]
 ];
 function melhorDe5(t) { let m = Infinity; for (let i = 0; i < 5; i++) { const t0 = performance.now(); sanearCampo('fato-desc', t); m = Math.min(m, performance.now() - t0); } return m; }

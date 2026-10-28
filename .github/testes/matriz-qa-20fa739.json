@@ -675,7 +675,8 @@
   "id": "Maestro6759-luhn-invalido",
   "campo": "pedido",
   "entrada": "6759000000000000006",
-  "esperado": "keep"
+  "esperado": "mask",
+  "nota": "Reclassificado (laudo 133315fc A-06): os 16 primeiros dígitos são PAN com Luhn válido e os 3 últimos ficam na posição do CVV; é a mesma forma de pedido-pan-cvv-colado (adv4), que o QA exige mascarar no Pedido."
  },
  {
   "id": "Maestro6759-texto",
@@ -1011,7 +1012,8 @@
   "id": "pedido-numerico",
   "campo": "pedido",
   "entrada": "4000123412341234567",
-  "esperado": "keep"
+  "esperado": "mask",
+  "nota": "Reclassificado (laudo 133315fc A-06): os 16 primeiros dígitos são PAN com Luhn válido e os 3 últimos ficam na posição do CVV; é a mesma forma de pedido-pan-cvv-colado (adv4), que o QA exige mascarar no Pedido."
  },
  {
   "id": "boleto",

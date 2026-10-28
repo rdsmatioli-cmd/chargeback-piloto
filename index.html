@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-YqLLj6ryx+mElS974haKfTsbSnoWZKFdvZOHa1WMRdw='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-9kIxnSY16j8TbDvOBSQG4+GUfZxvbnAbNqMgAJthjXw='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
 body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
@@ -636,6 +636,7 @@ function prefixoDeCartao(d, livre = false) {
 function tamanhoCompativel(d) {
   if (d.length < 13 || d.length > 19) return false;
   if (d.length === 15) return /^(?:3[47]|1)/.test(d);   // 15 dígitos: só Amex (e UATP); IMEI não
+  if (d.length === 13) return d.charCodeAt(0) === 52;     // 13 dígitos: só Visa (telefone +55 não)
   return d.length !== 14 || /^3[0689]/.test(d);
 }
 function ehPAN(d, livre) { return tamanhoCompativel(d) && prefixoDeCartao(d, livre) && luhn(d); }
@@ -648,19 +649,7 @@ function ehPAN(d, livre) { return tamanhoCompativel(d) && prefixoDeCartao(d, liv
 // - chave e2e de Pix (E + ISPB + data AAAAMMDD...) fica de fora (laudo M-04).
 // Trecho fora da busca: caractere de uso privado, que também corta a cadeia de grupos.
 const FORA = '\uE000';
-function mod10(d) { let s = 0; for (let i = d.length - 1, k = 2; i >= 0; i--, k = k === 2 ? 1 : 2) { const x = (d.charCodeAt(i) - 48) * k; s += x > 9 ? x - 9 : x; } return (10 - (s % 10)) % 10; }
-function mod11(d, peso = 9, zero = [0, 10, 11]) { let s = 0; for (let i = d.length - 1, k = 2; i >= 0; i--, k = k === peso ? 2 : k + 1) s += (d.charCodeAt(i) - 48) * k; const r = 11 - (s % 11); return zero.includes(r) ? (zero === BARRA ? 1 : 0) : r; }
-const BARRA = [0, 10, 11];
-function ehCodigoDeCobranca(w) {
-  const n = (i) => w.charCodeAt(i) - 48;
-  if (w.length === 47) return w[3] === '9' || mod10(w.slice(0, 9)) === n(9) && mod10(w.slice(10, 20)) === n(20) && mod10(w.slice(21, 31)) === n(31);
-  if (w.length === 48) return w[0] === '8';            // linha de arrecadação (água, luz, tributo)
-  // 44: código de barras bancário (moeda 9 na posição 4 ou DV na 5), de arrecadação (começa com 8) ou chave NF-e (DV no fim)
-  if (w[0] === '8') return mod10(w.slice(0, 3) + w.slice(4)) === n(3) || mod11(w.slice(0, 3) + w.slice(4), 9, [10, 11]) === n(3);
-  // bancário: banco (3) + moeda 9; o DV geral nem sempre confere em código colado de exemplo
-  if (w[3] === '9' || mod11(w.slice(0, 4) + w.slice(5), 9, BARRA) === n(4)) return true;
-  return mod11(w.slice(0, 43), 9, [10, 11]) === n(43);
-}
+const ROTULADO = /(\b(?:protocolo|nsu|n[º°o]\.?|chave|nf-?e|boleto|linha\s+digit[aá]vel)(?:\s+(?:de|do|da|n[º°o]\.?)?\s*\p{L}{0,12}){0,2}\s{0,3}[:#=.-]?\s{0,3})(\d{4}(?: \d{4}){10}|\d{1,22})(?![\p{L}\p{N}]|[^\S\n]?[ .\-/_]?\d)/giu;
 const ZEROS = [0x0660, 0x06F0, 0x0966, 0x09E6, 0xFF10];
 function textoDeAnalise(t) {
   let a = t.replace(/(?![0-9])\p{Nd}/gu, (c) => {
@@ -674,9 +663,16 @@ function textoDeAnalise(t) {
   // Laudo d8158468 M-04: telefones (+55 11 91234-5678, (11) 98765-4321, 0800 123 4567) também
   // saem, salvo se os dígitos forem PAN.
   a = a.replace(/(?<![\p{L}\p{N}])(?:\+\d{1,3}[ .-]?\(?\d{2}\)?[ .-]?9?\d{4}[ .-]?\d{4}|\(\d{2}\) ?9?\d{4}[ .-]?\d{4}|0[3589]00[ .-]?\d{3}[ .-]?\d{4})(?![\p{L}\p{N}])/gu, (w) => (ehPAN(w.replace(/\D/g, ''), false) ? w : FORA.repeat(w.length)));
-  // Boleto (47 ou 48 dígitos), código de barras e chave NF-e (44) sem formatação: só saem se os
-  // dígitos verificadores conferem.
-  a = a.replace(/(?<![\p{L}\p{N}])(?:\d{44}|\d{47,48})(?![\p{L}\p{N}])/gu, (w) => (ehCodigoDeCobranca(w) ? FORA.repeat(w.length) : w));
+  // Laudo 133315fc A-07: sequência de exatamente 44, 47 ou 48 dígitos sem separador (código de
+  // barras, chave NF-e, boleto, arrecadação) e boleto formatado (00000.00000 00000.000000
+  // 00000.000000 0 00000000000000) saem da busca.
+  a = a.replace(/(?<![\p{L}\p{N}])(?:\d{44}|\d{47,48})(?![\p{L}\p{N}])/gu, (w) => FORA.repeat(w.length));
+  a = a.replace(/(?<![\p{L}\p{N}])\d{5}\.\d{5}\s+\d{5}\.\d{6}\s+\d{5}\.\d{6}\s+\d\s+\d{14}(?![\p{L}\p{N}])/gu, (w) => FORA.repeat(w.length));
+  // A-07 / adendo 4 S-01: número logo após protocolo, NSU, nº, chave, NF-e, boleto ou linha
+  // digitável (até 2 palavras entre o rótulo e o número), com até 22 dígitos, sai da busca, salvo se o número inteiro
+  // passa no Luhn e tem prefixo de bandeira. Número: dígitos contínuos, chave de 44 em grupos de 4
+  // ou boleto formatado.
+  a = a.replace(ROTULADO, (w, r, nn) => r + (ehPAN(nn.replace(/\D/g, ''), true) ? nn : FORA.repeat(nn.length)));
   // CNPJ sem pontuação (14 dígitos com DV) também sai, salvo se for PAN Diners.
   a = a.replace(/(?<![\p{L}\p{N}])\d{14}(?![\p{L}\p{N}])/gu, (w) => (validarCNPJ(w) && !ehPAN(w, false) ? FORA.repeat(w.length) : w));
   // Linha de arrecadação formatada (8xxxxxxxxxx-d 4 vezes).
@@ -714,8 +710,9 @@ const SEP_SIMPLES = /^[^\p{L}\p{N}]+$/u;
 // Adendo 2 do Advogado, M-01: até 3 palavras curtas (até 10 letras) entre os grupos, num vão de
 // até 40 caracteres ('4111 0000 e os últimos 0000 0008').
 // Adendo 3, S-01: até 6 palavras de até 20 letras num vão de até 60 caracteres.
-const SEP_PALAVRAS = /^[^\p{L}\p{N}]*(?:\p{L}{1,20}[^\p{L}\p{N}]+){1,6}$/u;
-function ehSep(t) { return !t.includes(FORA) && (SEP_SIMPLES.test(t) || (t.length <= 60 && SEP_PALAVRAS.test(t))); }
+// Laudo 133315fc / adendo 4 B-02: até 10 palavras num vão de até 100 caracteres.
+const SEP_PALAVRAS = /^[^\p{L}\p{N}]*(?:\p{L}{1,20}[^\p{L}\p{N}]+){1,10}$/u;
+function ehSep(t) { return !t.includes(FORA) && (SEP_SIMPLES.test(t) || (t.length <= 100 && SEP_PALAVRAS.test(t))); }
 const TAMANHOS = [16, 15, 19, 18, 17, 14, 13];
 function mascararCartao(texto, livre = false) {
   const base = textoDeAnalise(texto);
@@ -746,9 +743,10 @@ function mascararCartao(texto, livre = false) {
       // (PAN + CVV, PAN + mês, dígito + PAN).
       // No campo Pedido (livre = false) segue o filtro CB-01: número de pedido de 14 a 19 dígitos
       // que começa como cartão e falha no Luhn não é varrido (matriz 20fa739, casos keep).
-      if (dj.length >= 20 || (dj.length >= 14 && (livre || !prefixoDeCartao(dj, false)))) {
+      // Laudo 133315fc A-06: o campo Pedido também é varrido (antes só fato e nomes de arquivo).
+      if (dj.length >= 14) {
         const lj = luhnJanelas(dj);
-        // grupo de 14-19 que já começa como cartão: só janelas encostadas numa ponta
+        // grupo de 14-19 que já começa como cartão: no Pedido, só janelas encostadas numa ponta
         const ponta = dj.length < 20 && prefixoDeCartao(dj, false);
         let p = 0;
         while (p + 13 <= dj.length) {
@@ -756,11 +754,18 @@ function mascararCartao(texto, livre = false) {
           const w = dj.substr(p, 4);
           if (prefixoDeCartao(w, false)) {
             for (const L of TAMANHOS) {
-              if (p + L > dj.length || (ponta && p > 0 && p + L < dj.length) || (L === 14 && !/^3[0689]/.test(w)) || (L === 15 && !/^3[47]/.test(w))) continue;
+              // no Pedido, só PAN de 15 ou 16 dígitos (Amex e o padrão) dentro de um número maior
+              if (!livre && dj.length < 20 && L !== 15 && L !== 16) continue;
+              if (p + L > dj.length || (ponta && !livre && p > 0 && p + L < dj.length) || (L === 14 && !/^3[0689]/.test(w)) || (L === 15 && !/^3[47]/.test(w)) || (L === 13 && w[0] !== '4')) continue;
               if (lj(p, p + L)) { L0 = L; break; }
             }
           }
-          if (L0) { trocas.push({ i: g[j].i + p, f: g[j].i + p + L0, u: dj.substr(p + L0 - 4, 4) }); p += L0; } else p++;
+          if (L0) {
+            // Adendo 4 B-03: até 7 dígitos colados depois do PAN (CVV, validade) viram '*'.
+            const resto = dj.length - (p + L0), cauda = resto > 0 && resto <= 7 ? resto : 0;
+            trocas.push({ i: g[j].i + p, f: g[j].i + p + L0 + cauda, u: dj.substr(p + L0 - 4, 4) + '*'.repeat(cauda) });
+            p += L0 + cauda;
+          } else p++;
         }
       }
       j++;
