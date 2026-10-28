@@ -1,4 +1,4 @@
-// Testes da máscara de cartão do app (index.html), sem dependências: node --test .github/testes/
+// Testes da máscara de cartão do app (index.html), sem dependências: node --test .github/testes/*.test.mjs
 // Carrega o <script> do próprio index.html num vm e chama sanearCampo/sanear como a página.
 // Matriz: os 171 casos do laudo QA app-retro-20fa739 (2026-10-28); C-01 exige 0 PAN em claro.
 import { test } from 'node:test';
@@ -12,7 +12,7 @@ let src = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 src = src.replace(/\}\)\(\);\s*$/, 'globalThis.__t = { sanearCampo, sanear, mascararCartao };})();');
 const ctx = { document: { addEventListener() {} }, console };
 vm.createContext(ctx); vm.runInContext(src, ctx);
-const { sanearCampo, sanear } = ctx.__t;
+const { sanearCampo, sanear, mascararCartao } = ctx.__t;
 
 const ascii = (t) => t.replace(/[\uFF10-\uFF19]/g, (c) => String(c.charCodeAt(0) - 0xFF10));
 const digitos = (t) => ascii(t).replace(/\D/g, '');
@@ -62,3 +62,31 @@ test('B-02: CNPJ válido que também é PAN Diners (36, Luhn ok) é mascarado no
   assert.equal(sanearCampo('cnpj', '36000000003820').texto, '**** **** **** 3820');
   assert.equal(sanearCampo('cnpj', '36.000.000/0038-20').texto, '**** **** **** 3820');
 });
+
+// Laudo QA PR #9 (588aed0c), C-02: 25 casos adversariais (20 com PAN, 5 sem).
+const PANS = ['4111000000000008', '378282246310005', '122000000000003'];
+const extra = JSON.parse(readFileSync(new URL('.github/testes/extra-qa-pr9-588aed0c.json', raiz), 'utf8'));
+test('extra QA tem 25 casos', () => assert.equal(extra.length, 25));
+for (const c of extra) {
+  test(`C-02 ${c.id} (${c.esperado}) ${JSON.stringify(c.entrada).slice(0, 40)}`, () => {
+    const r = sanearCampo(c.campo, c.entrada);
+    if (c.esperado === 'keep') { assert.equal(r.texto, c.entrada); return; }
+    const so = digitos(r.texto);
+    for (const p of PANS) assert.ok(!so.includes(p), `PAN em claro: ${r.texto}`);
+    assert.match(r.texto, /\*\*\*\* \*\*\*\* \*\*\*\* \d{4}/);
+  });
+}
+
+// A-03: mascaramento linear. 20.000 grupos em menos de 100 ms (várias formas de entrada).
+for (const [nome, big] of [
+  ['20.000 grupos de 1 dígito', Array(20000).fill('1').join(' ')],
+  ['20.000 grupos de 4 dígitos', Array(20000).fill('4111').join(' ')],
+  ['20.000 grupos de 1 dígito com |', Array(20000).fill('5').join('|')],
+  ['grupo único de 200.000 dígitos', '4'.repeat(200000)]
+]) {
+  test(`A-03: ${nome} em < 100 ms`, () => {
+    mascararCartao(big.slice(0, 1000), true);           // aquece o JIT
+    const t0 = performance.now(); mascararCartao(big, true); const dt = performance.now() - t0;
+    assert.ok(dt < 100, `${dt.toFixed(1)} ms`);
+  });
+}

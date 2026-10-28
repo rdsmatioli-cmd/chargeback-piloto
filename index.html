@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-yvnbYWyUFtREz12uCkEMOE4+Cl8wBWUZD5kweJi6p9A='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-NmXb0lc8eV93Zqk8hNVhcopWA55XbWtz8V9V7IqfV90='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
 body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
@@ -623,10 +623,11 @@ function luhn(d) {
 // mascarados. Parecer B-01: em texto livre (fatos, nomes de arquivo) entram também o prefixo 1
 // (UATP) e 2200-2220 (Mir), para não deixar PAN dessas redes em claro.
 function prefixoDeCartao(d, livre = false) {
-  if (/^[3-6]/.test(d)) return true;
-  const p = Number(d.slice(0, 4));
+  const c0 = d.charCodeAt(0);
+  if (c0 >= 51 && c0 <= 54) return true;                 // 3 a 6
+  const p = (c0 - 48) * 1000 + (d.charCodeAt(1) - 48) * 100 + (d.charCodeAt(2) - 48) * 10 + (d.charCodeAt(3) - 48);
   if (p >= 2221 && p <= 2720) return true;
-  return livre && (d[0] === '1' || (p >= 2200 && p <= 2220));
+  return livre && (c0 === 49 || (p >= 2200 && p <= 2220));
 }
 
 // Só a Diners usa PAN de 14 dígitos (30, 36, 38, 39). Laudo M-03: 14 dígitos fora disso
@@ -640,48 +641,64 @@ function ehPAN(d, livre) { return tamanhoCompativel(d) && prefixoDeCartao(d, liv
 // Dígitos de outros sistemas (largos, arábicos etc.) viram 0-9 antes da análise.
 const ZEROS = [0x0660, 0x06F0, 0x0966, 0x09E6, 0xFF10, 0x1D7CE, 0x1D7D8, 0x1D7E2, 0x1D7EC, 0x1D7F6];
 function digitosAscii(t) {
-  return t.replace(/\p{Nd}/gu, (c) => {
+  return t.replace(/(?![0-9])\p{Nd}/gu, (c) => {
     const n = c.codePointAt(0);
     for (const z of ZEROS) if (n >= z && n <= z + 9) return String(n - z);
     return c;
-  });
+  }).replace(/(?<=\d)[Oo](?=[Oo]*\d)/g, '0');
 }
 
-// CB-07 / laudo C-01: grupos de dígitos ligados por separadores (qualquer sequência curta de
-// espaço Unicode, NBSP, quebra de linha, ponto, hífen, barra, vírgula ou sublinhado) formam uma
-// cadeia. Dentro da cadeia, procura o PAN em cada trecho de grupos inteiros com 13 a 19 dígitos,
-// do mais longo para o mais curto, à esquerda primeiro; o trecho que passa no prefixo (CB-01)
-// e no Luhn vira "**** **** **** últimos 4" e o resto da cadeia fica como está.
-const SEP_CARTAO = '[\\s.\\-/_,]{1,3}';
-const CADEIA = new RegExp(`\\d+(?:${SEP_CARTAO}\\d+)*`, 'gu');
+// CB-07 / laudos C-01 e C-02: o texto vira uma lista de grupos de dígitos. Dois grupos ficam na
+// mesma cadeia quando entre eles só há separadores (qualquer quantidade de qualquer caractere que
+// não é letra nem dígito: espaço, tab, quebra, | : ; – ( ) etc.). Letra O entre dígitos conta como 0.
+// Em cada cadeia, procura PAN (13 a 19 dígitos, prefixo CB-01, Luhn) em dois tipos de trecho:
+// (a) grupos inteiros consecutivos e (b) janelas no início ou no fim de um grupo com 20 ou mais
+// dígitos (PAN colado a outros dígitos). Tempo linear: até 19 grupos por início, 14 janelas por grupo.
+const RE_SEP = /^[^\p{L}\p{N}]+$/u;
+function ehSep(t) { return t.length === 1 ? !/[\p{L}\p{N}]/u.test(t) : RE_SEP.test(t); }
 function mascararCartao(texto, livre = false) {
-  let removido = false;
   const base = digitosAscii(texto);
-  const out = base.replace(CADEIA, (cad) => {
-    const partes = cad.split(/(\d+)/);     // ['', g0, s0, g1, s1, ..., gN, '']
-    const g = [], s = [];
-    for (let i = 1; i < partes.length; i += 2) { g.push(partes[i]); s.push(partes[i + 1] || ''); }
-    let res = '', i = 0, ultimo = 0;
-    const pedacos = [];
-    while (i < g.length) {
-      let achou = -1;
-      for (let j = g.length - 1; j >= i && achou < 0; j--) {
-        const d = g.slice(i, j + 1).join('');
-        if (d.length <= 19 && ehPAN(d, livre)) achou = j;
+  const re = /\d+/g, g = []; let m;
+  while ((m = re.exec(base))) g.push({ i: m.index, f: m.index + m[0].length, d: m[0] });
+  const trocas = [];                                   // {i, f, ult4} em ordem
+  let k = 0;
+  while (k < g.length) {
+    let fim = k;                                       // cadeia g[k..fim]
+    while (fim + 1 < g.length && ehSep(base.slice(g[fim].f, g[fim + 1].i))) fim++;
+    let j = k;
+    while (j <= fim) {
+      let achou = null;
+      // (a) grupos inteiros j..e, o trecho mais longo primeiro
+      let e = j, n = 0;
+      while (e <= fim && n + g[e].d.length <= 19) { n += g[e].d.length; e++; }
+      for (let x = e - 1; x >= j && !achou; x--) {
+        if (n >= 13) {
+          let d = ''; for (let y = j; y <= x; y++) d += g[y].d;
+          if (ehPAN(d, livre)) achou = { i: g[j].i, f: g[x].f, u: d.slice(-4), prox: x + 1 };
+        }
+        n -= g[x].d.length;
       }
-      if (achou >= 0) { pedacos.push({ de: i, ate: achou }); i = achou + 1; } else i++;
+      // (b) grupo com 20 ou mais dígitos (PAN colado a outros dígitos): janelas de 13 a 19 dígitos
+      // presas ao início ou ao fim do grupo. Grupos de até 19 dígitos só valem inteiros (a), para
+      // não mascarar pedidos e chaves que por acaso têm uma janela com Luhn válido.
+      if (!achou && g[j].d.length >= 20) {
+        const d = g[j].d;
+        for (const L of [16, 15, 19, 18, 17, 14, 13]) {
+          if (achou || L > d.length) continue;
+          for (const p of [0, d.length - L]) {
+            const w = d.substr(p, L);
+            if (ehPAN(w, livre)) { achou = { i: g[j].i + p, f: g[j].i + p + L, u: w.slice(-4), prox: j + 1 }; break; }
+          }
+        }
+      }
+      if (achou) { trocas.push(achou); j = achou.prox; } else j++;
     }
-    if (!pedacos.length) return cad;
-    removido = true;
-    for (const p of pedacos) {
-      for (let k = ultimo; k < p.de; k++) res += g[k] + s[k];
-      res += `**** **** **** ${g.slice(p.de, p.ate + 1).join('').slice(-4)}` + s[p.ate];
-      ultimo = p.ate + 1;
-    }
-    for (let k = ultimo; k < g.length; k++) res += g[k] + s[k];
-    return res;
-  });
-  return { texto: removido ? out : texto, removido };
+    k = fim + 1;
+  }
+  if (!trocas.length) return { texto, removido: false };
+  let out = '', pos = 0;
+  for (const t of trocas) { out += base.slice(pos, t.i) + `**** **** **** ${t.u}`; pos = t.f; }
+  return { texto: out + base.slice(pos), removido: true };
 }
 
 const ENTRE = '(?:\\s+\\S+){0,3}?\\s*[:=]?\\s*';           // até 3 palavras (CP-02), só fora do CVV
