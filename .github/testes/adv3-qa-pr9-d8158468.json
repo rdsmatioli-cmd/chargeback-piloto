@@ -1,0 +1,287 @@
+{
+ "fonte": "laudo QA app-pr9-d8158468 (2026-10-28), evid adv3.py",
+ "casos": [
+  {
+   "id": "recibo-tef",
+   "campo": "fato-desc",
+   "entrada": "COMPROVANTE TEF\nVISA CREDITO\n4111111111111111\nAUT 123456 NSU 000987\nVALOR R$ 199,90",
+   "esperado": "mask"
+  },
+  {
+   "id": "recibo-maquininha-asteriscos",
+   "campo": "fato-desc",
+   "entrada": "MASTERCARD ************4444 AUT 778899",
+   "esperado": "keep"
+  },
+  {
+   "id": "extrato-banco-linha",
+   "campo": "fato-desc",
+   "entrada": "27/10/2026 COMPRA CARTAO 5555 5555 5555 4444 LOJA X 1.299,00 D",
+   "esperado": "mask"
+  },
+  {
+   "id": "extrato-colado-data",
+   "campo": "fato-desc",
+   "entrada": "27/104111111111111111LOJAX",
+   "esperado": "mask"
+  },
+  {
+   "id": "whatsapp-cliente",
+   "campo": "fato-desc",
+   "entrada": "[27/10/26 14:32] Cliente: meu cartão é 4012 8888 8888 1881 vence 08/29 cvv 123",
+   "esperado": "mask"
+  },
+  {
+   "id": "whatsapp-emoji",
+   "campo": "fato-desc",
+   "entrada": "💳 2223-0031-2200-3222 ✅",
+   "esperado": "mask"
+  },
+  {
+   "id": "csv-linha",
+   "campo": "fato-desc",
+   "entrada": "pedido;cliente;cartao;validade\n98765;Ana;4111111111111111;12/28",
+   "esperado": "mask"
+  },
+  {
+   "id": "csv-virgula-aspas",
+   "campo": "fato-desc",
+   "entrada": "\"98765\",\"378282246310005\",\"0328\",\"1234\"",
+   "esperado": "mask"
+  },
+  {
+   "id": "csv-sem-sep-pan-val-cvv",
+   "campo": "fato-desc",
+   "entrada": "9876541111111111111111228123",
+   "esperado": "mask"
+  },
+  {
+   "id": "email-pan-val-cvv-colados",
+   "campo": "fato-desc",
+   "entrada": "Segue: 40128888888818810829123 obrigado",
+   "esperado": "mask"
+  },
+  {
+   "id": "email-assinatura",
+   "campo": "fato-desc",
+   "entrada": "Att, Ana\nTel (11) 98765-4321\nCartão final 1881 (4012888888881881)",
+   "esperado": "mask"
+  },
+  {
+   "id": "multiplos-pans-lista",
+   "campo": "fato-desc",
+   "entrada": "4111111111111111\n5555555555554444\n378282246310005\n6011111111111117",
+   "esperado": "mask"
+  },
+  {
+   "id": "multiplos-virgula",
+   "campo": "fato-desc",
+   "entrada": "4111111111111111,5555555555554444,5067230000000002",
+   "esperado": "mask"
+  },
+  {
+   "id": "pan-arabe",
+   "campo": "fato-desc",
+   "entrada": "بطاقة ٤١١١١١١١١١١١١١١١",
+   "esperado": "mask"
+  },
+  {
+   "id": "pan-devanagari",
+   "campo": "fato-desc",
+   "entrada": "४१११११११११११११११",
+   "esperado": "mask"
+  },
+  {
+   "id": "pan-fullwidth-espacos",
+   "campo": "fato-desc",
+   "entrada": "５５５５ ５５５５ ５５５５ ４４４４",
+   "esperado": "mask"
+  },
+  {
+   "id": "sep-ponto-meio",
+   "campo": "fato-desc",
+   "entrada": "4111·1111·1111·1111",
+   "esperado": "mask"
+  },
+  {
+   "id": "sep-bullet",
+   "campo": "fato-desc",
+   "entrada": "4111•1111•1111•1111",
+   "esperado": "mask"
+  },
+  {
+   "id": "sep-hifen-unicode",
+   "campo": "fato-desc",
+   "entrada": "4111‐1111‐1111‐1111",
+   "esperado": "mask"
+  },
+  {
+   "id": "sep-menos-matematico",
+   "campo": "fato-desc",
+   "entrada": "4111−1111−1111−1111",
+   "esperado": "mask"
+  },
+  {
+   "id": "sep-barra-invertida",
+   "campo": "fato-desc",
+   "entrada": "4111\\1111\\1111\\1111",
+   "esperado": "mask"
+  },
+  {
+   "id": "sep-underscore-multiplo",
+   "campo": "fato-desc",
+   "entrada": "4111__1111__1111__1111",
+   "esperado": "mask"
+  },
+  {
+   "id": "pan-6-4-6",
+   "campo": "fato-desc",
+   "entrada": "411111 1111 111111",
+   "esperado": "mask"
+  },
+  {
+   "id": "amex-4-6-5",
+   "campo": "fato-desc",
+   "entrada": "3782 822463 10005",
+   "esperado": "mask"
+  },
+  {
+   "id": "diners-4-6-4",
+   "campo": "fato-desc",
+   "entrada": "3056 930902 5904",
+   "esperado": "mask"
+  },
+  {
+   "id": "jcb",
+   "campo": "fato-desc",
+   "entrada": "cartão JCB 3530111333300000",
+   "esperado": "mask"
+  },
+  {
+   "id": "visa13",
+   "campo": "fato-desc",
+   "entrada": "cartão antigo 4222222222222",
+   "esperado": "mask"
+  },
+  {
+   "id": "limite1-parcela-colada",
+   "campo": "fato-desc",
+   "entrada": "34111111111111111",
+   "esperado": "mask"
+  },
+  {
+   "id": "limite1-6-mais-pan",
+   "campo": "fato-desc",
+   "entrada": "64111111111111111",
+   "esperado": "mask"
+  },
+  {
+   "id": "limite1-5-mais-visa13",
+   "campo": "fato-desc",
+   "entrada": "54222222222222",
+   "esperado": "mask"
+  },
+  {
+   "id": "limite1-4-mais-pan",
+   "campo": "fato-desc",
+   "entrada": "45555555555554444",
+   "esperado": "mask"
+  },
+  {
+   "id": "limite1-pan-mais-2",
+   "campo": "fato-desc",
+   "entrada": "411111111111111112",
+   "esperado": "mask"
+  },
+  {
+   "id": "limite1-pan-mais-3cvv",
+   "campo": "fato-desc",
+   "entrada": "5555555555554444123",
+   "esperado": "mask"
+  },
+  {
+   "id": "limite2-frase",
+   "campo": "fato-desc",
+   "entrada": "primeiros 4111 1111 e os últimos 1111 1111",
+   "esperado": "mask"
+  },
+  {
+   "id": "quebra-html",
+   "campo": "fato-desc",
+   "entrada": "4111<br>1111<br>1111<br>1111",
+   "esperado": "mask"
+  },
+  {
+   "id": "sem-pan-tel-lista",
+   "campo": "fato-desc",
+   "entrada": "(11) 98765-4321, (21) 3456-7890, +55 11 91234-5678, 0800 123 4567",
+   "esperado": "keep"
+  },
+  {
+   "id": "sem-pan-pix-e2e",
+   "campo": "fato-desc",
+   "entrada": "E00000000202610271430abcdEFGH1234",
+   "esperado": "keep"
+  },
+  {
+   "id": "sem-pan-pix-e2e-2",
+   "campo": "fato-desc",
+   "entrada": "ID: E18236120202610281200s0123456789 valor 50,00",
+   "esperado": "keep"
+  },
+  {
+   "id": "sem-pan-cnpj-cpf",
+   "campo": "fato-desc",
+   "entrada": "CNPJ 11.222.333/0001-81, 45.723.174/0001-10; CPF 529.982.247-25",
+   "esperado": "keep"
+  },
+  {
+   "id": "sem-pan-cnpj-cru",
+   "campo": "fato-desc",
+   "entrada": "CNPJ 45723174000110",
+   "esperado": "keep"
+  },
+  {
+   "id": "sem-pan-boleto",
+   "campo": "fato-desc",
+   "entrada": "34191.79001 01043.510047 91020.150008 1 96610000012345",
+   "esperado": "keep"
+  },
+  {
+   "id": "sem-pan-boleto-cru",
+   "campo": "fato-desc",
+   "entrada": "34191790010104351004791020150008196610000012345",
+   "esperado": "keep"
+  },
+  {
+   "id": "sem-pan-cod-barras-44",
+   "campo": "fato-desc",
+   "entrada": "34191966100000123451790001043510049102015000",
+   "esperado": "keep"
+  },
+  {
+   "id": "sem-pan-rastreio-nf",
+   "campo": "fato-desc",
+   "entrada": "NF-e 3526 1012 3456 7800 0190 5500 1000 0012 3410 0012 3456",
+   "esperado": "keep"
+  },
+  {
+   "id": "sem-pan-pedido-ml",
+   "campo": "pedido",
+   "entrada": "2000004567891234",
+   "esperado": "keep"
+  },
+  {
+   "id": "sem-pan-imei",
+   "campo": "fato-desc",
+   "entrada": "IMEI 356938035643809",
+   "esperado": "keep"
+  },
+  {
+   "id": "sem-pan-valores",
+   "campo": "fato-desc",
+   "entrada": "R$ 4.111,11 + R$ 1.111,11 = R$ 5.222,22",
+   "esperado": "keep"
+  }
+ ]
+}

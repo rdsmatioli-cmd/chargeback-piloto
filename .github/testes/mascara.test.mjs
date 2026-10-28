@@ -116,6 +116,40 @@ for (const t of ['Pedido 1234 de 2026 valor 5000 em 3x, NF 000123 série 1 e lot
   test(`M-01 sem excesso: ${JSON.stringify(t).slice(0, 50)}`, () => assert.equal(sanearCampo('fato-desc', t).texto, t));
 }
 
+// Laudo QA PR #9 (d8158468), C-04 / A-05 / M-04: os 47 casos adv3 do QA, com o oráculo estrito.
+const PANS3 = ['4111111111111111', '4012888888881881', '5555555555554444', '2223003122003222', '378282246310005', '371449635398431',
+  '5067230000000002', '6062826786276634', '30569309025904', '6011111111111117', '3530111333300000', '4222222222222'];
+const adv3 = JSON.parse(readFileSync(new URL('.github/testes/adv3-qa-pr9-d8158468.json', raiz), 'utf8')).casos;
+test('adv3 QA tem 47 casos', () => assert.equal(adv3.length, 47));
+for (const c of adv3) {
+  test(`C-04/A-05/M-04 adv3 ${c.id} (${c.esperado})`, () => {
+    const r = sanearCampo(c.campo, c.entrada);
+    if (c.esperado === 'keep') { assert.equal(r.texto, c.entrada); return; }
+    if (r.texto === '') { assert.ok(sanear(c.entrada).limpo, 'campo limpo sem aviso de valor de cartão'); return; }  // PAN + validade/CVV: campo limpo (CB-07)
+    confereMascara(c.entrada, r.texto, PANS3.filter((p) => digitos(c.entrada).includes(p)));
+  });
+}
+// Padrões vizinhos aos do laudo d8158468 (C-04 e A-05) e B-01 do adendo 3 (até 6 palavras / 60 caracteres).
+const VIZINHOS = [
+  ['cartão 5555555555554444123', '5555555555554444'], ['41111111111111110829', '4111111111111111'], ['411111111111111108', '4111111111111111'],
+  ['PAN 4111111111111111/0829', '4111111111111111'], ['41111111111111110829123', '4111111111111111'], ['124111111111111111', '4111111111111111'],
+  ['34111111111111111', '4111111111111111'], ['3782822463100051234', '378282246310005'], ['93530111333300000', '3530111333300000'],
+  ['4111 0000 e depois os últimos 0000 0008', '4111000000000008'], ['4111 0000 os quatro números seguintes: 0000 0008', '4111000000000008'],
+  ['4111 0000 extraordinariamente 0000 0008', '4111000000000008'], ['4111 1111. Depois mando o resto: 1111 1111', '4111111111111111'],
+  ['4111<br/>1111<br />1111<br>1111', '4111111111111111'], ['4111&nbsp;1111&nbsp;1111&nbsp;1111', '4111111111111111'],
+  ['4111\n1111\n1111\n1111', '4111111111111111'], ['<p>4111 1111</p><p>1111 1111</p>', '4111111111111111']];
+for (const [t, pan] of VIZINHOS) {
+  test(`C-04/A-05 vizinho: ${JSON.stringify(t).slice(0, 50)}`, () => confereMascara(t, sanearCampo('fato-desc', t).texto, [pan]));
+}
+// M-04 vizinhos: códigos que não são cartão ficam como estão.
+for (const t of ['IMEI: 35-693803-564380-9', 'IMEI1 356938035643809 IMEI2 356938035643817', 'nº de série 356938035643809',
+  '+5511912345678', '+55 (11) 91234-5678', 'tel 11 91234-5678 e 11 3456-7890 e 0800 123 4567', '0300 123 4567 ou 4004-0001',
+  'ISBN 978-85-359-0277-8', 'linha 83600000001-5 12340000000-1 00000000000-0 00000000000-0',
+  '836000000015123400000001000000000000000000000000', 'CNPJ 33000167000101 e 60746948000112',
+  '23793381286008267713976000063305984410000012345', '35261012345678000190550010000012341000123456']) {
+  test(`M-04 vizinho sem cartão: ${JSON.stringify(t).slice(0, 50)}`, () => assert.equal(sanearCampo('fato-desc', t).texto, t));
+}
+
 // A-03: mascaramento linear. Cada entrada abaixo em menos de 100 ms (melhor de 5 execuções, para
 // não oscilar em runner compartilhado: laudo 84c7ce26 B-04), e o tempo cresce de forma linear.
 const V = '4111000000000008';
@@ -128,7 +162,9 @@ const ENTRADAS = [
   ['5.000 quase-PANs', Array(5000).fill(V.slice(0, -1) + '9').join(' ')],
   ['5.000 PANs colados', V.repeat(5000)],
   ['20.000 grupos com palavras entre eles', Array(20000).fill('4111 e os').join(' ')],
-  ['20.000 números entre palavras', Array(20000).fill('12 casa 3').join(' ')]
+  ['20.000 números entre palavras', Array(20000).fill('12 casa 3').join(' ')],
+  ['5.000 grupos de 17 dígitos com prefixo', Array(5000).fill('34111111111111112').join(' ')],
+  ['5.000 telefones e boletos', Array(5000).fill('+55 11 91234-5678 34191790010104351004791020150008196610000012345').join(' ')]
 ];
 function melhorDe5(t) { let m = Infinity; for (let i = 0; i < 5; i++) { const t0 = performance.now(); sanearCampo('fato-desc', t); m = Math.min(m, performance.now() - t0); } return m; }
 for (const [nome, big] of ENTRADAS) {
