@@ -139,7 +139,9 @@ const cp = (...ns) => String.fromCodePoint(...ns);
 const INVISIVEIS = [0x202A, 0x202B, 0x202C, 0x202D, 0x202E, 0x2066, 0x2067, 0x2068, 0x2069, 0x200E, 0x200F, 0x061C,
   0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF, 0x00AD, 0x180E, 0xE0041, 0xE007F,       // bidi, largura zero, formatação (Cf)
   0x00, 0x01, 0x07, 0x08, 0x0E, 0x1B, 0x1F, 0x7F, 0x80, 0x9B, 0x9F,                // controles C0/C1
-  0xE000, 0xF8FF, 0xF0000];                                                          // uso privado
+  0xE000, 0xF8FF, 0xF0000,                                                           // uso privado
+  // Revisão do lote: ignoráveis por padrão fora de Cc/Cf/Co/Cs e o braille em branco
+  0xFE00, 0xFE0F, 0xE0100, 0xE01EF, 0x180B, 0x180C, 0x180D, 0x180F, 0x034F, 0x115F, 0x1160, 0x3164, 0xFFA0, 0x17B4, 0x2800];
 test('CB-04: limparTexto remove bidi, largura zero, formatação, controles C0/C1 e uso privado', () => {
   for (const n of INVISIVEIS) {
     assert.equal(limparTexto(`a${cp(n)}b`), 'ab', `U+${n.toString(16).toUpperCase()}`);
@@ -179,6 +181,11 @@ test('CB-04: caractere invisível ou de uso privado não parte o PAN nem esconde
     assert.equal(r.aviso, TEXTOS['A-3']);
   }
   assert.deepEqual([...encontrarVedados(sanearEntrada('fato-desc', `abri um pro${cp(0x200B)}cesso`).texto)], ['processo']);
+  // Revisão do lote: seletor de variação, preenchedor Hangul e braille em branco também não escondem o termo.
+  for (const n of [0xFE0F, 0x180B, 0x3164, 0x115F, 0x2800, 0xE0100]) {
+    assert.deepEqual([...encontrarVedados(sanearEntrada('fato-desc', `abri um pro${cp(n)}cesso`).texto)], ['processo'], `U+${n.toString(16)}`);
+    assert.equal(sanearEntrada('fato-desc', `cartão 4111${cp(n)}1111 1111 1111 usado`).texto, 'cartão **** **** **** 1111 usado', `U+${n.toString(16)}`);
+  }
   assert.equal(sanearEntrada('pedido', `PED${cp(0x200B)}-1`).texto, 'PED-1');
   assert.equal(sanearEntrada('cnpj', `12.ABC${cp(0x200B)}.345/01DE-35`).texto, '12.ABC.345/01DE-35');
 });
