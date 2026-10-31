@@ -1,7 +1,8 @@
 // DOM mínimo para o teste de fluxo do app (index.html), sem dependências. Cobre só o que o <script>
 // da página usa: getElementById, createElement, querySelector(All) com seletores simples, eventos com
-// propagação, textContent, value/checked/disabled/hidden, dataset, select com options e download por
-// <a download>. A árvore vem do <body> do próprio HTML, para os ids e a estrutura serem os da página.
+// propagação, textContent, value/checked/disabled/hidden, dataset, atributos (set/get/has/remove), select
+// com options, foco, scrollIntoView (registrado em document.rolagens) e download por <a download>. A
+// árvore vem do <body> do próprio HTML, para os ids e a estrutura serem os da página.
 const VAZIOS = new Set(['input', 'meta', 'br', 'hr', 'img', 'link', 'source', 'wbr']);
 const SEM_BOLHA = new Set(['focus', 'blur']);
 const ENTIDADES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: '\u{A0}' };
@@ -51,6 +52,7 @@ class Elemento extends No {
   setAttribute(k, v) { this.attrs[k] = String(v); if (k.startsWith('data-')) this.dataset[camel(k.slice(5))] = String(v); }
   getAttribute(k) { return k in this.attrs ? this.attrs[k] : null; }
   hasAttribute(k) { return k in this.attrs; }
+  removeAttribute(k) { delete this.attrs[k]; if (k.startsWith('data-')) delete this.dataset[camel(k.slice(5))]; }
   get id() { return this.attrs.id || ''; }
   set id(v) { this.attrs.id = String(v); }
   get type() { return (this.attrs.type || (this.tagName === 'INPUT' ? 'text' : this.tagName === 'BUTTON' ? 'submit' : '')).toLowerCase(); }
@@ -90,6 +92,7 @@ class Elemento extends No {
     this._valor = s;
   }
   focus() { this.ownerDocument.activeElement = this; }
+  scrollIntoView(opcoes) { this.ownerDocument.rolagens.push({ el: this, opcoes }); }
   blur() { if (this.ownerDocument.activeElement === this) this.ownerDocument.activeElement = this.ownerDocument.body; }
   click() {
     if (this.disabled) return;
@@ -129,7 +132,7 @@ function casa(el, sel) {
 }
 
 class Documento extends No {
-  constructor() { super(null); this.ownerDocument = this; this.downloads = []; this.title = ''; this.body = new Elemento(this, 'body'); this.body.parentNode = this; this.activeElement = this.body; }
+  constructor() { super(null); this.ownerDocument = this; this.downloads = []; this.rolagens = []; this.title = ''; this.body = new Elemento(this, 'body'); this.body.parentNode = this; this.activeElement = this.body; }
   createElement(tag) { return new Elemento(this, tag); }
   getElementById(id) { return this.body.querySelectorAll(`#${id}`)[0] || null; }
   querySelectorAll(sel) { return this.body.querySelectorAll(sel); }

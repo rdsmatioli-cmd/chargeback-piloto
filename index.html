@@ -4,14 +4,36 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-vAwe5AhpnfjmtNpkZ8rB3mTVLRda09vI1Whnf+RcpQQ='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-mA6vOKbGiu9dpW4lrlRwiCw0cJagJeixo8fmi8M4Zpo='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
-body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
-fieldset{margin:.5rem 0}label{display:block;margin:.3rem 0}
-input,select,textarea{max-width:100%;box-sizing:border-box}select{width:100%}
-#aviso{border:1px solid #888;padding:.5rem;background:#f4f4f4}
+/* Cores do blog (blog/index.html). CB-11 de 31/10: campos e botões com a fonte da página (16 px; abaixo disso o
+   iOS dá zoom ao focar), alvo de toque de 44 px, campos de texto na largura toda e prévia vazia oculta. */
+:root{--txt:#0f1f19;--txt2:#4b5a53;--prim:#0a7a54;--tinta:#0b2b20;--suave:#eef6f3;--erro:#b00020}
+body{font-family:system-ui,sans-serif;line-height:1.5;max-width:760px;margin:2rem auto;padding:0 1rem;color:var(--txt);background:#fff}
+h1,h2{color:var(--tinta);line-height:1.25}
+fieldset{margin:.5rem 0}label{display:block;margin:.5rem 0}
+input,select,textarea,button{font:inherit;color:inherit;max-width:100%;box-sizing:border-box}
+input,select,button{min-height:44px}
+input,select,textarea{padding:.5rem;border:1px solid var(--txt2);border-radius:4px;background:#fff}
+input[type=text],input[type=date],select,textarea{display:block;width:100%;margin-top:.25rem}
+input[type=file]{display:block;width:100%;padding:0;border:0}
+input[type=file]::file-selector-button{font:inherit;min-height:44px;margin-right:.75rem;padding:.5rem 1rem;border:1px solid var(--txt2);border-radius:4px;background:#fff;color:var(--tinta)}
+input[type=checkbox]{flex:none;width:1.5rem;height:1.5rem;min-height:0;margin:0;accent-color:var(--prim)}
+label.opcao{display:flex;gap:.5rem;align-items:flex-start}
+button{padding:.5rem 1rem;border:1px solid var(--txt2);border-radius:4px;background:#fff;color:var(--tinta);cursor:pointer}
+#gerar,#baixar{background:var(--prim);border-color:var(--prim);color:#fff;font-weight:600}
+button:disabled{cursor:not-allowed;opacity:.6}
+:focus-visible{outline:3px solid var(--prim);outline-offset:2px}
+#lista-fatos li{margin:.25rem 0}#lista-fatos button{margin-left:.5rem}
+/* CB-08 de 31/10: mensagem de campo logo depois dele; erro com aria-invalid. */
+.msg{margin:.25rem 0 .75rem;padding:.25rem .5rem;border-left:4px solid var(--txt2)}
+.msg.erro{border-left-color:var(--erro);color:var(--erro)}
+[aria-invalid=true]{border:2px solid var(--erro)}
+#aviso{border:1px solid var(--txt2);border-left:4px solid var(--prim);padding:.5rem;background:var(--suave)}
+#fato-status{margin:.25rem 0}
 pre{white-space:pre-wrap;border:1px solid #ccc;padding:.5rem}
+#previa:empty{display:none}
 footer{margin-top:2rem;font-size:.85rem;border-top:1px solid #ccc}
 </style>
 </head>
@@ -20,16 +42,19 @@ footer{margin-top:2rem;font-size:.85rem;border-top:1px solid #ccc}
 <h1 id="titulo">Organize as provas da sua disputa de chargeback</h1>
 <p id="o1"></p>
 <p id="ag1"></p>
-<p id="aviso" role="alert" hidden></p>
-<label><input type="checkbox" id="a1"> <span id="a1-texto"></span></label>
+<label class="opcao"><input type="checkbox" id="a1"> <span id="a1-texto"></span></label>
 <section id="form" hidden>
   <h2>1. Identificação</h2>
   <label>Identificação do pedido <input type="text" id="pedido" autocomplete="off"></label>
+  <p id="pedido-erro" class="msg" hidden></p>
   <label>4 últimos dígitos do cartão (opcional) <input type="text" id="ultimos4" inputmode="numeric" autocomplete="off"></label>
+  <p id="ultimos4-erro" class="msg" hidden></p>
   <label>CNPJ (opcional) <input type="text" id="cnpj" autocomplete="off"></label>
-  <label><input type="checkbox" id="p1" disabled> <span id="p1-texto"></span></label>
+  <p id="cnpj-erro" class="msg" hidden></p>
+  <label class="opcao"><input type="checkbox" id="p1" disabled> <span id="p1-texto"></span></label>
   <label>Gateway ou adquirente <select id="gateway"><option value="">(não informar)</option></select></label>
   <label>Motivo indicado pela adquirente <select id="motivo"><option value="">(selecione o motivo)</option></select></label>
+  <p id="motivo-erro" class="msg" hidden></p>
   <p id="fonte-motivo"></p>
   <p id="secao-motivo" hidden></p>
   <p id="obs-motivo" hidden></p>
@@ -38,17 +63,22 @@ footer{margin-top:2rem;font-size:.85rem;border-top:1px solid #ccc}
   <h2>2. Cronologia</h2>
   <p id="a2-texto"></p>
   <label>Data <input type="date" id="fato-data"></label>
+  <p id="fato-data-erro" class="msg" hidden></p>
   <label>Fato <textarea id="fato-desc" rows="3"></textarea></label>
+  <p id="fato-desc-erro" class="msg" hidden></p>
   <button type="button" id="add-fato">Adicionar fato</button>
+  <p id="fato-status" role="status"></p>
   <ul id="lista-fatos"></ul>
-  <h2>3. Documentos</h2>
-  <input type="file" id="docs" multiple>
+  <h2 id="docs-titulo">3. Documentos</h2>
+  <input type="file" id="docs" multiple aria-labelledby="docs-titulo">
+  <p id="docs-erro" class="msg" hidden></p>
   <h2>4. Evidências do motivo</h2>
   <div id="vinculos"></div>
   <button type="button" id="gerar">Gerar dossiê</button>
+  <p id="aviso" role="alert" hidden></p>
   <pre id="previa"></pre>
   <div id="etapa-d1" hidden>
-    <label><input type="checkbox" id="d1"> <span id="d1-texto"></span></label>
+    <label class="opcao"><input type="checkbox" id="d1"> <span id="d1-texto"></span></label>
     <button type="button" id="baixar" disabled>Baixar dossiê</button>
   </div>
 </section>
@@ -996,35 +1026,70 @@ function nomeArquivoDossie(pedido, hoje = hojeLocal()) {
 }
 
 // Dossiê (CB-02). P-1 não entra (CP-09).
+// CB-10 de 31/10: cada linha leva a origem (campo do formulário; sem origem, texto fixo do dossiê ou do motivo) e
+// o dossiê devolve, além da lista de termos vedados do texto inteiro, os termos por origem, para a mensagem dizer
+// onde está cada um. Nenhum termo da lista tem quebra de linha: a busca linha a linha acha o mesmo que no texto.
 function montarDossie({ pedido, ultimos4, cnpj, gateway, motivo, fatos, documentos, vinculos }) {
   const ordenados = ordenarFatos(fatos);
   const L = [];
-  L.push('DOSSIÊ DE DISPUTA DE CHARGEBACK', '', '1. Identificação do pedido');
-  L.push(`Pedido: ${pedido}`);
-  if (ultimos4) L.push(`Cartão: **** **** **** ${ultimos4}`);
-  if (cnpj) L.push(`CNPJ do lojista: ${cnpj}`);
-  if (gateway) L.push(`Gateway ou adquirente: ${gateway}`);
-  L.push(`Motivo informado: ${rotuloMotivo(motivo)}`, '', '2. Cronologia');
+  const add = (origem, ...linhas) => { for (const t of linhas) L.push({ t, origem }); };
+  add(null, 'DOSSIÊ DE DISPUTA DE CHARGEBACK', '', '1. Identificação do pedido');
+  add({ campo: 'pedido' }, `Pedido: ${pedido}`);
+  if (ultimos4) add({ campo: 'ultimos4' }, `Cartão: **** **** **** ${ultimos4}`);
+  if (cnpj) add({ campo: 'cnpj' }, `CNPJ do lojista: ${cnpj}`);
+  if (gateway) add(null, `Gateway ou adquirente: ${gateway}`);
+  add(null, `Motivo informado: ${rotuloMotivo(motivo)}`, '', '2. Cronologia');
   // CB-04 de 31/10: fato de várias linhas sai com as linhas seguintes recuadas, para não imitar cabeçalho
   // de seção nem item de documento do dossiê.
-  for (const f of ordenados) {
+  ordenados.forEach((f, i) => {
     const [primeira, ...resto] = f.descricao.split('\n');
-    L.push(`${dataBR(f.data)}: ${primeira}`, ...resto.map((l) => (l ? `  ${l}` : '')));
-  }
-  L.push('', '3. Documentos anexados pelo lojista');
-  documentos.forEach((d, i) => L.push(`D${i + 1}. ${d.nome} (${d.tamanho} bytes)`));
-  L.push('', '4. Correspondência documento x requisito de evidência');
+    add({ campo: 'fato', n: i + 1, data: f.data }, `${dataBR(f.data)}: ${primeira}`, ...resto.map((l) => (l ? `  ${l}` : '')));
+  });
+  add(null, '', '3. Documentos anexados pelo lojista');
+  documentos.forEach((d, i) => add({ campo: 'documento', n: i + 1, nome: d.nome }, `D${i + 1}. ${d.nome} (${d.tamanho} bytes)`));
+  add(null, '', '4. Correspondência documento x requisito de evidência');
   motivo.evidencias.forEach((ev, i) => {
     const ds = (vinculos[i] || []).map((k) => `D${k + 1}`);
-    L.push(`${ev}: ${ds.length ? ds.join(', ') : 'nenhum documento anexado'}`);
+    add(null, `${ev}: ${ds.length ? ds.join(', ') : 'nenhum documento anexado'}`);
   });
-  if (motivo.observacao && motivo.observacao !== linhaFonte(motivo)) L.push(motivo.observacao);
-  L.push(linhaFonte(motivo));
-  if (motivo.secao_pagina) L.push(motivo.secao_pagina);
-  L.push(RODAPE_MATRIZ, RODAPE_PRAZOS);
-  if (motivo.bandeira === 'Elo') L.push(RODAPE_ELO);
-  const texto = L.join('\n') + '\n';
-  return { texto, vedados: encontrarVedados(texto) };
+  if (motivo.observacao && motivo.observacao !== linhaFonte(motivo)) add(null, motivo.observacao);
+  add(null, linhaFonte(motivo));
+  if (motivo.secao_pagina) add(null, motivo.secao_pagina);
+  add(null, RODAPE_MATRIZ, RODAPE_PRAZOS);
+  if (motivo.bandeira === 'Elo') add(null, RODAPE_ELO);
+  const texto = L.map((l) => l.t).join('\n') + '\n';
+  const origens = [];
+  for (const { t, origem } of L) {
+    const termos = encontrarVedados(t);
+    if (!termos.length) continue;
+    const o = origem || { campo: 'fixo' };
+    const mesma = origens.find((x) => x.campo === o.campo && x.n === o.n);
+    if (mesma) mesma.termos.push(...termos.filter((v) => !mesma.termos.includes(v)));
+    else origens.push({ ...o, termos: [...termos] });
+  }
+  return { texto, vedados: encontrarVedados(texto), origens };
+}
+
+// CB-10 de 31/10: mensagens de termo vedado com a origem. O nome do arquivo não se edita na página: a saída é
+// renomear o arquivo e selecionar de novo (a seleção substitui a lista inteira).
+const RENOMEAR = 'Renomeie o arquivo no seu dispositivo e selecione de novo todos os documentos.';
+function onde(o) {
+  if (o.campo === 'pedido') return 'no pedido';
+  if (o.campo === 'ultimos4') return 'nos 4 últimos dígitos';
+  if (o.campo === 'cnpj') return 'no CNPJ';
+  if (o.campo === 'fato') return `no fato de ${dataBR(o.data)}`;
+  if (o.campo === 'documento') return `no nome do documento D${o.n}, ${o.nome}`;
+  return 'no texto do motivo';
+}
+function mensagemVedados(origens) {
+  const partes = origens.map((o) => `${o.termos.join(', ')} (${onde(o)})`).join('; ');
+  return `Remova os termos não permitidos no dossiê: ${partes}.` + (origens.some((o) => o.campo === 'documento') ? ` ${RENOMEAR}` : '');
+}
+// Mensagem do seletor de documentos para os nomes com termo vedado (na seleção e ao gerar).
+function mensagemDocumentos(documentos) {
+  const ruins = documentos.map((d, i) => ({ n: i + 1, nome: d.nome, termos: encontrarVedados(d.nome) })).filter((d) => d.termos.length);
+  if (!ruins.length) return '';
+  return ruins.map((d) => `O nome do documento D${d.n} (${d.nome}) tem termo não permitido no dossiê: ${d.termos.join(', ')}.`).join(' ') + ` ${RENOMEAR}`;
 }
 
 // CB-01 de 31/10: dados do dossiê a partir dos valores do formulário, sem tocar na página. gerar() usa para
@@ -1072,7 +1137,32 @@ const $ = (id) => document.getElementById(id);
 const estado = { documentos: [], fatos: [], dossie: null };
 
 function txt(id, t) { $(id).textContent = t; }
-function aviso(msg) { const a = $('aviso'); a.textContent = msg || ''; a.hidden = !msg; }
+// CB-08 de 31/10: o aviso geral (role=alert) fica logo depois do botão Gerar, onde está quem clicou em Gerar ou
+// Baixar; rolar=true o traz para o meio da tela quando não há campo para focar. No topo, ficava fora da tela.
+function aviso(msg, rolar = false) {
+  const a = $('aviso'); a.textContent = msg || ''; a.hidden = !msg;
+  if (msg && rolar) a.scrollIntoView({ block: 'center' });
+}
+
+// CB-08 de 31/10: mensagem de campo num <p id="<id>-erro"> logo depois dele, ligada por aria-describedby. Erro marca
+// aria-invalid; nota (A-3/A-3b do saneamento daquele campo) não, e vai também para o aviso geral, que o leitor de
+// tela anuncia. A próxima edição do campo limpa a mensagem (ouvinte em iniciar()).
+const CAMPOS_COM_MENSAGEM = ['pedido', 'ultimos4', 'cnpj', 'motivo', 'fato-data', 'fato-desc', 'docs'];
+function mensagemCampo(id, msg, erro) {
+  const el = $(id), m = $(`${id}-erro`);
+  m.textContent = msg; m.hidden = false; m.setAttribute('class', erro ? 'msg erro' : 'msg');
+  el.setAttribute('aria-describedby', m.id);
+  if (erro) el.setAttribute('aria-invalid', 'true'); else el.removeAttribute('aria-invalid');
+}
+function limparCampo(id) {
+  const el = $(id), m = $(`${id}-erro`);
+  m.textContent = ''; m.hidden = true; m.setAttribute('class', 'msg');
+  el.removeAttribute('aria-invalid'); el.removeAttribute('aria-describedby');
+}
+// Foco no campo e a mensagem dele no meio da tela (o campo fica logo acima dela).
+function focarCampo(id) { $(id).focus({ preventScroll: true }); $(`${id}-erro`).scrollIntoView({ block: 'center' }); }
+function erroCampo(id, msg, focar = true) { mensagemCampo(id, msg, true); if (focar) focarCampo(id); }
+function avisoCampo(id, msg) { mensagemCampo(id, msg, false); aviso(msg); }
 
 function iniciar() {
   document.title = TITULO;
@@ -1105,6 +1195,12 @@ function iniciar() {
 
   $('a1').addEventListener('change', () => { $('form').hidden = !$('a1').checked; });
 
+  // CB-08 de 31/10: a próxima edição do campo limpa a mensagem dele. Registrado antes dos outros ouvintes, que
+  // podem escrever uma mensagem nova no mesmo evento (A-3 dos 4 últimos dígitos). CB-09: editar o fato tira o
+  // anúncio 'Fato adicionado.'.
+  for (const id of CAMPOS_COM_MENSAGEM) $(id).addEventListener('input', () => limparCampo(id));
+  for (const id of ['fato-data', 'fato-desc']) $(id).addEventListener('input', () => txt('fato-status', ''));
+
   // CB-06 de 31/10: o seletor de data já limita o intervalo; o add-fato confere de novo.
   $('fato-data').min = DATA_MIN;
   $('fato-data').max = hojeLocal();
@@ -1113,7 +1209,7 @@ function iniciar() {
   document.querySelectorAll('input[type=text], textarea').forEach((el) => {
     if (el.id === 'ultimos4') return;
     const ctl = controladorCampo(el.id);
-    const aplicar = (fn) => { const r = fn(el.value); if (r.aviso) aviso(r.aviso); if (r.texto !== el.value) el.value = r.texto; };
+    const aplicar = (fn) => { const r = fn(el.value); if (r.texto !== el.value) el.value = r.texto; if (r.aviso) avisoCampo(el.id, r.aviso); };
     el.addEventListener('paste', () => setTimeout(() => aplicar(ctl.aoColar), 0));
     el.addEventListener('blur', () => aplicar(ctl.aoSair));
     el.addEventListener('change', () => aplicar(ctl.aoSair));
@@ -1126,7 +1222,7 @@ function iniciar() {
   // Só os 4 últimos dígitos: mais de 4 dígitos (PAN digitado ou colado) limpa o campo + A-3.
   const ultimos4 = () => {
     const el = $('ultimos4'); const d = el.value.replace(/\D/g, '');
-    if (d.length > 4) { el.value = ''; aviso(TEXTOS['A-3']); } else if (el.value !== d) el.value = d;
+    if (d.length > 4) { el.value = ''; avisoCampo('ultimos4', TEXTOS['A-3']); } else if (el.value !== d) el.value = d;
   };
   $('ultimos4').addEventListener('input', ultimos4);
   $('ultimos4').addEventListener('paste', () => setTimeout(ultimos4, 0));
@@ -1146,36 +1242,46 @@ function iniciar() {
       if (r.aviso) avisos.push(r.aviso);
       return { nome: r.texto || '[nome removido]', tamanho: f.size };
     });
-    if (avisos.length) aviso(avisos.includes(TEXTOS['A-3']) ? TEXTOS['A-3'] : avisos[0]);
+    limparCampo('docs');
+    const a3 = avisos.length ? (avisos.includes(TEXTOS['A-3']) ? TEXTOS['A-3'] : avisos[0]) : '';
+    if (a3) avisoCampo('docs', a3);
+    // CB-10 de 31/10: nome com termo vedado bloquearia o Baixar; avisa já na seleção, com o documento e a saída.
+    const vedados = mensagemDocumentos(estado.documentos);
+    if (vedados) erroCampo('docs', [a3, vedados].filter(Boolean).join(' '));
     invalidarDossie();
     renderVinculos();
   });
   $('motivo').addEventListener('change', () => { invalidarDossie(); renderVinculos(); });
 
   $('add-fato').addEventListener('click', () => {
-    // CB-02: o blur do campo roda antes do clique e já mascarou o cartão e mostrou o A-3;
-    // aqui o texto chega mascarado e sanear() não devolve mais o A-3.
-    const a3Visivel = !$('aviso').hidden && $('aviso').textContent.startsWith(TEXTOS['A-3']);
+    // CB-09 de 31/10: cada tentativa recomeça as mensagens dos dois campos; o que falta (data, descrição) ou o termo
+    // vedado vai para o campo, com foco no primeiro. O A-3 do saneamento fica no aviso geral e junto do fato.
+    // O blur do campo roda antes do clique e já mascarou o cartão; aqui sanear() não devolve mais o A-3.
+    limparCampo('fato-data'); limparCampo('fato-desc'); txt('fato-status', '');
     const data = $('fato-data').value;
     const desc = sanearEntrada('fato-desc', $('fato-desc').value);
-    if (desc.aviso) aviso(desc.aviso);
     $('fato-desc').value = desc.texto;
-    if (!desc.texto.trim()) return;
+    if (desc.aviso) avisoCampo('fato-desc', desc.aviso);
     // CB-06 de 31/10: data real entre 01/01/2000 e hoje. O máximo é recalculado (a página pode virar o dia aberta).
     const hoje = hojeLocal();
     $('fato-data').max = hoje;
-    if (!validarDataFato(data, hoje)) {
-      aviso([a3Visivel ? TEXTOS['A-3'] : desc.aviso, `Informe a data do fato entre ${dataBR(DATA_MIN)} e hoje (${dataBR(hoje)}).`].filter(Boolean).join(' '));
-      return $('fato-data').focus();
-    }
+    const erros = [];
+    if (!validarDataFato(data, hoje)) erros.push(['fato-data', `Informe a data do fato entre ${dataBR(DATA_MIN)} e hoje (${dataBR(hoje)}).`]);
     // CB-02: fato com termo vedado não entra; o texto fica no campo para edição.
-    // A recusa se soma ao A-3 que estava visível, em vez de substituí-lo.
     const vedados = encontrarVedados(desc.texto);
-    if (vedados.length) return aviso([a3Visivel ? TEXTOS['A-3'] : desc.aviso, `Remova os termos não permitidos no fato: ${vedados.join(', ')}.`].filter(Boolean).join(' '));
+    if (!desc.texto.trim()) erros.push(['fato-desc', 'Descreva o fato.']);
+    else if (vedados.length) erros.push(['fato-desc', `Remova os termos não permitidos no fato: ${vedados.join(', ')}.`]);
+    if (erros.length) {
+      for (const [id, msg] of erros) erroCampo(id, id === 'fato-desc' && desc.aviso ? `${desc.aviso} ${msg}` : msg, false);
+      return focarCampo(erros[0][0]);
+    }
     estado.fatos.push({ data, descricao: desc.texto.trim() });
     $('fato-desc').value = '';
     invalidarDossie();
     renderFatos();
+    // CB-09 de 31/10: anúncio em role=status e foco de volta na data, para o próximo fato.
+    txt('fato-status', 'Fato adicionado.');
+    $('fato-data').focus();
   });
 
   $('gerar').addEventListener('click', gerar);
@@ -1196,7 +1302,7 @@ function renderFatos() {
     rm.setAttribute('aria-label', `Remover fato de ${dataBR(f.data)}` + (doDia.length > 1 ? ` (${doDia.indexOf(f) + 1}º do dia)` : ''));
     rm.addEventListener('click', () => {
       estado.fatos.splice(estado.fatos.indexOf(f), 1);
-      invalidarDossie(); aviso('');
+      invalidarDossie(); aviso(''); txt('fato-status', '');
       renderFatos();
       // O botão focado foi recriado: foco no Remover seguinte, ou no anterior; sem fatos, no campo do fato.
       const bs = $('lista-fatos').querySelectorAll('button');
@@ -1220,7 +1326,7 @@ function renderVinculos() {
     const fs = document.createElement('fieldset');
     const lg = document.createElement('legend'); lg.textContent = ev; fs.appendChild(lg);
     estado.documentos.forEach((d, k) => {
-      const l = document.createElement('label');
+      const l = document.createElement('label'); l.setAttribute('class', 'opcao');
       const c = document.createElement('input'); c.type = 'checkbox'; c.dataset.ev = String(i); c.dataset.doc = String(k);
       l.appendChild(c); l.append(` D${k + 1}. ${d.nome}`); fs.appendChild(l);
     });
@@ -1257,19 +1363,31 @@ function gerar() {
   const a3Visivel = !$('aviso').hidden && $('aviso').textContent.startsWith(TEXTOS['A-3']);
   invalidarDossie();
   aviso('');
-  if (dossieBloqueadoPorExemplo(PILOTO, MATRIZ)) return aviso('Build de piloto com linha de exemplo na matriz: dossiê bloqueado.');
+  for (const id of CAMPOS_COM_MENSAGEM) limparCampo(id);
+  if (dossieBloqueadoPorExemplo(PILOTO, MATRIZ)) return aviso('Build de piloto com linha de exemplo na matriz: dossiê bloqueado.', true);
   const r = dadosDoFormulario(lerFormulario());
   if (a3Visivel && !r.avisos.includes(TEXTOS['A-3'])) r.avisos.unshift(TEXTOS['A-3']);
   // Gravar o valor saneado no campo não dispara input/change: não descarta o que se está gerando.
   for (const id of ['pedido', 'cnpj']) if ($(id).value !== r.valores[id]) $(id).value = r.valores[id];
   atualizarP1();
-  // A recusa se soma ao A-3 do saneamento, em vez de substituí-lo; o foco vai para o campo (CB-03 de 31/10).
-  if (!r.ok) { aviso([...r.avisos, r.erro].join(' ')); $(r.campo).focus(); return; }
+  // CB-08 de 31/10: a recusa vai para o campo (mensagem logo depois dele, aria-invalid, foco e rolagem); o A-3 do
+  // saneamento fica no aviso geral, junto do botão.
+  if (!r.ok) { aviso(r.avisos.join(' ')); erroCampo(r.campo, r.erro); return; }
   const d = montarDossie(r.dados);
   d.nomeArquivo = nomeArquivoDossie(r.dados.pedido);   // CB-06 de 31/10: um nome por disputa
   estado.dossie = d;
   $('previa').textContent = d.texto;
-  aviso([...r.avisos, d.vedados.length ? `Remova os termos não permitidos no dossiê: ${d.vedados.join(', ')}.` : ''].filter(Boolean).join(' '));
+  // CB-10 de 31/10: termo vedado com a origem no aviso geral e no campo de onde veio, com foco no primeiro.
+  // O CNPJ não se altera: a mensagem só diz o termo (a lista de termos não muda neste lote).
+  const campos = [];
+  for (const o of d.origens) {
+    const lista = `${o.termos.length > 1 ? 'termos não permitidos' : 'termo não permitido'} no dossiê: ${o.termos.join(', ')}.`;
+    const msg = o.campo === 'documento' ? mensagemDocumentos(r.dados.documentos) : o.campo === 'cnpj' ? `O CNPJ forma ${lista}` : `Remova ${o.termos.length > 1 ? 'os' : 'o'} ${lista}`;
+    const id = o.campo === 'documento' ? 'docs' : o.campo;
+    if (CAMPOS_COM_MENSAGEM.includes(id) && !campos.includes(id)) { erroCampo(id, msg, false); campos.push(id); }
+  }
+  aviso([...r.avisos, d.origens.length ? mensagemVedados(d.origens) : ''].filter(Boolean).join(' '), !campos.length);
+  if (campos.length) focarCampo(CAMPOS_COM_MENSAGEM.find((id) => campos.includes(id)));
   // CB-02 de 31/10: cada geração pede nova D-1; Baixar fica desabilitado até ela ser marcada de novo.
   $('d1').checked = false;
   $('etapa-d1').hidden = false;
@@ -1287,7 +1405,7 @@ function baixar() {
   const r = dadosDoFormulario(lerFormulario());
   if (!r.ok || montarDossie(r.dados).texto !== estado.dossie.texto) {
     invalidarDossie();
-    return aviso('Os dados do formulário mudaram depois da geração. Gere o dossiê de novo.');
+    return aviso('Os dados do formulário mudaram depois da geração. Gere o dossiê de novo.', true);
   }
   const blob = new Blob([estado.dossie.texto], { type: 'text/plain;charset=utf-8' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = estado.dossie.nomeArquivo;

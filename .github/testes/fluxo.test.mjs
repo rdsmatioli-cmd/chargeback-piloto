@@ -3,6 +3,7 @@
 // como o navegador (input, change, click) e confere a tela, o estado e o arquivo baixado.
 // CB-01 a CB-06: achados do lote 'Integridade do dossiê baixado' (31/10/2026), citados no index.html
 // como 'CB-0n de 31/10'; não são os CB-xx de laudos anteriores que aparecem nos comentários antigos.
+// CB-07 a CB-10: lote 'Acessibilidade, mensagens de erro e mobile do formulário' (31/10/2026).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -11,7 +12,7 @@ import { documentoDe, contextoDe, Evento } from './dom-minimo.mjs';
 
 const raiz = new URL('../../', import.meta.url);
 const html = readFileSync(new URL('index.html', raiz), 'utf8');
-const INTERNOS = ['estado', 'MATRIZ', 'TEXTOS'];
+const INTERNOS = ['estado', 'MATRIZ', 'TEXTOS', 'validarCNPJ'];
 
 function abrir() {
   const doc = documentoDe(html);
@@ -37,6 +38,9 @@ function abrir() {
     fato(data, desc) { p.preencher('fato-data', data); p.preencher('fato-desc', desc); p.clicar('add-fato'); },
     baixados() { return doc.downloads.map((d) => ({ nome: d.nome, texto: ctx.blobs.get(d.href).texto() })); },
     aviso() { return $('aviso').hidden ? '' : $('aviso').textContent; },
+    // Mensagem do campo (CB-08): texto do <p id="<id>-erro"> quando visível.
+    erro(id) { const e = $(`${id}-erro`); return e && !e.hidden ? e.textContent : ''; },
+    invalido(id) { return $(id).getAttribute('aria-invalid') === 'true'; },
     podeBaixar() { return !$('baixar').disabled; }
   };
   return p;
@@ -91,7 +95,9 @@ test('CB-03: gerar sem motivo não cria estado.dossie, avisa e põe o foco no se
   assert.equal(p.t.estado.dossie, null);
   assert.equal(p.$('previa').textContent, '');
   assert.ok(p.$('etapa-d1').hidden);
-  assert.match(p.aviso(), /motivo/i);
+  // CB-08: a recusa fica junto do campo (antes ia para o #aviso do topo).
+  assert.match(p.erro('motivo'), /motivo/i);
+  assert.ok(p.invalido('motivo'));
   assert.equal(p.doc.activeElement, p.$('motivo'));
 });
 test('CB-03: com o motivo escolhido, as evidências aparecem e o dossiê sai com ele', () => {
@@ -211,7 +217,8 @@ test('CB-05: Gerar com CNPJ inválido recusa, avisa e põe o foco no campo', () 
   p.preencher('cnpj', '123');
   p.clicar('gerar');
   assert.equal(p.t.estado.dossie, null);
-  assert.match(p.aviso(), /CNPJ/);
+  assert.match(p.erro('cnpj'), /CNPJ/);
+  assert.ok(p.invalido('cnpj'));
   assert.equal(p.doc.activeElement, p.$('cnpj'));
   p.preencher('cnpj', '12abc34501de35');
   p.clicar('gerar');
@@ -235,7 +242,7 @@ test('Revisão CB-05: CNPJ alfanumérico lido como PAN é mascarado e não vai a
     assert.equal(p.$('cnpj').value, '**** **** **** 0438', `sair=${sair}`);
     assert.equal(p.t.estado.dossie, null, `sair=${sair}`);
     assert.ok(p.aviso().startsWith(p.t.TEXTOS['A-3']), p.aviso());
-    assert.match(p.aviso(), /CNPJ/);
+    assert.match(p.erro('cnpj'), /CNPJ/);
     p.preencher('cnpj', '');
     p.clicar('gerar');
     assert.ok(p.t.estado.dossie, 'gera sem o CNPJ');
@@ -312,7 +319,8 @@ test('CB-06: data futura, anterior a 2000 ou com ano de 5+ dígitos não entra e
   for (const d of ['2999-01-01', '1999-12-31', '10000-01-01', '275760-09-13', '']) {
     p.fato(d, 'Fato com data inválida');
     assert.equal(p.t.estado.fatos.length, 0, d);
-    assert.match(p.aviso(), /data/i, d);
+    assert.match(p.erro('fato-data'), /data/i, d);
+    assert.ok(p.invalido('fato-data'), d);
     assert.equal(p.$('fato-desc').value, 'Fato com data inválida', `${d}: texto fica no campo`);
   }
   p.fato(hojeLocal(), 'Fato de hoje');
@@ -331,4 +339,188 @@ test('CB-06: lista e dossiê mostram DD/MM/AAAA, em ordem; o arquivo leva pedido
   const [arq] = p.baixados();
   assert.match(arq.texto, /^30\/09\/2026: Antes\n02\/10\/2026: Depois$/m);
   assert.equal(arq.nome, `dossie-chargeback-Pedido-no-77-B-${hojeLocal()}.txt`);
+});
+
+// Elemento logo depois do campo (ou do <label> que o envolve).
+function depoisDoCampo(el) {
+  const ref = el.parentNode.tagName === 'LABEL' ? el.parentNode : el;
+  const irmaos = ref.parentNode.children;
+  return irmaos[irmaos.indexOf(ref) + 1];
+}
+// Nome acessível simplificado: aria-labelledby, aria-label, <label> que envolve ou <label for>.
+function nomeAcessivel(doc, el) {
+  const ids = el.getAttribute('aria-labelledby');
+  if (ids) return ids.split(/\s+/).map((id) => (doc.getElementById(id) || { textContent: '' }).textContent).join(' ').trim();
+  if (el.getAttribute('aria-label')) return el.getAttribute('aria-label').trim();
+  for (let n = el.parentNode; n && n.tagName; n = n.parentNode) if (n.tagName === 'LABEL') return n.textContent.trim();
+  const l = doc.querySelectorAll('label').find((x) => x.getAttribute('for') === el.id);
+  return l ? l.textContent.trim() : '';
+}
+
+// CB-07: o input de arquivos não tinha rótulo (violação 'label' do axe, impacto critical).
+test('CB-07: todo campo do formulário tem nome acessível, inclusive o seletor de documentos', () => {
+  const p = abrir();
+  p.marcar('a1');
+  p.escolher('motivo', p.valorMotivo('Visa', '10.4'));
+  p.anexar([{ name: 'nota.pdf', size: 1 }]);
+  const campos = p.$('form').querySelectorAll('input, select, textarea');
+  assert.ok(campos.length > 8);
+  for (const c of campos) assert.ok(nomeAcessivel(p.doc, c), `sem nome: ${c.id || c.dataset.ev}`);
+  assert.match(nomeAcessivel(p.doc, p.$('docs')), /Documentos/);
+});
+
+// CB-08: recusa de Gerar fica junto do campo, com aria-invalid e aria-describedby, foco e rolagem até ela.
+const RECUSAS = [
+  ['pedido', () => {}, (p) => p.digitar('pedido', 'P'), /^Informe a identificação do pedido\.$/],
+  ['ultimos4', (p) => { p.preencher('pedido', 'PED-1'); p.digitar('ultimos4', '12'); }, (p) => p.digitar('ultimos4', '123'), /4 últimos dígitos/],
+  ['cnpj', (p) => { p.preencher('pedido', 'PED-1'); p.preencher('cnpj', '123'); }, (p) => p.digitar('cnpj', '1234'), /^CNPJ inválido/],
+  ['motivo', (p) => p.preencher('pedido', 'PED-1'), (p) => p.escolher('motivo', p.valorMotivo('Visa', '10.4')), /motivo/]
+];
+for (const [id, preparar, corrigir, msg] of RECUSAS) {
+  test(`CB-08: Gerar com erro em ${id} escreve a mensagem junto do campo, marca e foca o campo`, () => {
+    const p = abrir();
+    p.marcar('a1');
+    preparar(p);
+    p.clicar('gerar');
+    assert.equal(p.t.estado.dossie, null);
+    assert.match(p.erro(id), msg);
+    assert.ok(p.invalido(id));
+    assert.equal(p.$(id).getAttribute('aria-describedby'), `${id}-erro`);
+    assert.equal(depoisDoCampo(p.$(id)).id, `${id}-erro`, 'mensagem logo depois do campo');
+    assert.equal(p.doc.activeElement.id, id);
+    assert.equal(p.aviso(), '', 'o erro do campo não vai para o aviso geral');
+    const rolagem = p.doc.rolagens.at(-1) || { el: {}, opcoes: {} };
+    assert.equal(rolagem.el.id, `${id}-erro`);
+    assert.equal((rolagem.opcoes || {}).block, 'center');
+    corrigir(p);
+    assert.equal(p.erro(id), '', 'a próxima edição limpa a mensagem');
+    assert.equal(p.$(id).getAttribute('aria-invalid'), null);
+    assert.equal(p.$(id).getAttribute('aria-describedby'), null);
+  });
+}
+test('CB-08: o aviso geral (role=alert) fica logo depois do botão Gerar e a página rola até ele', () => {
+  const p = pronto();
+  assert.equal(depoisDoCampo(p.$('gerar')).id, 'aviso');
+  assert.equal(p.$('aviso').getAttribute('role'), 'alert');
+  p.$('pedido').value = 'PED-2';
+  p.clicar('baixar');
+  assert.match(p.aviso(), /Gere o dossiê de novo/);
+  assert.equal(p.doc.rolagens.at(-1)?.el.id, 'aviso');
+});
+test('CB-08: o A-3 da saída do campo aparece junto do campo, sem marcar erro, e no aviso geral', () => {
+  const p = abrir();
+  p.marcar('a1');
+  p.preencher('fato-desc', 'cartão 4111 1111 1111 1111');
+  assert.equal(p.erro('fato-desc'), p.t.TEXTOS['A-3']);
+  assert.equal(p.$('fato-desc').getAttribute('aria-describedby'), 'fato-desc-erro');
+  assert.equal(p.invalido('fato-desc'), false);
+  assert.equal(p.aviso(), p.t.TEXTOS['A-3']);
+  p.digitar('ultimos4', '41111111');
+  assert.equal(p.$('ultimos4').value, '');
+  assert.equal(p.erro('ultimos4'), p.t.TEXTOS['A-3']);
+});
+test('CB-08: Gerar de novo limpa as mensagens de campo que já não valem', () => {
+  const p = abrir();
+  p.marcar('a1');
+  p.clicar('gerar');
+  assert.ok(p.erro('pedido'));
+  p.$('pedido').value = 'PED-1';          // sem evento: a mensagem só sai na próxima geração
+  p.escolher('motivo', p.valorMotivo('Visa', '10.4'));
+  p.clicar('gerar');
+  assert.ok(p.t.estado.dossie);
+  assert.equal(p.erro('pedido'), '');
+  assert.equal(p.invalido('pedido'), false);
+});
+
+// CB-09: 'Adicionar fato' sem data ou sem descrição diz o que falta, no campo; o aviso antigo não fica.
+test('CB-09: fato sem descrição avisa no campo e não deixa o aviso de outro campo', () => {
+  const p = abrir();
+  p.marcar('a1');
+  p.clicar('gerar');                       // erro no pedido
+  p.preencher('fato-data', '2026-10-01');
+  p.clicar('add-fato');
+  assert.equal(p.t.estado.fatos.length, 0);
+  assert.equal(p.erro('fato-desc'), 'Descreva o fato.');
+  assert.ok(p.invalido('fato-desc'));
+  assert.equal(p.doc.activeElement.id, 'fato-desc');
+  assert.equal(p.aviso(), '');
+  assert.doesNotMatch(p.$('fato-status').textContent, /adicionado/);
+});
+test('CB-09: fato sem data e sem descrição marca os dois campos e foca a data', () => {
+  const p = abrir();
+  p.marcar('a1');
+  p.clicar('add-fato');
+  assert.match(p.erro('fato-data'), /^Informe a data do fato entre 01\/01\/2000 e hoje/);
+  assert.equal(p.erro('fato-desc'), 'Descreva o fato.');
+  assert.ok(p.invalido('fato-data') && p.invalido('fato-desc'));
+  assert.equal(p.doc.activeElement.id, 'fato-data');
+  p.preencher('fato-data', '2026-10-01');
+  assert.equal(p.erro('fato-data'), '');
+  assert.equal(p.erro('fato-desc'), 'Descreva o fato.', 'a outra mensagem fica até o campo dela mudar');
+});
+test('CB-09: fato com termo vedado fica no campo, com a mensagem junto dele', () => {
+  const p = abrir();
+  p.marcar('a1');
+  p.fato('2026-10-01', 'Conforme o processo de entrega');
+  assert.equal(p.t.estado.fatos.length, 0);
+  assert.match(p.erro('fato-desc'), /Remova os termos não permitidos no fato: processo\./);
+  assert.equal(p.$('fato-desc').value, 'Conforme o processo de entrega');
+});
+test('CB-09: fato adicionado é anunciado em role=status e o foco volta para a data', () => {
+  const p = abrir();
+  p.marcar('a1');
+  p.clicar('add-fato');
+  p.fato('2026-10-01', 'Pedido entregue');
+  assert.equal(p.t.estado.fatos.length, 1);
+  assert.equal(p.$('fato-status').getAttribute('role'), 'status');
+  assert.equal(p.$('fato-status').textContent, 'Fato adicionado.');
+  assert.equal(p.doc.activeElement.id, 'fato-data');
+  assert.equal(p.erro('fato-data'), '');
+  assert.equal(p.erro('fato-desc'), '');
+  p.digitar('fato-desc', 'outro');
+  assert.equal(p.$('fato-status').textContent, '', 'o anúncio sai na próxima edição do fato');
+});
+
+// CB-10: termo vedado em nome de arquivo, pedido ou CNPJ: a mensagem diz onde está e como resolver.
+test('CB-10: nome de arquivo com termo vedado avisa já na seleção, junto do seletor de documentos', () => {
+  const p = abrir();
+  p.marcar('a1');
+  p.anexar([{ name: 'nota.pdf', size: 1 }, { name: 'processo-entrega.pdf', size: 2 }]);
+  assert.match(p.erro('docs'), /D2 \(processo-entrega\.pdf\)/);
+  assert.match(p.erro('docs'), /: processo\./);
+  assert.match(p.erro('docs'), /Renomeie o arquivo no seu dispositivo e selecione de novo todos os documentos\./);
+  assert.ok(p.invalido('docs'));
+  p.anexar([{ name: 'nota.pdf', size: 1 }]);
+  assert.equal(p.erro('docs'), '');
+  assert.equal(p.invalido('docs'), false);
+});
+test('CB-10: Gerar com termo vedado cita a origem (documento, pedido) e marca o campo', () => {
+  const p = abrir();
+  p.marcar('a1');
+  p.preencher('pedido', 'processo 77');
+  p.escolher('motivo', p.valorMotivo('Visa', '10.4'));
+  p.anexar([{ name: 'processo-entrega.pdf', size: 2 }]);
+  p.clicar('gerar');
+  assert.ok(p.t.estado.dossie);
+  assert.equal(p.podeBaixar(), false);
+  assert.match(p.aviso(), /^Remova os termos não permitidos no dossiê: processo \(no pedido\); processo \(no nome do documento D1, processo-entrega\.pdf\)\. /);
+  assert.match(p.aviso(), /Renomeie o arquivo no seu dispositivo e selecione de novo todos os documentos\./);
+  assert.equal(p.erro('pedido'), 'Remova o termo não permitido no dossiê: processo.');
+  assert.match(p.erro('docs'), /^O nome do documento D1 \(processo-entrega\.pdf\) tem termo não permitido no dossiê: processo\. Renomeie/);
+  assert.ok(p.invalido('pedido') && p.invalido('docs'));
+  assert.equal(p.doc.activeElement.id, 'pedido', 'foco no primeiro campo com termo vedado');
+});
+test('CB-10: CNPJ alfanumérico com termo vedado é apontado no campo CNPJ', () => {
+  const p = abrir();
+  p.marcar('a1');
+  let cnpj = '';
+  for (let dv = 0; dv < 100 && !cnpj; dv++) { const c = `12CDC3450001${String(dv).padStart(2, '0')}`; if (p.t.validarCNPJ(c)) cnpj = c; }
+  assert.ok(cnpj);
+  p.preencher('pedido', 'PED-1');
+  p.preencher('cnpj', cnpj);
+  p.escolher('motivo', p.valorMotivo('Visa', '10.4'));
+  p.clicar('gerar');
+  assert.match(p.aviso(), /CDC \(no CNPJ\)/);
+  assert.equal(p.erro('cnpj'), 'O CNPJ forma termo não permitido no dossiê: CDC.');
+  assert.equal(p.doc.activeElement.id, 'cnpj');
 });

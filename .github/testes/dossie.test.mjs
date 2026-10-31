@@ -2,6 +2,7 @@
 // Carrega o <script> do próprio index.html num vm, como o teste da máscara, e chama as funções da página.
 // CB-01 a CB-06: achados do lote 'Integridade do dossiê baixado' (31/10/2026), citados no index.html
 // como 'CB-0n de 31/10'; não são os CB-xx de laudos anteriores que aparecem nos comentários antigos.
+// CB-10: lote 'Acessibilidade, mensagens de erro e mobile do formulário' (31/10/2026).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -241,4 +242,22 @@ test('CB-06: nome do arquivo traz o pedido saneado e a data', () => {
   assert.equal(longo, `dossie-chargeback-${'A'.repeat(39)}-2026-10-31.txt`);
   for (const p of ['PED-1', 'x'.repeat(100), 'Pedido nº 123/ABC', 'a\u{202E}b', '-a-', '12.ABC.345/01DE-35'])
     assert.match(nomeArquivoDossie(p, hoje), /^dossie-chargeback-(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,38}[A-Za-z0-9])?-)?\d{4}-\d{2}-\d{2}\.txt$/, p);
+});
+
+const json = (v) => JSON.parse(JSON.stringify(v));
+
+// CB-10: montarDossie diz de onde vem cada termo vedado (pedido, CNPJ, fato, documento), e a união das origens
+// é a lista do texto inteiro (nenhum termo vedado atravessa linha: a busca por linha acha o mesmo).
+test('CB-10: montarDossie devolve os termos vedados por origem', () => {
+  const dados = { ...dadosDoFormulario(BASE).dados, pedido: 'processo 9', cnpj: '12.CDC.345/0001-00',
+    fatos: [{ data: '2026-10-02', descricao: 'ok' }, { data: '2026-09-30', descricao: 'linha\ncom parecer' }],
+    documentos: [{ nome: 'nota.pdf', tamanho: 1 }, { nome: 'tese-advogada.pdf', tamanho: 2 }] };
+  const d = montarDossie(dados);
+  assert.deepEqual(json(d.origens), [
+    { campo: 'pedido', termos: ['processo'] },
+    { campo: 'cnpj', termos: ['CDC'] },
+    { campo: 'fato', n: 1, data: '2026-09-30', termos: ['parecer'] },
+    { campo: 'documento', n: 2, nome: 'tese-advogada.pdf', termos: ['tese', 'advogada'] }
+  ]);
+  assert.deepEqual(new Set(d.origens.flatMap((o) => o.termos)), new Set(d.vedados));
 });
