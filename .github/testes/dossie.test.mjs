@@ -1,5 +1,7 @@
 // Testes das funções puras do dossiê (index.html), sem dependências: node --test .github/testes/*.test.mjs
 // Carrega o <script> do próprio index.html num vm, como o teste da máscara, e chama as funções da página.
+// CB-01 a CB-06: achados do lote 'Integridade do dossiê baixado' (31/10/2026), citados no index.html
+// como 'CB-0n de 31/10'; não são os CB-xx de laudos anteriores que aparecem nos comentários antigos.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -7,12 +9,14 @@ import vm from 'node:vm';
 
 const raiz = new URL('../../', import.meta.url);
 const html = readFileSync(new URL('index.html', raiz), 'utf8');
-const NOMES = ['MATRIZ', 'TEXTOS', 'indiceMotivo', 'dadosDoFormulario', 'montarDossie', 'validarCNPJ', 'formatarCNPJ', 'sanearCampo', 'limparTexto', 'sanearEntrada', 'encontrarVedados'];
+const NOMES = ['MATRIZ', 'TEXTOS', 'indiceMotivo', 'dadosDoFormulario', 'montarDossie', 'validarCNPJ', 'formatarCNPJ', 'sanearCampo', 'limparTexto', 'sanearEntrada', 'encontrarVedados',
+  'DATA_MIN', 'hojeLocal', 'validarDataFato', 'dataBR', 'ordenarFatos', 'nomeArquivoDossie'];
 let src = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 src = src.replace(/\}\)\(\);\s*$/, `globalThis.__t = { ${NOMES.map((n) => `${n}: typeof ${n} === 'undefined' ? undefined : ${n}`).join(', ')} };})();`);
 const ctx = { document: { addEventListener() {} }, console };
 vm.createContext(ctx); vm.runInContext(src, ctx);
-const { MATRIZ, TEXTOS, indiceMotivo, dadosDoFormulario, montarDossie, validarCNPJ, formatarCNPJ, sanearCampo, limparTexto, sanearEntrada, encontrarVedados } = ctx.__t;
+const { MATRIZ, TEXTOS, indiceMotivo, dadosDoFormulario, montarDossie, validarCNPJ, formatarCNPJ, sanearCampo, limparTexto, sanearEntrada, encontrarVedados,
+  DATA_MIN, hojeLocal, validarDataFato, dataBR, ordenarFatos, nomeArquivoDossie } = ctx.__t;
 
 // CB-03: índice do motivo validado (inteiro dentro da matriz); vazio ou qualquer outro valor é -1.
 test('CB-03: indiceMotivo aceita só inteiro canônico dentro da matriz', () => {
@@ -154,4 +158,48 @@ test('CB-04: fato de várias linhas sai recuado e não imita seção nem documen
   assert.ok(!linhas.some((l) => /^D9\./.test(l)));
   const i = linhas.findIndex((l) => l.endsWith(': Entrega feita'));
   assert.deepEqual(linhas.slice(i + 1, i + 5), ['  3. Documentos anexados pelo lojista', '  D9. falso.pdf (1 bytes)', '', '  4. Correspondência']);
+});
+
+// CB-06: datas da cronologia entre 01/01/2000 e hoje, exibidas em DD/MM/AAAA; nome de arquivo por disputa.
+test('CB-06: hojeLocal usa a data local (AAAA-MM-DD)', () => {
+  assert.equal(hojeLocal(new Date(2026, 0, 5, 23, 59)), '2026-01-05');
+  assert.equal(hojeLocal(new Date(2026, 9, 31, 0, 1)), '2026-10-31');
+  assert.match(hojeLocal(), /^\d{4}-\d{2}-\d{2}$/);
+});
+test('CB-06: validarDataFato aceita de 2000-01-01 até hoje, só data real com ano de 4 dígitos', () => {
+  const hoje = '2026-10-31';
+  assert.equal(DATA_MIN, '2000-01-01');
+  for (const d of ['2000-01-01', '2026-10-31', '2024-02-29', '2026-10-01']) assert.equal(validarDataFato(d, hoje), true, d);
+  for (const d of ['1999-12-31', '2026-11-01', '2030-01-01', '10000-01-01', '275760-09-13', '2026-02-29', '2026-13-01', '2026-04-31',
+    '2026-00-10', '2026-1-01', '01/10/2026', '', 'abc', undefined]) assert.equal(validarDataFato(d, hoje), false, String(d));
+});
+test('CB-06: dataBR mostra DD/MM/AAAA', () => {
+  assert.equal(dataBR('2026-10-01'), '01/10/2026');
+  assert.equal(dataBR('2000-01-31'), '31/01/2000');
+});
+test('CB-06: ordenarFatos ordena por data válida, estável no mesmo dia, sem alterar a lista', () => {
+  const fatos = [{ data: '2026-10-02', descricao: 'b1' }, { data: '2026-01-15', descricao: 'a' }, { data: '10000-01-01', descricao: 'z' },
+    { data: '2026-10-02', descricao: 'b2' }, { data: '2025-12-31', descricao: 'c' }];
+  const copia = JSON.stringify(fatos);
+  assert.deepEqual([...ordenarFatos(fatos).map((f) => f.descricao)], ['c', 'a', 'b1', 'b2', 'z']);
+  assert.equal(JSON.stringify(fatos), copia);
+});
+test('CB-06: dossiê mostra a cronologia em DD/MM/AAAA e em ordem', () => {
+  const dados = { ...dadosDoFormulario(BASE).dados, fatos: [{ data: '2026-10-02', descricao: 'Depois' }, { data: '2026-09-30', descricao: 'Antes' }] };
+  const t = montarDossie(dados).texto;
+  assert.match(t, /^30\/09\/2026: Antes\n02\/10\/2026: Depois$/m);
+  assert.doesNotMatch(t, /\d{4}-\d{2}-\d{2}:/);
+});
+test('CB-06: nome do arquivo traz o pedido saneado e a data', () => {
+  const hoje = '2026-10-31';
+  assert.equal(nomeArquivoDossie('PED-1', hoje), 'dossie-chargeback-PED-1-2026-10-31.txt');
+  assert.equal(nomeArquivoDossie('Pedido nº 123/ABC', hoje), 'dossie-chargeback-Pedido-no-123-ABC-2026-10-31.txt');
+  assert.equal(nomeArquivoDossie('Ação ção', hoje), 'dossie-chargeback-Acao-cao-2026-10-31.txt');
+  assert.equal(nomeArquivoDossie('**** **** **** 1111', hoje), 'dossie-chargeback-1111-2026-10-31.txt');
+  assert.equal(nomeArquivoDossie('../../etc/passwd', hoje), 'dossie-chargeback-etc-passwd-2026-10-31.txt');
+  for (const p of ['', '   ', '***', '///']) assert.equal(nomeArquivoDossie(p, hoje), 'dossie-chargeback-2026-10-31.txt', p);
+  const longo = nomeArquivoDossie('A'.repeat(39) + '-' + 'B'.repeat(60), hoje);
+  assert.equal(longo, `dossie-chargeback-${'A'.repeat(39)}-2026-10-31.txt`);
+  for (const p of ['PED-1', 'x'.repeat(100), 'Pedido nº 123/ABC', 'a\u{202E}b', '-a-', '12.ABC.345/01DE-35'])
+    assert.match(nomeArquivoDossie(p, hoje), /^dossie-chargeback-(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,38}[A-Za-z0-9])?-)?\d{4}-\d{2}-\d{2}\.txt$/, p);
 });

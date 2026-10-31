@@ -1,6 +1,8 @@
 // Teste de fluxo do app (index.html) num DOM mínimo, sem dependências: node --test .github/testes/*.test.mjs
 // Roda o <script> da página num vm sobre a árvore do próprio HTML (dom-minimo.mjs), dispara os eventos
 // como o navegador (input, change, click) e confere a tela, o estado e o arquivo baixado.
+// CB-01 a CB-06: achados do lote 'Integridade do dossiê baixado' (31/10/2026), citados no index.html
+// como 'CB-0n de 31/10'; não são os CB-xx de laudos anteriores que aparecem nos comentários antigos.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -255,4 +257,38 @@ test('CB-04: caractere invisível sai do campo na saída e do dossiê', () => {
   assert.equal(p.$('pedido').value, 'PED-1');
   p.preencher('fato-desc', `4111${String.fromCodePoint(0xE000)}1111 1111 1111`);
   assert.equal(p.$('fato-desc').value, '**** **** **** 1111');
+});
+
+// CB-06: data do fato entre 01/01/2000 e hoje; lista e dossiê em DD/MM/AAAA; arquivo por disputa.
+const hojeLocal = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+test('CB-06: o campo de data tem min 2000-01-01 e max hoje', () => {
+  const p = abrir();
+  assert.equal(p.$('fato-data').min, '2000-01-01');
+  assert.equal(p.$('fato-data').max, hojeLocal());
+});
+test('CB-06: data futura, anterior a 2000 ou com ano de 5+ dígitos não entra e avisa', () => {
+  const p = abrir();
+  p.marcar('a1');
+  for (const d of ['2999-01-01', '1999-12-31', '10000-01-01', '275760-09-13', '']) {
+    p.fato(d, 'Fato com data inválida');
+    assert.equal(p.t.estado.fatos.length, 0, d);
+    assert.match(p.aviso(), /data/i, d);
+    assert.equal(p.$('fato-desc').value, 'Fato com data inválida', `${d}: texto fica no campo`);
+  }
+  p.fato(hojeLocal(), 'Fato de hoje');
+  assert.equal(p.t.estado.fatos.length, 1);
+});
+test('CB-06: lista e dossiê mostram DD/MM/AAAA, em ordem; o arquivo leva pedido e data', () => {
+  const p = abrir();
+  p.marcar('a1');
+  p.preencher('pedido', 'Pedido nº 77/B');
+  p.escolher('motivo', p.valorMotivo('Visa', '10.4'));
+  p.fato('2026-10-02', 'Depois');
+  p.fato('2026-09-30', 'Antes');
+  const itens = p.$('lista-fatos').children.map((li) => li.firstChild.textContent);
+  assert.deepEqual(itens, ['30/09/2026: Antes ', '02/10/2026: Depois ']);
+  p.clicar('gerar'); p.marcar('d1'); p.clicar('baixar');
+  const [arq] = p.baixados();
+  assert.match(arq.texto, /^30\/09\/2026: Antes\n02\/10\/2026: Depois$/m);
+  assert.equal(arq.nome, `dossie-chargeback-Pedido-no-77-B-${hojeLocal()}.txt`);
 });

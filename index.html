@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-QD+5plj3oy5sQBEUgw1lorwzWLbBza6XDE0ujUEk2vY='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-XY/rccXb+fWVmuuf0lcgiRJGUZHTjzUfughiKx+x43w='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
 body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
@@ -605,7 +605,7 @@ function matrizTemExemplo(matriz = MATRIZ) {
   return matriz.some((m) => m.id === ID_EXEMPLO);
 }
 
-// CB-03: valor do select de motivo -> índice na matriz. Só inteiro canônico dentro da matriz; o
+// CB-03 de 31/10: valor do select de motivo -> índice na matriz. Só inteiro canônico dentro da matriz; o
 // valor vazio de '(selecione o motivo)' e qualquer outro dão -1 (sem motivo escolhido).
 function indiceMotivo(valor, matriz = MATRIZ) {
   if (typeof valor !== 'string' || !/^(?:0|[1-9]\d{0,5})$/.test(valor)) return -1;
@@ -867,7 +867,7 @@ function sanear(texto, livre = true) {
   return { texto: m.texto, aviso: temMencao(m.texto) ? TEXTOS_REVISAO['A-3b'] : null, limpo: false };
 }
 
-// CB-04: caracteres que enganam quem lê o dossiê. Saem os controles bidi (U+202A-202E,
+// CB-04 de 31/10: caracteres que enganam quem lê o dossiê. Saem os controles bidi (U+202A-202E,
 // U+2066-2069, U+200E/200F, U+061C), os de largura zero (U+200B-200D, U+2060, U+FEFF) e as demais
 // formatações invisíveis (categoria Cf, como as tags U+E0020-E007F), os controles C0/C1 e o uso
 // privado (Co: o U+E000 é o marcador interno da máscara e, digitado, partia o PAN). As quebras de
@@ -881,7 +881,7 @@ function limparTexto(texto, umaLinha = false) {
   if (umaLinha) t = t.replace(/\n/g, ' ');
   return t.replace(INVISIVEIS, (c) => (c === '\n' ? c : ''));
 }
-// CB-04: toda entrada de texto da página (campos, fatos, nomes de arquivo) passa por aqui:
+// CB-04 de 31/10: toda entrada de texto da página (campos, fatos, nomes de arquivo) passa por aqui:
 // primeiro limparTexto, depois a máscara de cartão (sanearCampo). Só o fato é de várias linhas.
 function sanearEntrada(id, texto) { return sanearCampo(id, limparTexto(texto, id !== 'fato-desc')); }
 
@@ -898,7 +898,7 @@ function controladorCampo(id) {
 
 function validarUltimos4(v) { return v === '' || /^\d{4}$/.test(v); }
 
-// CP-05: CNPJ com dígitos verificadores válidos. CB-05: aceita também o CNPJ alfanumérico
+// CP-05: CNPJ com dígitos verificadores válidos. CB-05 de 31/10: aceita também o CNPJ alfanumérico
 // (IN RFB 2.229/2024): 12 posições de 0-9 ou A-Z e 2 DVs numéricos, calculados com o código do
 // caractere menos 48 e os mesmos pesos (para dígitos, igual ao cálculo numérico). Minúsculas valem
 // como maiúsculas; pontos, barra, hífen e espaços são ignorados.
@@ -913,7 +913,7 @@ function validarCNPJ(v) {
   };
   return dv(12) === c.charCodeAt(12) - 48 && dv(13) === c.charCodeAt(13) - 48;
 }
-// CB-05: CNPJ do dossiê no formato 00.000.000/0000-00 (ou 12.ABC.345/01DE-35).
+// CB-05 de 31/10: CNPJ do dossiê no formato 00.000.000/0000-00 (ou 12.ABC.345/01DE-35).
 function formatarCNPJ(v) {
   const c = normalizarCNPJ(v);
   return `${c.slice(0, 2)}.${c.slice(2, 5)}.${c.slice(5, 8)}/${c.slice(8, 12)}-${c.slice(12)}`;
@@ -921,7 +921,7 @@ function formatarCNPJ(v) {
 
 // CB-01: no campo CNPJ, um CNPJ válido (só caracteres e pontuação de CNPJ) não é tratado
 // como cartão; 14 dígitos com DV válido podem passar no Luhn. Qualquer outro valor é saneado.
-// CB-05: as 12 primeiras posições aceitam letras (CNPJ alfanumérico).
+// CB-05 de 31/10: as 12 primeiras posições aceitam letras (CNPJ alfanumérico).
 const FORMATO_CNPJ = /^[0-9A-Z]{2}\.?[0-9A-Z]{3}\.?[0-9A-Z]{3}\/?[0-9A-Z]{4}-?\d{2}$/i;
 // Parecer B-02: a exceção não vale quando os 14 dígitos também são um PAN Diners válido
 // (prefixo 30/36/38/39 e Luhn); nesse caso o campo é mascarado como qualquer outro. Só CNPJ todo
@@ -955,9 +955,36 @@ function vedadosNaPagina(textos, matriz) {
   return textos.filter((t) => !ok.has(t) && encontrarVedados(t).length).map((t) => ({ texto: t, vedados: encontrarVedados(t) }));
 }
 
+// CB-06 de 31/10: datas da cronologia. O campo de data aceita ano de até 6 dígitos e data futura; o fato só
+// entra com data real entre 01/01/2000 e hoje (data local), sempre AAAA-MM-DD no estado, o que
+// deixa a ordem alfabética igual à cronológica. Na tela e no dossiê, DD/MM/AAAA.
+const DATA_MIN = '2000-01-01';
+const doisDigitos = (n) => String(n).padStart(2, '0');
+function hojeLocal(agora = new Date()) { return `${agora.getFullYear()}-${doisDigitos(agora.getMonth() + 1)}-${doisDigitos(agora.getDate())}`; }
+function validarDataFato(iso, hoje = hojeLocal()) {
+  if (typeof iso !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+  const [a, m, d] = iso.split('-').map(Number);
+  const dt = new Date(Date.UTC(a, m - 1, d));
+  if (dt.getUTCFullYear() !== a || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return false;
+  return iso >= DATA_MIN && iso <= hoje;
+}
+function dataBR(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso); return m ? `${m[3]}/${m[2]}/${m[1]}` : iso; }
+// Ordem cronológica, estável no mesmo dia (ordem de inclusão); data fora do formato vai para o fim.
+function ordenarFatos(fatos) {
+  const chave = (f) => (/^\d{4}-\d{2}-\d{2}$/.test(f.data) ? f.data : `~${f.data}`);
+  return [...fatos].sort((x, y) => (chave(x) < chave(y) ? -1 : chave(x) > chave(y) ? 1 : 0));
+}
+// CB-06 de 31/10: dossie-chargeback-<pedido>-<AAAA-MM-DD>.txt, com o pedido (já mascarado) reduzido a
+// [A-Za-z0-9-], até 40 caracteres; sem nada aproveitável, só a data.
+function nomeArquivoDossie(pedido, hoje = hojeLocal()) {
+  const p = String(pedido).normalize('NFKD').replace(/\p{M}/gu, '').replace(/[^A-Za-z0-9]+/g, '-')
+    .replace(/^-+/, '').slice(0, 40).replace(/-+$/, '');
+  return `dossie-chargeback-${p ? `${p}-` : ''}${hoje}.txt`;
+}
+
 // Dossiê (CB-02). P-1 não entra (CP-09).
 function montarDossie({ pedido, ultimos4, cnpj, gateway, motivo, fatos, documentos, vinculos }) {
-  const ordenados = [...fatos].sort((a, b) => a.data.localeCompare(b.data));
+  const ordenados = ordenarFatos(fatos);
   const L = [];
   L.push('DOSSIÊ DE DISPUTA DE CHARGEBACK', '', '1. Identificação do pedido');
   L.push(`Pedido: ${pedido}`);
@@ -965,11 +992,11 @@ function montarDossie({ pedido, ultimos4, cnpj, gateway, motivo, fatos, document
   if (cnpj) L.push(`CNPJ do lojista: ${cnpj}`);
   if (gateway) L.push(`Gateway ou adquirente: ${gateway}`);
   L.push(`Motivo informado: ${rotuloMotivo(motivo)}`, '', '2. Cronologia');
-  // CB-04: fato de várias linhas sai com as linhas seguintes recuadas, para não imitar cabeçalho
+  // CB-04 de 31/10: fato de várias linhas sai com as linhas seguintes recuadas, para não imitar cabeçalho
   // de seção nem item de documento do dossiê.
   for (const f of ordenados) {
     const [primeira, ...resto] = f.descricao.split('\n');
-    L.push(`${f.data}: ${primeira}`, ...resto.map((l) => (l ? `  ${l}` : '')));
+    L.push(`${dataBR(f.data)}: ${primeira}`, ...resto.map((l) => (l ? `  ${l}` : '')));
   }
   L.push('', '3. Documentos anexados pelo lojista');
   documentos.forEach((d, i) => L.push(`D${i + 1}. ${d.nome} (${d.tamanho} bytes)`));
@@ -987,7 +1014,7 @@ function montarDossie({ pedido, ultimos4, cnpj, gateway, motivo, fatos, document
   return { texto, vedados: encontrarVedados(texto) };
 }
 
-// CB-01: dados do dossiê a partir dos valores do formulário, sem tocar na página. gerar() usa para
+// CB-01 de 31/10: dados do dossiê a partir dos valores do formulário, sem tocar na página. gerar() usa para
 // montar o dossiê e baixar() para conferir, na hora do download, que o arquivo ainda é o do formulário.
 // Devolve { ok, dados } ou { ok: false, campo, erro }; em ambos, os valores saneados dos campos de
 // texto (para gerar() gravar de volta) e os avisos de cartão (A-3/A-3b) do saneamento.
@@ -999,7 +1026,7 @@ function dadosDoFormulario({ pedido = '', ultimos4 = '', cnpj = '', gateway = ''
   const p = valores.pedido.trim();
   if (!p) return recusa('pedido', 'Informe a identificação do pedido.');
   if (!validarUltimos4(ultimos4)) return recusa('ultimos4', 'Informe exatamente os 4 últimos dígitos, ou deixe em branco.');
-  // CB-05: CNPJ é opcional; preenchido, só entra válido e formatado.
+  // CB-05 de 31/10: CNPJ é opcional; preenchido, só entra válido e formatado.
   const c = valores.cnpj.trim();
   if (c && !validarCNPJ(c)) return recusa('cnpj', 'CNPJ inválido: confira os 14 caracteres ou deixe o campo em branco.');
   const im = indiceMotivo(motivo, matriz);
@@ -1065,6 +1092,10 @@ function iniciar() {
 
   $('a1').addEventListener('change', () => { $('form').hidden = !$('a1').checked; });
 
+  // CB-06 de 31/10: o seletor de data já limita o intervalo; o add-fato confere de novo.
+  $('fato-data').min = DATA_MIN;
+  $('fato-data').max = hojeLocal();
+
   // CP-01: digitar não saneia; paste, saída do campo e geração do dossiê saneiam.
   document.querySelectorAll('input[type=text], textarea').forEach((el) => {
     if (el.id === 'ultimos4') return;
@@ -1089,14 +1120,14 @@ function iniciar() {
   $('ultimos4').addEventListener('input', ultimos4);
   $('ultimos4').addEventListener('paste', () => setTimeout(ultimos4, 0));
 
-  // CB-01: input ou change em qualquer controle do formulário (campos, motivo, gateway, documentos,
+  // CB-01 de 31/10: input ou change em qualquer controle do formulário (campos, motivo, gateway, documentos,
   // vínculos) descarta o dossiê gerado. Ficam de fora a D-1 e o Baixar, que são a etapa do dossiê.
   for (const tipo of ['input', 'change']) {
     $('form').addEventListener(tipo, (e) => { if (e.target.id !== 'd1' && e.target.id !== 'baixar') invalidarDossie(); });
   }
 
   $('docs').addEventListener('change', (e) => {
-    // Só nome e tamanho; o conteúdo do arquivo não é lido. CB-04: o nome passa pela mesma limpeza
+    // Só nome e tamanho; o conteúdo do arquivo não é lido. CB-04 de 31/10: o nome passa pela mesma limpeza
     // e máscara dos campos, e nome mascarado mostra o A-3 como eles (antes o aviso era descartado).
     const avisos = [];
     estado.documentos = [...e.target.files].map((f) => {
@@ -1118,7 +1149,14 @@ function iniciar() {
     const desc = sanearEntrada('fato-desc', $('fato-desc').value);
     if (desc.aviso) aviso(desc.aviso);
     $('fato-desc').value = desc.texto;
-    if (!data || !desc.texto.trim()) return;
+    if (!desc.texto.trim()) return;
+    // CB-06 de 31/10: data real entre 01/01/2000 e hoje. O máximo é recalculado (a página pode virar o dia aberta).
+    const hoje = hojeLocal();
+    $('fato-data').max = hoje;
+    if (!validarDataFato(data, hoje)) {
+      aviso([a3Visivel ? TEXTOS['A-3'] : desc.aviso, `Informe a data do fato entre ${dataBR(DATA_MIN)} e hoje (${dataBR(hoje)}).`].filter(Boolean).join(' '));
+      return $('fato-data').focus();
+    }
     // CB-02: fato com termo vedado não entra; o texto fica no campo para edição.
     // A recusa se soma ao A-3 que estava visível, em vez de substituí-lo.
     const vedados = encontrarVedados(desc.texto);
@@ -1137,14 +1175,14 @@ function iniciar() {
 
 function renderFatos() {
   const ul = $('lista-fatos'); ul.textContent = '';
-  const ordenados = [...estado.fatos].sort((a, b) => a.data.localeCompare(b.data));
+  const ordenados = ordenarFatos(estado.fatos);
   ordenados.forEach((f, i) => {
-    const li = document.createElement('li'); li.textContent = `${f.data}: ${f.descricao} `;
+    const li = document.createElement('li'); li.textContent = `${dataBR(f.data)}: ${f.descricao} `;
     // CB-02: remover o fato invalida o dossiê já gerado, que ainda o contém.
     const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remover';
     // Nome próprio por botão: data do fato e, se houver mais de um no dia, a ordem.
     const doDia = ordenados.filter((g) => g.data === f.data);
-    rm.setAttribute('aria-label', `Remover fato de ${f.data.split('-').reverse().join('/')}` + (doDia.length > 1 ? ` (${doDia.indexOf(f) + 1}º do dia)` : ''));
+    rm.setAttribute('aria-label', `Remover fato de ${dataBR(f.data)}` + (doDia.length > 1 ? ` (${doDia.indexOf(f) + 1}º do dia)` : ''));
     rm.addEventListener('click', () => {
       estado.fatos.splice(estado.fatos.indexOf(f), 1);
       invalidarDossie(); aviso('');
@@ -1158,7 +1196,7 @@ function renderFatos() {
 }
 
 function renderVinculos() {
-  // CB-03: sem motivo escolhido, nenhuma evidência nem fonte; fica só o rodapé de prazos.
+  // CB-03 de 31/10: sem motivo escolhido, nenhuma evidência nem fonte; fica só o rodapé de prazos.
   const i = indiceMotivo($('motivo').value);
   const m = i < 0 ? null : MATRIZ[i];
   const fonte = $('fonte-motivo'); fonte.textContent = m ? linhaFonte(m) : ''; fonte.hidden = !m;
@@ -1179,7 +1217,7 @@ function renderVinculos() {
   });
 }
 
-// CB-01: valores atuais do formulário, como estão na tela, para dadosDoFormulario().
+// CB-01 de 31/10: valores atuais do formulário, como estão na tela, para dadosDoFormulario().
 function lerFormulario() {
   return {
     pedido: $('pedido').value, ultimos4: $('ultimos4').value, cnpj: $('cnpj').value, gateway: $('gateway').value, motivo: $('motivo').value,
@@ -1188,8 +1226,8 @@ function lerFormulario() {
   };
 }
 
-// CB-01: descarta o dossiê gerado (estado, prévia e etapa da D-1). A D-1 declara o conteúdo gerado,
-// por isso volta desmarcada (CB-02).
+// CB-01 de 31/10: descarta o dossiê gerado (estado, prévia e etapa da D-1). A D-1 declara o conteúdo gerado,
+// por isso volta desmarcada (CB-02 de 31/10).
 function invalidarDossie() {
   estado.dossie = null;
   $('previa').textContent = '';
@@ -1209,13 +1247,14 @@ function gerar() {
   if (a3Visivel && !r.avisos.includes(TEXTOS['A-3'])) r.avisos.unshift(TEXTOS['A-3']);
   // Gravar o valor saneado no campo não dispara input/change: não descarta o que se está gerando.
   for (const id of ['pedido', 'cnpj']) if ($(id).value !== r.valores[id]) $(id).value = r.valores[id];
-  // A recusa se soma ao A-3 do saneamento, em vez de substituí-lo; o foco vai para o campo (CB-03).
+  // A recusa se soma ao A-3 do saneamento, em vez de substituí-lo; o foco vai para o campo (CB-03 de 31/10).
   if (!r.ok) { aviso([...r.avisos, r.erro].join(' ')); $(r.campo).focus(); return; }
   const d = montarDossie(r.dados);
+  d.nomeArquivo = nomeArquivoDossie(r.dados.pedido);   // CB-06 de 31/10: um nome por disputa
   estado.dossie = d;
   $('previa').textContent = d.texto;
   aviso([...r.avisos, d.vedados.length ? `Remova os termos não permitidos no dossiê: ${d.vedados.join(', ')}.` : ''].filter(Boolean).join(' '));
-  // CB-02: cada geração pede nova D-1; Baixar fica desabilitado até ela ser marcada de novo.
+  // CB-02 de 31/10: cada geração pede nova D-1; Baixar fica desabilitado até ela ser marcada de novo.
   $('d1').checked = false;
   $('etapa-d1').hidden = false;
   atualizarBaixar();
@@ -1227,7 +1266,7 @@ function atualizarBaixar() {
 
 function baixar() {
   if ($('baixar').disabled || !estado.dossie) return;
-  // CB-01: defesa extra. O dossiê é remontado com o formulário atual; se o texto mudou (alteração que
+  // CB-01 de 31/10: defesa extra. O dossiê é remontado com o formulário atual; se o texto mudou (alteração que
   // não passou pelos eventos, como autopreenchimento), o download é recusado e o dossiê descartado.
   const r = dadosDoFormulario(lerFormulario());
   if (!r.ok || montarDossie(r.dados).texto !== estado.dossie.texto) {
@@ -1235,7 +1274,7 @@ function baixar() {
     return aviso('Os dados do formulário mudaram depois da geração. Gere o dossiê de novo.');
   }
   const blob = new Blob([estado.dossie.texto], { type: 'text/plain;charset=utf-8' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'dossie-chargeback.txt';
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = estado.dossie.nomeArquivo;
   a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
