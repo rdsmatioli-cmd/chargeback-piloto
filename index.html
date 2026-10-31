@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-N/3+PuCOSFvGnKn1NYJbuFH0U/getBabf1r0joG/xtY='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-l3WRfQW7MFPTNLkS4tCvuhNEynH7g7DcvCERt7VvjSw='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
 body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
@@ -950,6 +950,32 @@ function montarDossie({ pedido, ultimos4, cnpj, gateway, motivo, fatos, document
   return { texto, vedados: encontrarVedados(texto) };
 }
 
+// CB-01: dados do dossiê a partir dos valores do formulário, sem tocar na página. gerar() usa para
+// montar o dossiê e baixar() para conferir, na hora do download, que o arquivo ainda é o do formulário.
+// Devolve { ok, dados } ou { ok: false, campo, erro }; em ambos, os valores saneados dos campos de
+// texto (para gerar() gravar de volta) e os avisos de cartão (A-3/A-3b) do saneamento.
+function dadosDoFormulario({ pedido = '', ultimos4 = '', cnpj = '', gateway = '', motivo = '', fatos = [], documentos = [], marcados = [] }, matriz = MATRIZ) {
+  const avisos = [];
+  const sanearValor = (id, v) => { const r = sanearCampo(id, String(v)); if (r.aviso && !avisos.includes(r.aviso)) avisos.push(r.aviso); return r.texto; };
+  const valores = { pedido: sanearValor('pedido', pedido), cnpj: sanearValor('cnpj', cnpj) };
+  const recusa = (campo, erro) => ({ ok: false, campo, erro, valores, avisos });
+  const p = valores.pedido.trim();
+  if (!p) return recusa('pedido', 'Informe a identificação do pedido.');
+  if (!validarUltimos4(ultimos4)) return recusa('ultimos4', 'Informe exatamente os 4 últimos dígitos, ou deixe em branco.');
+  const im = indiceMotivo(motivo, matriz);
+  if (im < 0) return recusa('motivo', 'Escolha o motivo indicado pela adquirente.');
+  const m = matriz[im];
+  const vinculos = m.evidencias.map(() => []);
+  for (const [ev, doc] of marcados) {
+    if (Number.isInteger(ev) && Number.isInteger(doc) && ev >= 0 && ev < vinculos.length && doc >= 0 && doc < documentos.length && !vinculos[ev].includes(doc)) vinculos[ev].push(doc);
+  }
+  vinculos.forEach((v) => v.sort((a, b) => a - b));
+  return {
+    ok: true, valores, avisos,
+    dados: { pedido: p, ultimos4, cnpj: valores.cnpj.trim(), gateway: GATEWAYS.includes(gateway) ? gateway : '', motivo: m, fatos, documentos, vinculos }
+  };
+}
+
 // CP-04: em build de piloto, a linha de exemplo bloqueia o dossiê.
 function dossieBloqueadoPorExemplo(piloto, matriz) { return piloto === true && matrizTemExemplo(matriz); }
 
@@ -1023,12 +1049,19 @@ function iniciar() {
   $('ultimos4').addEventListener('input', ultimos4);
   $('ultimos4').addEventListener('paste', () => setTimeout(ultimos4, 0));
 
+  // CB-01: input ou change em qualquer controle do formulário (campos, motivo, gateway, documentos,
+  // vínculos) descarta o dossiê gerado. Ficam de fora a D-1 e o Baixar, que são a etapa do dossiê.
+  for (const tipo of ['input', 'change']) {
+    $('form').addEventListener(tipo, (e) => { if (e.target.id !== 'd1' && e.target.id !== 'baixar') invalidarDossie(); });
+  }
+
   $('docs').addEventListener('change', (e) => {
     // Só nome e tamanho; o conteúdo do arquivo não é lido.
     estado.documentos = [...e.target.files].map((f) => ({ nome: sanear(f.name).texto || '[nome removido]', tamanho: f.size }));
+    invalidarDossie();
     renderVinculos();
   });
-  $('motivo').addEventListener('change', renderVinculos);
+  $('motivo').addEventListener('change', () => { invalidarDossie(); renderVinculos(); });
 
   $('add-fato').addEventListener('click', () => {
     // CB-02: o blur do campo roda antes do clique e já mascarou o cartão e mostrou o A-3;
@@ -1045,6 +1078,7 @@ function iniciar() {
     if (vedados.length) return aviso([a3Visivel ? TEXTOS['A-3'] : desc.aviso, `Remova os termos não permitidos no fato: ${vedados.join(', ')}.`].filter(Boolean).join(' '));
     estado.fatos.push({ data, descricao: desc.texto.trim() });
     $('fato-desc').value = '';
+    invalidarDossie();
     renderFatos();
   });
 
@@ -1066,7 +1100,7 @@ function renderFatos() {
     rm.setAttribute('aria-label', `Remover fato de ${f.data.split('-').reverse().join('/')}` + (doDia.length > 1 ? ` (${doDia.indexOf(f) + 1}º do dia)` : ''));
     rm.addEventListener('click', () => {
       estado.fatos.splice(estado.fatos.indexOf(f), 1);
-      estado.dossie = null; $('previa').textContent = ''; $('etapa-d1').hidden = true; atualizarBaixar(); aviso('');
+      invalidarDossie(); aviso('');
       renderFatos();
       // O botão focado foi recriado: foco no Remover seguinte, ou no anterior; sem fatos, no campo do fato.
       const bs = $('lista-fatos').querySelectorAll('button');
@@ -1098,29 +1132,44 @@ function renderVinculos() {
   });
 }
 
+// CB-01: valores atuais do formulário, como estão na tela, para dadosDoFormulario().
+function lerFormulario() {
+  return {
+    pedido: $('pedido').value, ultimos4: $('ultimos4').value, cnpj: $('cnpj').value, gateway: $('gateway').value, motivo: $('motivo').value,
+    fatos: estado.fatos, documentos: estado.documentos,
+    marcados: [...document.querySelectorAll('#vinculos input:checked')].map((c) => [Number(c.dataset.ev), Number(c.dataset.doc)])
+  };
+}
+
+// CB-01: descarta o dossiê gerado (estado, prévia e etapa da D-1). A D-1 declara o conteúdo gerado,
+// por isso volta desmarcada (CB-02).
+function invalidarDossie() {
+  estado.dossie = null;
+  $('previa').textContent = '';
+  $('etapa-d1').hidden = true;
+  $('d1').checked = false;
+  atualizarBaixar();
+}
+
 function gerar() {
+  // O blur do campo roda antes do clique e já mascarou o cartão e mostrou o A-3; o texto chega
+  // mascarado e o saneamento não devolve mais o A-3. Ele continua visível (como no add-fato).
+  const a3Visivel = !$('aviso').hidden && $('aviso').textContent.startsWith(TEXTOS['A-3']);
+  invalidarDossie();
   aviso('');
   if (dossieBloqueadoPorExemplo(PILOTO, MATRIZ)) return aviso('Build de piloto com linha de exemplo na matriz: dossiê bloqueado.');
-  let alerta = null;
-  for (const id of ['pedido', 'cnpj']) { const r = sanearCampo(id, $(id).value); $(id).value = r.texto; if (r.aviso) alerta = r.aviso; }
-  if (alerta) aviso(alerta);
-  const pedido = $('pedido').value.trim();
-  const u4 = $('ultimos4').value;
-  if (!pedido) return aviso('Informe a identificação do pedido.');
-  if (!validarUltimos4(u4)) return aviso('Informe exatamente os 4 últimos dígitos, ou deixe em branco.');
-  // CB-03: o dossiê só sai com o motivo escolhido pelo usuário.
-  const im = indiceMotivo($('motivo').value);
-  if (im < 0) { aviso('Escolha o motivo indicado pela adquirente.'); $('motivo').focus(); return; }
-  const motivo = MATRIZ[im];
-  const vinculos = motivo.evidencias.map(() => []);
-  document.querySelectorAll('#vinculos input:checked').forEach((c) => vinculos[Number(c.dataset.ev)].push(Number(c.dataset.doc)));
-  const d = montarDossie({
-    pedido, ultimos4: u4, cnpj: $('cnpj').value.trim(), gateway: $('gateway').value,
-    motivo, fatos: estado.fatos, documentos: estado.documentos, vinculos
-  });
+  const r = dadosDoFormulario(lerFormulario());
+  if (a3Visivel && !r.avisos.includes(TEXTOS['A-3'])) r.avisos.unshift(TEXTOS['A-3']);
+  // Gravar o valor saneado no campo não dispara input/change: não descarta o que se está gerando.
+  for (const id of ['pedido', 'cnpj']) if ($(id).value !== r.valores[id]) $(id).value = r.valores[id];
+  // A recusa se soma ao A-3 do saneamento, em vez de substituí-lo; o foco vai para o campo (CB-03).
+  if (!r.ok) { aviso([...r.avisos, r.erro].join(' ')); $(r.campo).focus(); return; }
+  const d = montarDossie(r.dados);
   estado.dossie = d;
   $('previa').textContent = d.texto;
-  if (d.vedados.length) aviso(`Remova os termos não permitidos no dossiê: ${d.vedados.join(', ')}.`);
+  aviso([...r.avisos, d.vedados.length ? `Remova os termos não permitidos no dossiê: ${d.vedados.join(', ')}.` : ''].filter(Boolean).join(' '));
+  // CB-02: cada geração pede nova D-1; Baixar fica desabilitado até ela ser marcada de novo.
+  $('d1').checked = false;
   $('etapa-d1').hidden = false;
   atualizarBaixar();
 }
@@ -1130,7 +1179,14 @@ function atualizarBaixar() {
 }
 
 function baixar() {
-  if ($('baixar').disabled) return;
+  if ($('baixar').disabled || !estado.dossie) return;
+  // CB-01: defesa extra. O dossiê é remontado com o formulário atual; se o texto mudou (alteração que
+  // não passou pelos eventos, como autopreenchimento), o download é recusado e o dossiê descartado.
+  const r = dadosDoFormulario(lerFormulario());
+  if (!r.ok || montarDossie(r.dados).texto !== estado.dossie.texto) {
+    invalidarDossie();
+    return aviso('Os dados do formulário mudaram depois da geração. Gere o dossiê de novo.');
+  }
   const blob = new Blob([estado.dossie.texto], { type: 'text/plain;charset=utf-8' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'dossie-chargeback.txt';
   a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);

@@ -103,3 +103,91 @@ test('CB-03: com o motivo escolhido, as evidências aparecem e o dossiê sai com
   p.escolher('motivo', '');
   assert.equal(p.$('vinculos').children.length, 0);
 });
+
+// CB-01: qualquer alteração depois de gerar descarta o dossiê; Baixar só entrega o que está na tela.
+const ALTERACOES = [
+  ['troca do motivo', (p) => p.escolher('motivo', p.valorMotivo('Visa', '13.1'))],
+  ['volta ao motivo vazio', (p) => p.escolher('motivo', '')],
+  ['digitação no pedido', (p) => p.digitar('pedido', 'PED-2')],
+  ['digitação no CNPJ', (p) => p.digitar('cnpj', '11.222.333/0001-81')],
+  ['4 últimos dígitos', (p) => p.digitar('ultimos4', '1234')],
+  ['gateway', (p) => p.escolher('gateway', 'Stripe')],
+  ['novo fato', (p) => p.fato('2026-10-02', 'Segundo fato')],
+  ['troca dos documentos', (p) => p.anexar([{ name: 'outro.pdf', size: 5 }])],
+  ['vínculo documento x evidência', (p) => p.marcar(p.$('vinculos').querySelector('input'))],
+  ['remoção de fato', (p) => p.$('lista-fatos').querySelector('button').click()]
+];
+for (const [nome, alterar] of ALTERACOES) {
+  test(`CB-01: ${nome} depois de gerar descarta o dossiê e desabilita Baixar`, () => {
+    const p = pronto({ docs: true });
+    alterar(p);
+    descartado(p, nome);
+  });
+}
+test('CB-01: cenário do laudo (motivo 13.1, PED-2 e outro fato) não baixa o dossiê antigo', () => {
+  const p = pronto();
+  p.escolher('motivo', p.valorMotivo('Visa', '13.1'));
+  p.preencher('pedido', 'PED-2');
+  p.fato('2026-10-02', 'Segundo fato');
+  p.clicar('baixar');
+  assert.equal(p.baixados().length, 0);
+  p.clicar('gerar'); p.marcar('d1'); p.clicar('baixar');
+  const [arq] = p.baixados();
+  assert.match(arq.texto, /^Pedido: PED-2$/m);
+  assert.match(arq.texto, /^Motivo informado: Motivo 13\.1 da Visa:/m);
+  assert.match(arq.texto, /Primeiro fato[\s\S]*Segundo fato/);
+});
+test('CB-01: o arquivo baixado é a prévia da tela, byte a byte', () => {
+  const p = pronto({ docs: true });
+  p.marcar(p.$('vinculos').querySelector('input'));
+  p.clicar('gerar'); p.marcar('d1'); p.clicar('baixar');
+  const [arq] = p.baixados();
+  assert.equal(arq.texto, p.$('previa').textContent);
+  assert.equal(arq.texto, p.t.estado.dossie.texto);
+});
+test('CB-01: Baixar remonta o dossiê e recusa se o formulário mudou sem evento', () => {
+  const p = pronto();
+  p.$('pedido').value = 'PED-2';            // alteração sem input/change (autopreenchimento, script)
+  p.clicar('baixar');
+  assert.equal(p.baixados().length, 0);
+  assert.match(p.aviso(), /Gere o dossiê de novo/);
+  descartado(p, 'alteração sem evento');
+});
+test('CB-01: D-1 e o próprio Baixar não descartam o dossiê', () => {
+  const p = pronto();
+  p.marcar('d1', false); p.marcar('d1', true);
+  assert.ok(p.t.estado.dossie);
+  p.clicar('baixar');
+  assert.equal(p.baixados().length, 1);
+  assert.ok(p.t.estado.dossie);
+});
+
+// CB-02: cada geração exige nova D-1.
+test('CB-02: gerar de novo desmarca a D-1 e desabilita Baixar até nova marcação', () => {
+  const p = pronto();
+  for (let i = 0; i < 3; i++) {
+    p.clicar('gerar');
+    assert.ok(p.t.estado.dossie);
+    assert.equal(p.$('d1').checked, false, `geração ${i + 1}: D-1 desmarcada`);
+    assert.equal(p.podeBaixar(), false, `geração ${i + 1}: Baixar desabilitado`);
+    p.marcar('d1');
+    assert.ok(p.podeBaixar(), `geração ${i + 1}: Baixar habilitado depois da D-1`);
+  }
+});
+test('CB-02: gerar de novo depois de alterar os dados exige nova D-1', () => {
+  const p = pronto();
+  p.$('pedido').value = 'PED-2';
+  p.clicar('gerar');
+  assert.match(p.t.estado.dossie.texto, /^Pedido: PED-2$/m);
+  assert.equal(p.podeBaixar(), false);
+});
+test('CB-01: o A-3 mostrado na saída do campo continua visível depois de Gerar', () => {
+  const p = abrir();
+  p.marcar('a1');
+  p.preencher('pedido', 'PED 4111 1111 1111 1111');
+  assert.ok(p.aviso().startsWith(p.t.TEXTOS['A-3']));
+  p.escolher('motivo', p.valorMotivo('Visa', '10.4'));
+  p.clicar('gerar');
+  assert.match(p.t.estado.dossie.texto, /^Pedido: PED \*\*\*\* \*\*\*\* \*\*\*\* 1111$/m);
+  assert.ok(p.aviso().startsWith(p.t.TEXTOS['A-3']), p.aviso());
+});
