@@ -146,3 +146,19 @@ test('CB-TXT-03: prazo da adquirente "costuma ser" menor que o da bandeira (sem 
   assert.ok(!/Ele é menor que o prazo da bandeira/.test(t));
   assert.ok(t.includes('Ele costuma ser menor que o prazo da bandeira'));
 });
+
+// CB-TXT-04: versões das fontes Mastercard e Elo fixadas e iguais no app e no blog.
+// Regulamento Elo versão 11.0 (29/01/2025), Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único
+// (conferido no PDF oficial em 31/10/2026; na versão em aprovação no BCB o artigo é renumerado).
+// Mastercard: versão de 13/05/2025, conferida em 15/10/2026 (o PDF não abriu na reconferência).
+test('CB-TXT-04: Elo cita a versão 11.0 do Regulamento no app e no blog', () => {
+  for (const m of MATRIZ.filter((x) => x.bandeira === 'Elo')) assert.ok(m.observacao.includes('versão 11.0, de 29/01/2025, Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único'), m.id);
+  const t = texto(blog);
+  assert.equal((t.match(/Regulamento Elo \(versão 11\.0, de 29 de janeiro de 2025\)/g) || []).length, 2);
+});
+test('CB-TXT-04: Mastercard com a mesma versão e data de conferência no app e no blog, sem jargão interno', () => {
+  for (const m of MATRIZ.filter((x) => x.bandeira === 'Mastercard')) assert.ok(m.rodape_linha.includes('versão de 13 May 2025, conferido em 15/10/2026'), m.id);
+  const t = texto(blog);
+  assert.equal((t.match(/Merchant Edition \(versão de 13 de maio de 2025, conferida em 15\/10\/2026\)/g) || []).length, 2);
+  assert.ok(!/matriz S-01/.test(t));
+});
