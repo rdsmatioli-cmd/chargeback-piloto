@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-qlwMeS9DkOFzub3J3+uuzOXxVyRhikMZC6yZqujVKL0='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-poIXh2qBomFUVoWMpb34ArofWgh6D9AhSwgxmkIc5A8='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
 body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
@@ -64,7 +64,7 @@ const COBRANCA = false;
 
 // Textos literais da seção 6 do escopo v5 (sha256 2634d896...). Não editar à mão.
 const TEXTOS = {
-  "O-1": "Organize as provas da sua disputa de chargeback. Você informa o motivo indicado pela sua adquirente e anexa seus documentos; a ferramenta lista as evidências pedidas para aquele motivo, monta a cronologia e gera um dossiê para você mesmo enviar pelo painel da sua adquirente. Grátis nesta fase. Não acessamos sua conta e não enviamos nada em seu nome. O resultado da disputa é decidido pelo banco emissor do cartão.",
+  "O-1": "Organize as provas da sua disputa de chargeback. Você informa o motivo indicado pela sua adquirente e anexa seus documentos; a ferramenta lista as evidências pedidas para aquele motivo, monta a cronologia e gera um dossiê para você mesmo enviar pelo painel da sua adquirente. Grátis nesta fase. Não acessamos sua conta e não enviamos nada em seu nome. A decisão da disputa cabe ao emissor, à bandeira e à adquirente.",
   "A-1": "Entendi que esta ferramenta organiza documentos e fatos que eu informo, com base em regras públicas das bandeiras e adquirentes na data indicada. Não é assessoria jurídica, não garante resultado e não substitui as instruções da minha adquirente, cujo prazo e cujos requisitos prevalecem.",
   "A-2": "Descreva apenas fatos que você pode comprovar com documentos. Não use esta ferramenta para contestar compra que você sabe não ter sido entregue ou que foi cancelada.",
   "A-3": "Removemos um dado de cartão do texto. Nunca informe número completo, código de segurança ou validade do cartão.",
@@ -77,10 +77,10 @@ const TEXTOS = {
   "T-4": "A responsabilidade total da LCM perante o Cliente, por qualquer causa relacionada à Ferramenta, fica limitada ao maior valor entre (i) o total efetivamente pago pelo Cliente à LCM nos 12 (doze) meses anteriores ao evento que deu causa ao dano e (ii) R$ 1.000,00 (mil reais). A limitação não se aplica em caso de dolo ou culpa grave da LCM, nem à responsabilidade perante titulares de dados pessoais prevista nos arts. 42 a 45 da Lei nº 13.709/2018. Se a relação com o Cliente for de consumo, aplicam-se integralmente as normas do Código de Defesa do Consumidor, e esta cláusula não se aplica (art. 51, I).",
   "T-5": "O conteúdo informado é processado no seu navegador e não é armazenado pela LCM. Não pedimos nem aceitamos número completo, código de segurança, validade ou trilha do cartão; quando necessário, usamos só os 4 últimos dígitos. O usuário é controlador dos dados do comprador que inserir e declara ter base legal para usá-los na disputa.",
   "T-6": "É proibido usar a ferramenta para contestar disputa legítima, inserir fato falso ou documento alterado. A LCM pode suspender o acesso diante de indício de uso indevido e cooperar com autoridades nos termos da lei.",
-  "T-7": "Contratado o serviço pela internet, você pode desistir em até 7 dias da contratação, com devolução imediata e integral do valor pago (CDC art. 49).",
+  "T-7": "Contratado o serviço pela internet, você pode desistir em até 7 dias, contados da contratação ou do recebimento do serviço, com devolução imediata dos valores pagos, monetariamente atualizados (CDC, art. 49).",
   "P-1": "Declaro que uso a Ferramenta na atividade profissional ou empresarial do CNPJ informado. Esta declaração não afasta nenhum direito que a lei me garanta."
 };
-const RODAPE_MATRIZ = "Prazos e responsabilidade entre emissor, credenciador e bandeira seguem o regulamento do arranjo, que está em adequação à Resolução BCB nº 522/2025. Confira no painel da sua adquirente; o prazo dela prevalece.";
+const RODAPE_MATRIZ = "Prazos e responsabilidade entre emissor, credenciador e bandeira seguem o regulamento de cada arranjo. A Resolução BCB nº 522/2025 exigiu a adequação desses regulamentos: a Visa informa ter atualizado suas regras de disputa no Brasil a partir de 24/10/2026, e a Elo publicou a versão em aprovação no Banco Central. Confira no painel da sua adquirente; o prazo dela prevalece.";
 const VEDADOS = ["parecer", "assessoria jurídica", "consultoria jurídica", "defesa jurídica", "tese", "fundamento legal", "nos termos do art.", "CDC", "Código de Defesa do Consumidor", "jurisprudência", "súmula", "advogado", "ação judicial", "processo", "Procon", "garantido", "garantia de êxito", "ganhe a disputa", "reverta", "taxa de sucesso", "aumente suas chances", "100%", "sem risco"];
 const TITULO = "Organize as provas da sua disputa de chargeback";
 // CP-08 (revisão do Advogado sobre a v0.1): acréscimo à lista do escopo.
@@ -90,7 +90,7 @@ const TEXTOS_REVISAO = { "A-3b": "Atenção: nunca informe número completo, có
 
 // GERADO por gerar-matriz.mjs. Não editar. Fonte: fontes/chargeback-S01-matriz-2026-10-15.json sha256 ee178219593727edaffb923ea2aa7e7b0f1814ea8db0a19d24b8045b53fe4fb7
 const S01_SHA256 = "ee178219593727edaffb923ea2aa7e7b0f1814ea8db0a19d24b8045b53fe4fb7";
-const S01_RODAPE_MATRIZ = "Prazos e responsabilidade entre emissor, credenciador e bandeira seguem o regulamento do arranjo, que está em adequação à Resolução BCB nº 522/2025. Confira no painel da sua adquirente; o prazo dela prevalece.";
+const S01_RODAPE_MATRIZ = "Prazos e responsabilidade entre emissor, credenciador e bandeira seguem o regulamento de cada arranjo. A Resolução BCB nº 522/2025 exigiu a adequação desses regulamentos: a Visa informa ter atualizado suas regras de disputa no Brasil a partir de 24/10/2026, e a Elo publicou a versão em aprovação no Banco Central. Confira no painel da sua adquirente; o prazo dela prevalece.";
 const S01_RODAPE_R2 = "Visa, Mastercard e Elo são marcas de seus titulares, citadas apenas para identificar regras públicas de disputa. A LCM não tem vínculo com elas nem com as adquirentes citadas.";
 const S01_RODAPE_ELO = "As regras de disputa da Elo constam de manual não público; os códigos sem lista de evidências devem ser tratados diretamente com a sua adquirente.";
 const S01_RODAPE_PRAZOS = "Esta matriz não informa prazos. O prazo para responder é o informado pela sua adquirente no aviso da disputa; perder o prazo costuma encerrar a defesa.";
@@ -101,26 +101,27 @@ const S01_MOTIVOS = [
   "codigo": "10.4",
   "motivo": "Outra fraude – compra sem cartão presente",
   "evidencias": [
-   "Registro de que a compra foi autenticada pelo Visa Secure no momento da autorização (informar à adquirente).",
-   "Ou: dados de 2 ou mais compras anteriores do mesmo portador, liquidadas entre 120 e 365 dias antes da disputa, sem registro de fraude, com pelo menos 2 elementos iguais aos da compra contestada (ID do dispositivo, impressão digital do dispositivo ou endereço IP), descrição do que foi comprado e data da entrega.",
+   "Registro de que a compra foi autenticada pelo Visa Secure (EMV 3-D Secure, com ECI 5 e CAVV na autorização), informado pela adquirente.",
+   "Ou: dados de 2 compras anteriores com o mesmo cartão ou token, não informadas como fraude, processadas pela mesma adquirente da compra contestada mais de 120 e no máximo 365 dias antes da disputa; a descrição detalhada do que foi comprado nelas e na compra contestada; e, iguais aos da compra contestada, o ID ou a impressão digital do dispositivo, ou o endereço IP, mais pelo menos 1 destes: login do cliente, endereço completo de entrega, ID ou impressão digital do dispositivo, endereço IP (ID e impressão digital do dispositivo contam como um só).",
    "Ou evidências da tabela 'Compelling Evidence' da fonte: e-mail ou foto que ligue quem recebeu ao portador; entrega no endereço com AVS Y ou M; para produto digital: descrição, data e hora do download e 2 ou mais entre IP/localização, ID do dispositivo, nome e e-mail do perfil, perfil verificado antes da compra; entrega em endereço comercial onde o portador trabalhava; pedido assinado (venda por correio ou telefone).",
    "Comprovante de reembolso ou estorno já feito, com valor e data (se houver).",
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Visa Dispute Management Guide for Merchants, versão de outubro de 2026, e Visa Core Rules and Visa Product and Service Rules, edição de 24 de outubro de 2026 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-11.1-1",
   "bandeira": "Visa",
   "codigo": "11.1",
-  "motivo": "Boletim de recuperação de cartão",
+  "motivo": "Boletim de recuperação de cartão (disputas até 23/10/2026)",
   "evidencias": [
+   "Para hotel, locadora de veículos ou cruzeiro com mais de uma autorização: registro de que o cartão não constava do boletim de recuperação de cartões (CRB) na data do check-in, da retirada do veículo ou do embarque.",
    "Documento de que a compra ocorreu em terminal EMV compatível (quando aplicável).",
    "Comprovante de reembolso ou estorno já feito, com valor e data (se houver)."
   ],
-  "observacao": "Geralmente presencial; a adquirente detém o registro.",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "observacao": "Pelas regras da Visa de 24/10/2026 (seção 11.9.1), este motivo só vale para disputas processadas até 23/10/2026. Geralmente presencial; a adquirente detém o registro.",
+  "rodape_linha": "Fonte: Visa, Visa Dispute Management Guide for Merchants, versão de outubro de 2026, e Visa Core Rules and Visa Product and Service Rules, edição de 24 de outubro de 2026 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-11.2-2",
@@ -132,7 +133,7 @@ const S01_MOTIVOS = [
    "Comprovante de reembolso ou estorno já feito, com valor e data (se houver)."
   ],
   "observacao": "Registro de autorização é da adquirente.",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024. A Visa publicou regras novas em 24/10/2026, e esta lista ainda não foi revista por elas. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-11.3-3",
@@ -145,7 +146,7 @@ const S01_MOTIVOS = [
    "Comprovante de reembolso ou estorno já feito, com valor e data (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024. A Visa publicou regras novas em 24/10/2026, e esta lista ainda não foi revista por elas. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-12.2-4",
@@ -157,7 +158,7 @@ const S01_MOTIVOS = [
    "Comprovante de reembolso ou estorno já feito, com valor e data (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024. A Visa publicou regras novas em 24/10/2026, e esta lista ainda não foi revista por elas. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-12.3-5",
@@ -171,7 +172,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024. A Visa publicou regras novas em 24/10/2026, e esta lista ainda não foi revista por elas. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-12.4-6",
@@ -185,7 +186,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024. A Visa publicou regras novas em 24/10/2026, e esta lista ainda não foi revista por elas. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-12.5-7",
@@ -198,7 +199,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024. A Visa publicou regras novas em 24/10/2026, e esta lista ainda não foi revista por elas. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-12.6.1-8",
@@ -211,7 +212,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024. A Visa publicou regras novas em 24/10/2026, e esta lista ainda não foi revista por elas. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-12.6.2-9",
@@ -224,7 +225,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024. A Visa publicou regras novas em 24/10/2026, e esta lista ainda não foi revista por elas. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-12.7-10",
@@ -237,7 +238,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024. A Visa publicou regras novas em 24/10/2026, e esta lista ainda não foi revista por elas. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-13.1-11",
@@ -253,7 +254,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024. A Visa publicou regras novas em 24/10/2026, e esta lista ainda não foi revista por elas. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-13.2-12",
@@ -262,11 +263,14 @@ const S01_MOTIVOS = [
   "motivo": "Assinatura recorrente cancelada",
   "evidencias": [
    "Registro de que o portador usou o serviço depois da data em que retirou a autorização de cobrança e antes da disputa.",
+   "Registro de que o portador pediu o cancelamento para outra data e de que o serviço foi prestado até essa data.",
+   "Registro de que a cobrança é lançada depois da prestação do serviço e de que o portador recebeu o serviço até a data do cancelamento.",
+   "Se o emissor alegar que a loja foi avisada do encerramento da conta: documento que mostre que essa alegação não procede.",
    "Comprovante de reembolso ou estorno já feito, com valor e data (se houver).",
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Visa Dispute Management Guide for Merchants, versão de outubro de 2026, e Visa Core Rules and Visa Product and Service Rules, edição de 24 de outubro de 2026 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-13.3-13",
@@ -281,7 +285,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024. A Visa publicou regras novas em 24/10/2026, e esta lista ainda não foi revista por elas. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-13.4-14",
@@ -294,7 +298,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024. A Visa publicou regras novas em 24/10/2026, e esta lista ainda não foi revista por elas. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-13.5-15",
@@ -308,7 +312,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024. A Visa publicou regras novas em 24/10/2026, e esta lista ainda não foi revista por elas. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-13.6-16",
@@ -321,7 +325,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024. A Visa publicou regras novas em 24/10/2026, e esta lista ainda não foi revista por elas. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-13.7-17",
@@ -336,7 +340,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024. A Visa publicou regras novas em 24/10/2026, e esta lista ainda não foi revista por elas. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Mastercard-4837-18",
@@ -465,7 +469,7 @@ const S01_MOTIVOS = [
    "Para produto digital: e-mail de confirmação, data e hora do download, IP e localização, ID do dispositivo, nome e e-mail do perfil, perfil verificado antes da compra.",
    "Para serviço: comprovante da prestação, data de início do uso, uso anterior."
   ],
-  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente.",
+  "observacao": "O Regulamento Elo (versão 13.0, de 11/05/2026, Cap. VII, Seção II, Subseção IV, art. 94, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente.",
   "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
@@ -480,7 +484,7 @@ const S01_MOTIVOS = [
    "Explicação do atraso, se houver.",
    "Para produto digital: e-mail de confirmação, data e hora da compra e do download."
   ],
-  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente.",
+  "observacao": "O Regulamento Elo (versão 13.0, de 11/05/2026, Cap. VII, Seção II, Subseção IV, art. 94, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente.",
   "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
@@ -494,7 +498,7 @@ const S01_MOTIVOS = [
    "Uso do serviço entre a cobrança e o cancelamento.",
    "Registro de que o portador não tentou contato para cancelar."
   ],
-  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente.",
+  "observacao": "O Regulamento Elo (versão 13.0, de 11/05/2026, Cap. VII, Seção II, Subseção IV, art. 94, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente.",
   "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
@@ -508,7 +512,7 @@ const S01_MOTIVOS = [
    "Conversas e acordos com o portador.",
    "Registro de que o portador não tentou contato nem devolveu."
   ],
-  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente.",
+  "observacao": "O Regulamento Elo (versão 13.0, de 11/05/2026, Cap. VII, Seção II, Subseção IV, art. 94, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente.",
   "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
@@ -521,7 +525,7 @@ const S01_MOTIVOS = [
    "Se houve só uma compra: prova de que não houve outra cobrança.",
    "Comprovante de reembolso ou estorno já feito, com valor e data (se houver)."
   ],
-  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente.",
+  "observacao": "O Regulamento Elo (versão 13.0, de 11/05/2026, Cap. VII, Seção II, Subseção IV, art. 94, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente.",
   "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
@@ -534,7 +538,7 @@ const S01_MOTIVOS = [
    "Registro de que o portador não devolveu ou não tentou devolver.",
    "Registro de que a devolução não seguiu a política escrita."
   ],
-  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente.",
+  "observacao": "O Regulamento Elo (versão 13.0, de 11/05/2026, Cap. VII, Seção II, Subseção IV, art. 94, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente.",
   "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
@@ -543,7 +547,7 @@ const S01_MOTIVOS = [
   "codigo": "71",
   "motivo": "Sem autorização / portador não reconhece",
   "evidencias": [],
-  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente. A fonte não lista evidências nem prazo para este código; confira com a sua adquirente.",
+  "observacao": "O Regulamento Elo (versão 13.0, de 11/05/2026, Cap. VII, Seção II, Subseção IV, art. 94, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente. A fonte não lista evidências nem prazo para este código; confira com a sua adquirente.",
   "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
@@ -552,7 +556,7 @@ const S01_MOTIVOS = [
   "codigo": "72",
   "motivo": "Autorização recusada",
   "evidencias": [],
-  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente. A fonte não lista evidências nem prazo para este código; confira com a sua adquirente.",
+  "observacao": "O Regulamento Elo (versão 13.0, de 11/05/2026, Cap. VII, Seção II, Subseção IV, art. 94, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente. A fonte não lista evidências nem prazo para este código; confira com a sua adquirente.",
   "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
@@ -561,7 +565,7 @@ const S01_MOTIVOS = [
   "codigo": "74",
   "motivo": "Apresentação tardia",
   "evidencias": [],
-  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente. A fonte não lista evidências nem prazo para este código; confira com a sua adquirente.",
+  "observacao": "O Regulamento Elo (versão 13.0, de 11/05/2026, Cap. VII, Seção II, Subseção IV, art. 94, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente. A fonte não lista evidências nem prazo para este código; confira com a sua adquirente.",
   "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
@@ -570,7 +574,7 @@ const S01_MOTIVOS = [
   "codigo": "77",
   "motivo": "Número de conta não confere",
   "evidencias": [],
-  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente. A fonte não lista evidências nem prazo para este código; confira com a sua adquirente.",
+  "observacao": "O Regulamento Elo (versão 13.0, de 11/05/2026, Cap. VII, Seção II, Subseção IV, art. 94, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente. A fonte não lista evidências nem prazo para este código; confira com a sua adquirente.",
   "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
@@ -579,7 +583,7 @@ const S01_MOTIVOS = [
   "codigo": "80",
   "motivo": "Erro de processamento",
   "evidencias": [],
-  "observacao": "O Regulamento Elo (Cap. VII, Seção II, Subseção IV, art. 97, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente. A fonte não lista evidências nem prazo para este código; confira com a sua adquirente.",
+  "observacao": "O Regulamento Elo (versão 13.0, de 11/05/2026, Cap. VII, Seção II, Subseção IV, art. 94, parágrafo único) remete os motivos ao Manual de Disputas Elo, que não está público; códigos e evidências vêm da documentação pública de adquirente. A fonte não lista evidências nem prazo para este código; confira com a sua adquirente.",
   "rodape_linha": "Fonte: Adyen (adquirente), Dispute reason codes and defense requirements, versão de página vigente em 15/10/2026. Confira no painel da sua adquirente; o prazo dela prevalece."
  }
 ];
