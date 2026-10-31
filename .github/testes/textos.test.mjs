@@ -203,3 +203,17 @@ test('CB-TXT-06: FAQ do Pix cita o regulamento em vigor e o MED', () => {
   const t = texto(blog);
   assert.ok(t.includes('Mecanismo Especial de Devolução, definidas no Regulamento do Pix, anexo à Resolução BCB nº 1/2020'));
 });
+
+// CB-TXT-07: a tabela "Os motivos mais comuns" do blog só usa códigos que existem na matriz do app
+// (a matriz é a constante; o blog não pode citar código que o app não tem).
+test('CB-TXT-07: códigos da tabela de motivos do blog existem na matriz do app', () => {
+  const tabela = blog.match(/<thead><tr><th>Motivo<\/th><th>Visa<\/th><th>Mastercard<\/th><th>Elo<\/th>[\s\S]*?<\/table>/)[0];
+  const linhas = [...tabela.matchAll(/<tr><td>([^<]+)<\/td><td>([^<]+)<\/td><td>([^<]+)<\/td><td>([^<]+)<\/td>/g)];
+  assert.equal(linhas.length, 6);
+  const tem = (b, c) => MATRIZ.some((m) => m.bandeira === b && (m.codigo === c || m.codigo.startsWith(`${c} (`)));
+  for (const [, nome, v, mc, elo] of linhas) {
+    assert.ok(tem('Visa', v), `${nome}: Visa ${v}`);
+    assert.ok(tem('Mastercard', mc), `${nome}: Mastercard ${mc}`);
+    assert.ok(tem('Elo', elo), `${nome}: Elo ${elo}`);
+  }
+});
