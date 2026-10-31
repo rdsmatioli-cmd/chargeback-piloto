@@ -217,6 +217,46 @@ test('CB-05: Gerar com CNPJ inválido recusa, avisa e põe o foco no campo', () 
   p.clicar('gerar');
   assert.match(p.t.estado.dossie.texto, /^CNPJ do lojista: 12\.ABC\.345\/01DE-35$/m);
 });
+// Revisão do lote: '36.O00.000/0004-38' é CNPJ alfanumérico válido e, lido pela máscara (O = 0), o PAN
+// Diners 36000000000438. Sai mascarado com A-3 na saída do campo e o dossiê não traz o CNPJ com O.
+test('Revisão CB-05: CNPJ alfanumérico lido como PAN é mascarado e não vai ao dossiê', () => {
+  for (const sair of [true, false]) {
+    const p = abrir();
+    p.marcar('a1');
+    p.preencher('pedido', 'PED-1');
+    p.escolher('motivo', p.valorMotivo('Visa', '10.4'));
+    p.digitar('cnpj', '36.O00.000/0004-38');
+    if (sair) {
+      p.sair('cnpj');
+      assert.equal(p.$('cnpj').value, '**** **** **** 0438');
+      assert.equal(p.aviso(), p.t.TEXTOS['A-3']);
+    }
+    p.clicar('gerar');
+    assert.equal(p.$('cnpj').value, '**** **** **** 0438', `sair=${sair}`);
+    assert.equal(p.t.estado.dossie, null, `sair=${sair}`);
+    assert.ok(p.aviso().startsWith(p.t.TEXTOS['A-3']), p.aviso());
+    assert.match(p.aviso(), /CNPJ/);
+    p.preencher('cnpj', '');
+    p.clicar('gerar');
+    assert.ok(p.t.estado.dossie, 'gera sem o CNPJ');
+    assert.doesNotMatch(p.t.estado.dossie.texto, /CNPJ do lojista|O00|0438/);
+  }
+});
+// Revisão do lote: gerar() grava no campo o CNPJ saneado sem disparar evento; a P-1 acompanha o valor gravado.
+test('Revisão CB-05: P-1 desmarca e desabilita quando Gerar mascara o CNPJ', () => {
+  const p = abrir();
+  p.marcar('a1');
+  p.preencher('pedido', 'PED-1');
+  p.escolher('motivo', p.valorMotivo('Visa', '10.4'));
+  p.digitar('cnpj', '12.ABC.345/01DE-35');
+  p.marcar('p1');
+  assert.equal(p.$('p1').checked, true);
+  p.$('cnpj').value = '36O00000000438';   // sem evento, como no autopreenchimento
+  p.clicar('gerar');
+  assert.equal(p.$('cnpj').value, '**** **** **** 0438');
+  assert.equal(p.$('p1').disabled, true);
+  assert.equal(p.$('p1').checked, false);
+});
 
 // CB-04: documentos e fatos chegam ao dossiê sem caracteres enganosos; nome com PAN mostra o A-3.
 test('CB-04: arquivo com U+202E entra com o nome real no vínculo e no dossiê', () => {

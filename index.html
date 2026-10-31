@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-XY/rccXb+fWVmuuf0lcgiRJGUZHTjzUfughiKx+x43w='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-y2+rEcIxgTOr73RHapjZE/QsWT6UblAvZZ+BZs7/IyQ='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
 body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
@@ -924,12 +924,22 @@ function formatarCNPJ(v) {
 // CB-05 de 31/10: as 12 primeiras posições aceitam letras (CNPJ alfanumérico).
 const FORMATO_CNPJ = /^[0-9A-Z]{2}\.?[0-9A-Z]{3}\.?[0-9A-Z]{3}\/?[0-9A-Z]{4}-?\d{2}$/i;
 // Parecer B-02: a exceção não vale quando os 14 dígitos também são um PAN Diners válido
-// (prefixo 30/36/38/39 e Luhn); nesse caso o campo é mascarado como qualquer outro. Só CNPJ todo
-// numérico pode ser PAN; o alfanumérico válido fica como está.
+// (prefixo 30/36/38/39 e Luhn); nesse caso o campo é mascarado como qualquer outro.
+// Revisão do lote (decisão C-01, PAN mascarado em qualquer lugar): no CNPJ com letra, a exceção só
+// vale se a própria máscara não acha PAN, nem no texto digitado nem no CNPJ formatado que vai ao
+// dossiê. A máscara lê O/o como 0 e I/l como 1, então '36O00000000438' (válido como CNPJ
+// alfanumérico) é o PAN Diners 36000000000438; e o 'i' minúsculo vira 'I' no dossiê. O CNPJ todo
+// numérico segue o B-02 como na main (só os 14 dígitos), para não mascarar CNPJ real à toa.
 function sanearCampo(id, texto) {
   if (id === 'cnpj' && FORMATO_CNPJ.test(texto.trim()) && validarCNPJ(texto)) {
     const c = normalizarCNPJ(texto);
-    if (!(/^\d{14}$/.test(c) && ehPAN(c, false))) return { texto, aviso: null, limpo: false };
+    if (/^\d{14}$/.test(c)) {
+      if (!ehPAN(c, false)) return { texto, aviso: null, limpo: false };
+    } else {
+      const formatado = formatarCNPJ(c);
+      if (!temPAN(texto) && !temPAN(formatado)) return { texto, aviso: null, limpo: false };
+      if (!temPAN(texto)) return sanear(formatado, true);
+    }
   }
   return sanear(texto, id !== 'pedido');
 }
@@ -1106,8 +1116,6 @@ function iniciar() {
     el.addEventListener('change', () => aplicar(ctl.aoSair));
   });
 
-  // CP-05: P-1 só com CNPJ válido; continua opcional e desmarcado.
-  const atualizarP1 = () => { const ok = validarCNPJ($('cnpj').value); $('p1').disabled = !ok; if (!ok) $('p1').checked = false; };
   $('cnpj').addEventListener('input', atualizarP1);
   $('cnpj').addEventListener('change', atualizarP1);
   atualizarP1();
@@ -1226,6 +1234,10 @@ function lerFormulario() {
   };
 }
 
+// CP-05: P-1 só com CNPJ válido; continua opcional e desmarcado. Roda no input e change do CNPJ e depois
+// de gerar() gravar no campo o valor saneado (revisão do lote: a escrita não dispara evento).
+function atualizarP1() { const ok = validarCNPJ($('cnpj').value); $('p1').disabled = !ok; if (!ok) $('p1').checked = false; }
+
 // CB-01 de 31/10: descarta o dossiê gerado (estado, prévia e etapa da D-1). A D-1 declara o conteúdo gerado,
 // por isso volta desmarcada (CB-02 de 31/10).
 function invalidarDossie() {
@@ -1247,6 +1259,7 @@ function gerar() {
   if (a3Visivel && !r.avisos.includes(TEXTOS['A-3'])) r.avisos.unshift(TEXTOS['A-3']);
   // Gravar o valor saneado no campo não dispara input/change: não descarta o que se está gerando.
   for (const id of ['pedido', 'cnpj']) if ($(id).value !== r.valores[id]) $(id).value = r.valores[id];
+  atualizarP1();
   // A recusa se soma ao A-3 do saneamento, em vez de substituí-lo; o foco vai para o campo (CB-03 de 31/10).
   if (!r.ok) { aviso([...r.avisos, r.erro].join(' ')); $(r.campo).focus(); return; }
   const d = montarDossie(r.dados);

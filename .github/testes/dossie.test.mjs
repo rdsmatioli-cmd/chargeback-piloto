@@ -101,6 +101,38 @@ test('CB-05: CNPJ inválido recusa o dossiê; válido sai formatado', () => {
   assert.match(t, /^CNPJ do lojista: 12\.ABC\.345\/01DE-35$/m);
   assert.doesNotMatch(montarDossie(dadosDoFormulario(BASE).dados).texto, /CNPJ do lojista/);
 });
+// Revisão do lote (decisão C-01): a máscara lê O/o como 0 e I/l como 1. Um CNPJ alfanumérico válido que,
+// lido assim, é PAN Diners (prefixo 36 e Luhn) não fica em claro: é mascarado com A-3, como na main.
+// O 'i' minúsculo não é lido como 1 no campo, mas vira 'I' no CNPJ formatado do dossiê.
+const PAN_COMO_CNPJ = [['36O00000000438', '0438'], ['36.O00.000/0004-38', '0438'], ['36o00000000438', '0438'], ['36O00000001329', '1329'],
+  ['36O00000002210', '2210'], ['36l00000000170', '0170'], ['36i00000000154', '0154'], ['36.i00.000/0001-54', '0154']];
+test('Revisão CB-05: CNPJ alfanumérico que a máscara lê como PAN é mascarado e devolve o A-3', () => {
+  for (const [v, fim] of PAN_COMO_CNPJ) {
+    assert.equal(validarCNPJ(v), true, `premissa: ${v} é CNPJ alfanumérico válido`);
+    const r = sanearCampo('cnpj', v);
+    assert.equal(r.texto, `**** **** **** ${fim}`, v);
+    assert.equal(r.aviso, TEXTOS['A-3'], v);
+  }
+});
+test('Revisão CB-05: CNPJ lido como PAN não entra no dossiê', () => {
+  for (const [v, fim] of PAN_COMO_CNPJ) {
+    const r = dadosDoFormulario({ ...BASE, cnpj: v });
+    assert.equal(r.ok, false, v); assert.equal(r.campo, 'cnpj');
+    assert.equal(r.valores.cnpj, `**** **** **** ${fim}`, v);
+    assert.deepEqual([...r.avisos], [TEXTOS['A-3']], v);
+  }
+});
+// O CNPJ todo numérico segue o parecer B-02 como na main: só é mascarado se os 14 dígitos forem PAN Diners.
+// Um CNPJ real em que a máscara acharia PAN numa janela interna (13 dígitos de Visa) continua em claro.
+test('Revisão CB-05: CNPJ numérico real não é mascarado por PAN numa janela interna', () => {
+  for (const v of ['34975883441890', '46518466315509', '34.975.883/4418-90']) {
+    assert.equal(validarCNPJ(v), true, v);
+    const r = sanearCampo('cnpj', v);
+    assert.equal(r.texto, v); assert.equal(r.aviso, null);
+  }
+  assert.match(montarDossie(dadosDoFormulario({ ...BASE, cnpj: '34975883441890' }).dados).texto, /^CNPJ do lojista: 34\.975\.883\/4418-90$/m);
+  assert.equal(sanearCampo('cnpj', '36000000003820').texto, '**** **** **** 3820', 'B-02: os 14 dígitos são PAN Diners');
+});
 
 // CB-04: texto sem caracteres que enganem quem lê o dossiê.
 const cp = (...ns) => String.fromCodePoint(...ns);
