@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-4blFoDL2qieCu0hQldj6M7G/wuugS1HSPl5FrVj/j7k='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-QD+5plj3oy5sQBEUgw1lorwzWLbBza6XDE0ujUEk2vY='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
 body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
@@ -867,14 +867,32 @@ function sanear(texto, livre = true) {
   return { texto: m.texto, aviso: temMencao(m.texto) ? TEXTOS_REVISAO['A-3b'] : null, limpo: false };
 }
 
+// CB-04: caracteres que enganam quem lê o dossiê. Saem os controles bidi (U+202A-202E,
+// U+2066-2069, U+200E/200F, U+061C), os de largura zero (U+200B-200D, U+2060, U+FEFF) e as demais
+// formatações invisíveis (categoria Cf, como as tags U+E0020-E007F), os controles C0/C1 e o uso
+// privado (Co: o U+E000 é o marcador interno da máscara e, digitado, partia o PAN). As quebras de
+// linha viram \n (CR, VT, FF, NEL, U+2028/2029) e a tabulação, espaço; em campo de uma linha
+// (pedido, CNPJ, nome de arquivo) a quebra também vira espaço. Roda antes de sanear(): remover
+// depois da máscara poderia juntar as partes de um PAN que ela não viu.
+const QUEBRAS = /\r\n|[\r\v\f\u{85}\u{2028}\u{2029}]/gu;
+const INVISIVEIS = /[\p{Cc}\p{Cf}\p{Co}\p{Cs}]/gu;
+function limparTexto(texto, umaLinha = false) {
+  let t = String(texto).replace(QUEBRAS, '\n').replace(/\t/g, ' ');
+  if (umaLinha) t = t.replace(/\n/g, ' ');
+  return t.replace(INVISIVEIS, (c) => (c === '\n' ? c : ''));
+}
+// CB-04: toda entrada de texto da página (campos, fatos, nomes de arquivo) passa por aqui:
+// primeiro limparTexto, depois a máscara de cartão (sanearCampo). Só o fato é de várias linhas.
+function sanearEntrada(id, texto) { return sanearCampo(id, limparTexto(texto, id !== 'fato-desc')); }
+
 // Controlador de campo (CP-01): digitar não altera o valor; paste, blur e
 // geração do dossiê saneiam. CB-01: recebe o id do campo, para a exceção de CNPJ
 // (sanearCampo) valer no mesmo caminho que a página usa.
 function controladorCampo(id) {
   return {
     aoDigitar: (v) => ({ texto: v, aviso: null }),
-    aoColar: (v) => sanearCampo(id, v),
-    aoSair: (v) => sanearCampo(id, v)
+    aoColar: (v) => sanearEntrada(id, v),
+    aoSair: (v) => sanearEntrada(id, v)
   };
 }
 
@@ -947,7 +965,12 @@ function montarDossie({ pedido, ultimos4, cnpj, gateway, motivo, fatos, document
   if (cnpj) L.push(`CNPJ do lojista: ${cnpj}`);
   if (gateway) L.push(`Gateway ou adquirente: ${gateway}`);
   L.push(`Motivo informado: ${rotuloMotivo(motivo)}`, '', '2. Cronologia');
-  for (const f of ordenados) L.push(`${f.data}: ${f.descricao}`);
+  // CB-04: fato de várias linhas sai com as linhas seguintes recuadas, para não imitar cabeçalho
+  // de seção nem item de documento do dossiê.
+  for (const f of ordenados) {
+    const [primeira, ...resto] = f.descricao.split('\n');
+    L.push(`${f.data}: ${primeira}`, ...resto.map((l) => (l ? `  ${l}` : '')));
+  }
   L.push('', '3. Documentos anexados pelo lojista');
   documentos.forEach((d, i) => L.push(`D${i + 1}. ${d.nome} (${d.tamanho} bytes)`));
   L.push('', '4. Correspondência documento x requisito de evidência');
@@ -970,7 +993,7 @@ function montarDossie({ pedido, ultimos4, cnpj, gateway, motivo, fatos, document
 // texto (para gerar() gravar de volta) e os avisos de cartão (A-3/A-3b) do saneamento.
 function dadosDoFormulario({ pedido = '', ultimos4 = '', cnpj = '', gateway = '', motivo = '', fatos = [], documentos = [], marcados = [] }, matriz = MATRIZ) {
   const avisos = [];
-  const sanearValor = (id, v) => { const r = sanearCampo(id, String(v)); if (r.aviso && !avisos.includes(r.aviso)) avisos.push(r.aviso); return r.texto; };
+  const sanearValor = (id, v) => { const r = sanearEntrada(id, String(v)); if (r.aviso && !avisos.includes(r.aviso)) avisos.push(r.aviso); return r.texto; };
   const valores = { pedido: sanearValor('pedido', pedido), cnpj: sanearValor('cnpj', cnpj) };
   const recusa = (campo, erro) => ({ ok: false, campo, erro, valores, avisos });
   const p = valores.pedido.trim();
@@ -1073,8 +1096,15 @@ function iniciar() {
   }
 
   $('docs').addEventListener('change', (e) => {
-    // Só nome e tamanho; o conteúdo do arquivo não é lido.
-    estado.documentos = [...e.target.files].map((f) => ({ nome: sanear(f.name).texto || '[nome removido]', tamanho: f.size }));
+    // Só nome e tamanho; o conteúdo do arquivo não é lido. CB-04: o nome passa pela mesma limpeza
+    // e máscara dos campos, e nome mascarado mostra o A-3 como eles (antes o aviso era descartado).
+    const avisos = [];
+    estado.documentos = [...e.target.files].map((f) => {
+      const r = sanearEntrada('arquivo', f.name);
+      if (r.aviso) avisos.push(r.aviso);
+      return { nome: r.texto || '[nome removido]', tamanho: f.size };
+    });
+    if (avisos.length) aviso(avisos.includes(TEXTOS['A-3']) ? TEXTOS['A-3'] : avisos[0]);
     invalidarDossie();
     renderVinculos();
   });
@@ -1085,7 +1115,7 @@ function iniciar() {
     // aqui o texto chega mascarado e sanear() não devolve mais o A-3.
     const a3Visivel = !$('aviso').hidden && $('aviso').textContent.startsWith(TEXTOS['A-3']);
     const data = $('fato-data').value;
-    const desc = sanear($('fato-desc').value);
+    const desc = sanearEntrada('fato-desc', $('fato-desc').value);
     if (desc.aviso) aviso(desc.aviso);
     $('fato-desc').value = desc.texto;
     if (!data || !desc.texto.trim()) return;

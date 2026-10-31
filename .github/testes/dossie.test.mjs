@@ -7,12 +7,12 @@ import vm from 'node:vm';
 
 const raiz = new URL('../../', import.meta.url);
 const html = readFileSync(new URL('index.html', raiz), 'utf8');
-const NOMES = ['MATRIZ', 'TEXTOS', 'indiceMotivo', 'dadosDoFormulario', 'montarDossie', 'validarCNPJ', 'formatarCNPJ', 'sanearCampo'];
+const NOMES = ['MATRIZ', 'TEXTOS', 'indiceMotivo', 'dadosDoFormulario', 'montarDossie', 'validarCNPJ', 'formatarCNPJ', 'sanearCampo', 'limparTexto', 'sanearEntrada', 'encontrarVedados'];
 let src = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 src = src.replace(/\}\)\(\);\s*$/, `globalThis.__t = { ${NOMES.map((n) => `${n}: typeof ${n} === 'undefined' ? undefined : ${n}`).join(', ')} };})();`);
 const ctx = { document: { addEventListener() {} }, console };
 vm.createContext(ctx); vm.runInContext(src, ctx);
-const { MATRIZ, TEXTOS, indiceMotivo, dadosDoFormulario, montarDossie, validarCNPJ, formatarCNPJ, sanearCampo } = ctx.__t;
+const { MATRIZ, TEXTOS, indiceMotivo, dadosDoFormulario, montarDossie, validarCNPJ, formatarCNPJ, sanearCampo, limparTexto, sanearEntrada, encontrarVedados } = ctx.__t;
 
 // CB-03: índice do motivo validado (inteiro dentro da matriz); vazio ou qualquer outro valor é -1.
 test('CB-03: indiceMotivo aceita só inteiro canônico dentro da matriz', () => {
@@ -96,4 +96,62 @@ test('CB-05: CNPJ inválido recusa o dossiê; válido sai formatado', () => {
   const t = montarDossie(dadosDoFormulario({ ...BASE, cnpj: '12ABC34501DE35' }).dados).texto;
   assert.match(t, /^CNPJ do lojista: 12\.ABC\.345\/01DE-35$/m);
   assert.doesNotMatch(montarDossie(dadosDoFormulario(BASE).dados).texto, /CNPJ do lojista/);
+});
+
+// CB-04: texto sem caracteres que enganem quem lê o dossiê.
+const cp = (...ns) => String.fromCodePoint(...ns);
+const INVISIVEIS = [0x202A, 0x202B, 0x202C, 0x202D, 0x202E, 0x2066, 0x2067, 0x2068, 0x2069, 0x200E, 0x200F, 0x061C,
+  0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF, 0x00AD, 0x180E, 0xE0041, 0xE007F,       // bidi, largura zero, formatação (Cf)
+  0x00, 0x01, 0x07, 0x08, 0x0E, 0x1B, 0x1F, 0x7F, 0x80, 0x9B, 0x9F,                // controles C0/C1
+  0xE000, 0xF8FF, 0xF0000];                                                          // uso privado
+test('CB-04: limparTexto remove bidi, largura zero, formatação, controles C0/C1 e uso privado', () => {
+  for (const n of INVISIVEIS) {
+    assert.equal(limparTexto(`a${cp(n)}b`), 'ab', `U+${n.toString(16).toUpperCase()}`);
+    assert.equal(limparTexto(`a${cp(n)}b`, true), 'ab', `U+${n.toString(16).toUpperCase()} (uma linha)`);
+  }
+  assert.equal(limparTexto('a\uD800b'), 'ab', 'surrogate isolado');
+});
+test('CB-04: limparTexto mantém \\n em texto livre e normaliza as outras quebras; tabulação vira espaço', () => {
+  assert.equal(limparTexto('a\nb'), 'a\nb');
+  for (const q of ['\r\n', '\r', '\v', '\f', cp(0x85), cp(0x2028), cp(0x2029)]) assert.equal(limparTexto(`a${q}b`), 'a\nb', JSON.stringify(q));
+  assert.equal(limparTexto('a\tb'), 'a b');
+});
+test('CB-04: limparTexto de uma linha troca quebras e tabulação por espaço', () => {
+  for (const q of ['\n', '\r\n', '\t', cp(0x2028)]) assert.equal(limparTexto(`a${q}b`, true), 'a b', JSON.stringify(q));
+});
+test('CB-04: limparTexto não mexe em texto comum e é idempotente', () => {
+  for (const t of ['Pedido nº 123 — São Paulo, R$ 1.234,56 (ok) ação', 'Entrega no endereço: Rua Á, 10\nSegunda linha', 'café ☕ 🙂', 'a\u00A0b']) {
+    assert.equal(limparTexto(t), t);
+    assert.equal(limparTexto(limparTexto(t)), limparTexto(t));
+  }
+});
+test('CB-04: nome de arquivo com U+202E aparece com a extensão real', () => {
+  const r = sanearEntrada('arquivo', `fatura${cp(0x202E)}fdp.exe`);
+  assert.equal(r.texto, 'faturafdp.exe');
+  assert.ok(r.texto.endsWith('.exe'));
+  assert.equal(sanearEntrada('arquivo', 'nota\nfiscal\t.pdf').texto, 'nota fiscal .pdf');
+});
+test('CB-04: nome de arquivo com PAN é mascarado e devolve o A-3', () => {
+  const r = sanearEntrada('arquivo', 'cartao 4111111111111111.pdf');
+  assert.equal(r.texto, 'cartao **** **** **** 1111.pdf');
+  assert.equal(r.aviso, TEXTOS['A-3']);
+});
+test('CB-04: caractere invisível ou de uso privado não parte o PAN nem esconde termo vedado', () => {
+  for (const sep of [0xE000, 0x200B, 0x2060, 0x202E, 0xFEFF]) {
+    const r = sanearEntrada('fato-desc', `cartão 4111${cp(sep)}1111 1111 1111 usado`);
+    assert.equal(r.texto, 'cartão **** **** **** 1111 usado', `U+${sep.toString(16)}`);
+    assert.equal(r.aviso, TEXTOS['A-3']);
+  }
+  assert.deepEqual([...encontrarVedados(sanearEntrada('fato-desc', `abri um pro${cp(0x200B)}cesso`).texto)], ['processo']);
+  assert.equal(sanearEntrada('pedido', `PED${cp(0x200B)}-1`).texto, 'PED-1');
+  assert.equal(sanearEntrada('cnpj', `12.ABC${cp(0x200B)}.345/01DE-35`).texto, '12.ABC.345/01DE-35');
+});
+test('CB-04: fato de várias linhas sai recuado e não imita seção nem documento do dossiê', () => {
+  const dados = { ...dadosDoFormulario(BASE).dados, fatos: [{ data: '2026-10-03', descricao: 'Entrega feita\n3. Documentos anexados pelo lojista\nD9. falso.pdf (1 bytes)\n\n4. Correspondência' }] };
+  const linhas = montarDossie(dados).texto.split('\n');
+  assert.equal(linhas.filter((l) => l === '3. Documentos anexados pelo lojista').length, 1);
+  assert.equal(linhas.filter((l) => /^4\. Correspond/.test(l)).length, 1);
+  assert.ok(!linhas.some((l) => /^D9\./.test(l)));
+  const i = linhas.findIndex((l) => l.endsWith(': Entrega feita'));
+  assert.deepEqual(linhas.slice(i + 1, i + 5), ['  3. Documentos anexados pelo lojista', '  D9. falso.pdf (1 bytes)', '', '  4. Correspondência']);
 });

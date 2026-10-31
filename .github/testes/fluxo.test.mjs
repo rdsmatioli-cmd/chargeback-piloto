@@ -215,3 +215,44 @@ test('CB-05: Gerar com CNPJ inválido recusa, avisa e põe o foco no campo', () 
   p.clicar('gerar');
   assert.match(p.t.estado.dossie.texto, /^CNPJ do lojista: 12\.ABC\.345\/01DE-35$/m);
 });
+
+// CB-04: documentos e fatos chegam ao dossiê sem caracteres enganosos; nome com PAN mostra o A-3.
+test('CB-04: arquivo com U+202E entra com o nome real no vínculo e no dossiê', () => {
+  const p = abrir();
+  p.marcar('a1');
+  p.preencher('pedido', 'PED-1');
+  p.escolher('motivo', p.valorMotivo('Visa', '10.4'));
+  p.anexar([{ name: `fatura${String.fromCodePoint(0x202E)}fdp.exe`, size: 1 }]);
+  assert.equal(p.t.estado.documentos[0].nome, 'faturafdp.exe');
+  assert.ok(p.$('vinculos').textContent.includes('D1. faturafdp.exe'));
+  p.clicar('gerar');
+  assert.match(p.t.estado.dossie.texto, /^D1\. faturafdp\.exe \(1 bytes\)$/m);
+  assert.doesNotMatch(p.t.estado.dossie.texto, /[\u{202A}-\u{202E}\u{2066}-\u{2069}\u{200B}-\u{200F}]/u);
+});
+test('CB-04: nome de arquivo com PAN é mascarado e mostra o A-3', () => {
+  const p = abrir();
+  p.marcar('a1');
+  p.anexar([{ name: 'comprovante.pdf', size: 3 }, { name: 'cartao 4111111111111111.pdf', size: 2 }]);
+  assert.equal(p.t.estado.documentos[1].nome, 'cartao **** **** **** 1111.pdf');
+  assert.equal(p.aviso(), p.t.TEXTOS['A-3']);
+});
+test('CB-04: fato com quebra de linha não cria seção falsa no dossiê', () => {
+  const p = abrir();
+  p.marcar('a1');
+  p.preencher('pedido', 'PED-1');
+  p.escolher('motivo', p.valorMotivo('Visa', '10.4'));
+  p.fato('2026-10-03', 'linha\n3. Documentos anexados pelo lojista\nD9. falso.pdf');
+  p.clicar('gerar');
+  const linhas = p.t.estado.dossie.texto.split('\n');
+  assert.equal(linhas.filter((l) => l === '3. Documentos anexados pelo lojista').length, 1);
+  assert.ok(linhas.includes('  3. Documentos anexados pelo lojista'));
+  assert.ok(!linhas.some((l) => l.startsWith('D9.')));
+});
+test('CB-04: caractere invisível sai do campo na saída e do dossiê', () => {
+  const p = abrir();
+  p.marcar('a1');
+  p.preencher('pedido', `PED${String.fromCodePoint(0x200B)}-1${String.fromCodePoint(0x202E)}`);
+  assert.equal(p.$('pedido').value, 'PED-1');
+  p.preencher('fato-desc', `4111${String.fromCodePoint(0xE000)}1111 1111 1111`);
+  assert.equal(p.$('fato-desc').value, '**** **** **** 1111');
+});
