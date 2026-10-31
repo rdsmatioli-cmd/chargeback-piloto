@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-qlwMeS9DkOFzub3J3+uuzOXxVyRhikMZC6yZqujVKL0='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-N/3+PuCOSFvGnKn1NYJbuFH0U/getBabf1r0joG/xtY='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
 body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
@@ -29,7 +29,7 @@ footer{margin-top:2rem;font-size:.85rem;border-top:1px solid #ccc}
   <label>CNPJ (opcional) <input type="text" id="cnpj" autocomplete="off"></label>
   <label><input type="checkbox" id="p1" disabled> <span id="p1-texto"></span></label>
   <label>Gateway ou adquirente <select id="gateway"><option value="">(não informar)</option></select></label>
-  <label>Motivo indicado pela adquirente <select id="motivo"></select></label>
+  <label>Motivo indicado pela adquirente <select id="motivo"><option value="">(selecione o motivo)</option></select></label>
   <p id="fonte-motivo"></p>
   <p id="secao-motivo" hidden></p>
   <p id="obs-motivo" hidden></p>
@@ -605,6 +605,14 @@ function matrizTemExemplo(matriz = MATRIZ) {
   return matriz.some((m) => m.id === ID_EXEMPLO);
 }
 
+// CB-03: valor do select de motivo -> índice na matriz. Só inteiro canônico dentro da matriz; o
+// valor vazio de '(selecione o motivo)' e qualquer outro dão -1 (sem motivo escolhido).
+function indiceMotivo(valor, matriz = MATRIZ) {
+  if (typeof valor !== 'string' || !/^(?:0|[1-9]\d{0,5})$/.test(valor)) return -1;
+  const i = Number(valor);
+  return i < matriz.length ? i : -1;
+}
+
 
 
 
@@ -1069,12 +1077,15 @@ function renderFatos() {
 }
 
 function renderVinculos() {
-  const m = MATRIZ[Number($('motivo').value) || 0];
-  txt('fonte-motivo', linhaFonte(m));
-  const sp = $('secao-motivo'); sp.textContent = m.secao_pagina || ''; sp.hidden = !sp.textContent;
-  const obs = $('obs-motivo'); obs.textContent = m.observacao && m.observacao !== linhaFonte(m) ? m.observacao : ''; obs.hidden = !obs.textContent;
-  const elo = $('rodape-elo'); elo.textContent = m.bandeira === 'Elo' ? RODAPE_ELO : ''; elo.hidden = !elo.textContent;
+  // CB-03: sem motivo escolhido, nenhuma evidência nem fonte; fica só o rodapé de prazos.
+  const i = indiceMotivo($('motivo').value);
+  const m = i < 0 ? null : MATRIZ[i];
+  const fonte = $('fonte-motivo'); fonte.textContent = m ? linhaFonte(m) : ''; fonte.hidden = !m;
+  const sp = $('secao-motivo'); sp.textContent = (m && m.secao_pagina) || ''; sp.hidden = !sp.textContent;
+  const obs = $('obs-motivo'); obs.textContent = m && m.observacao && m.observacao !== linhaFonte(m) ? m.observacao : ''; obs.hidden = !obs.textContent;
+  const elo = $('rodape-elo'); elo.textContent = m && m.bandeira === 'Elo' ? RODAPE_ELO : ''; elo.hidden = !elo.textContent;
   const box = $('vinculos'); box.textContent = '';
+  if (!m) return;
   m.evidencias.forEach((ev, i) => {
     const fs = document.createElement('fieldset');
     const lg = document.createElement('legend'); lg.textContent = ev; fs.appendChild(lg);
@@ -1097,7 +1108,10 @@ function gerar() {
   const u4 = $('ultimos4').value;
   if (!pedido) return aviso('Informe a identificação do pedido.');
   if (!validarUltimos4(u4)) return aviso('Informe exatamente os 4 últimos dígitos, ou deixe em branco.');
-  const motivo = MATRIZ[Number($('motivo').value) || 0];
+  // CB-03: o dossiê só sai com o motivo escolhido pelo usuário.
+  const im = indiceMotivo($('motivo').value);
+  if (im < 0) { aviso('Escolha o motivo indicado pela adquirente.'); $('motivo').focus(); return; }
+  const motivo = MATRIZ[im];
   const vinculos = motivo.evidencias.map(() => []);
   document.querySelectorAll('#vinculos input:checked').forEach((c) => vinculos[Number(c.dataset.ev)].push(Number(c.dataset.doc)));
   const d = montarDossie({
