@@ -181,3 +181,25 @@ test('CB-TXT-05: T-4 e T-5 citam os artigos conferidos', () => {
   assert.ok(TEXTOS['T-4'].includes('(art. 51, I)'));
   assert.ok(TEXTOS['T-5'].includes('O usuário é controlador dos dados do comprador'));
 });
+
+// CB-TXT-06: exemplo do blog recalculado a partir das próprias premissas do texto. Se alguém mudar
+// um número sem refazer a conta, o teste falha. Formato pt-BR: R$ 30.000,00.
+const brl = (v) => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+test('CB-TXT-06: exemplo "quanto custa um chargeback" confere com a conta', () => {
+  const t = texto(blog);
+  const preco = 300, custo = 150, vendasMes = 200, perdidas = 4;
+  assert.ok(t.includes(`vendendo um produto de ${brl(preco)} com custo de mercadoria e frete de ${brl(custo)}`));
+  const lucro = preco - custo, perdido = -custo, diferenca = lucro - perdido;
+  assert.ok(t.includes(`+ ${brl(lucro)}`) && t.includes(`− ${brl(custo)}`));
+  assert.ok(t.includes(`A diferença entre os dois cenários é de ${brl(diferenca)} por chargeback perdido`));
+  assert.ok(t.includes(`lucro bruto de ${diferenca / lucro} vendas`));
+  const antes = vendasMes * lucro, depois = (vendasMes - perdidas) * lucro - perdidas * custo;
+  assert.equal(antes - depois, perdidas * diferenca);
+  assert.ok(t.includes(`cai de ${brl(antes)} (${vendasMes} × ${brl(lucro)}) para ${brl(depois)} (${vendasMes - perdidas} × ${brl(lucro)} − ${perdidas} × ${brl(custo)})`));
+});
+// Regulamento do Pix: anexo à Resolução BCB nº 1/2020 (em vigor, conferida na API de normativos do
+// BCB em 31/10/2026); o Mecanismo Especial de Devolução está no Capítulo XI, Seção II.
+test('CB-TXT-06: FAQ do Pix cita o regulamento em vigor e o MED', () => {
+  const t = texto(blog);
+  assert.ok(t.includes('Mecanismo Especial de Devolução, definidas no Regulamento do Pix, anexo à Resolução BCB nº 1/2020'));
+});
