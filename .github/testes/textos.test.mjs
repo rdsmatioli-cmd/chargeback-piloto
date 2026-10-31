@@ -123,3 +123,26 @@ test('CB-TXT-02: nenhum texto apresenta os 180 dias como prazo de resposta do lo
     assert.ok(!/(lojista|você|voce)[^.]{0,80}180 dias/i.test(h.replace('Esse limite não é o prazo do lojista para responder', '')));
   }
 });
+
+// CB-TXT-03: promessas e generalizações sem fonte no blog.
+// - Quem decide: Regulamento Elo (versão 11.0, arts. 106 a 108) e Visa Core Rules (cap. 11) preveem
+//   pré-arbitragem e arbitragem pela bandeira; o termo T-2 do app já diz emissor, bandeira e adquirente.
+// - Evidências da Elo vêm da lista de uma adquirente, não do manual da bandeira (não público).
+// - Nenhuma fonte primária diz que o prazo da adquirente é sempre menor que o da bandeira.
+test('CB-TXT-03: blog não diz que a decisão é sempre do emissor e cita a bandeira, como o T-2', () => {
+  const t = texto(blog);
+  assert.ok(!/sempre do banco emissor/.test(t));
+  assert.ok(t.includes('A decisão cabe ao banco emissor e, se a disputa chegar à arbitragem, à bandeira'));
+  assert.ok(TEXTOS['T-2'].includes('emissor, à bandeira e à adquirente'));
+});
+test('CB-TXT-03: blog não atribui ao manual da bandeira as evidências da Elo', () => {
+  const t = texto(blog);
+  assert.ok(!/aceitas pelo manual da bandeira/.test(t));
+  assert.ok(t.includes('para a Elo, a lista de uma adquirente'));
+  for (const m of MATRIZ.filter((x) => x.bandeira === 'Elo')) assert.ok(m.rodape_linha.startsWith('Fonte: Adyen (adquirente)'), m.id);
+});
+test('CB-TXT-03: prazo da adquirente "costuma ser" menor que o da bandeira (sem afirmação absoluta)', () => {
+  const t = texto(blog);
+  assert.ok(!/Ele é menor que o prazo da bandeira/.test(t));
+  assert.ok(t.includes('Ele costuma ser menor que o prazo da bandeira'));
+});
