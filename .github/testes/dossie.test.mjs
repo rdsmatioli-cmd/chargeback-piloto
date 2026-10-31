@@ -7,12 +7,12 @@ import vm from 'node:vm';
 
 const raiz = new URL('../../', import.meta.url);
 const html = readFileSync(new URL('index.html', raiz), 'utf8');
-const NOMES = ['MATRIZ', 'TEXTOS', 'indiceMotivo', 'dadosDoFormulario', 'montarDossie'];
+const NOMES = ['MATRIZ', 'TEXTOS', 'indiceMotivo', 'dadosDoFormulario', 'montarDossie', 'validarCNPJ', 'formatarCNPJ', 'sanearCampo'];
 let src = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 src = src.replace(/\}\)\(\);\s*$/, `globalThis.__t = { ${NOMES.map((n) => `${n}: typeof ${n} === 'undefined' ? undefined : ${n}`).join(', ')} };})();`);
 const ctx = { document: { addEventListener() {} }, console };
 vm.createContext(ctx); vm.runInContext(src, ctx);
-const { MATRIZ, TEXTOS, indiceMotivo, dadosDoFormulario, montarDossie } = ctx.__t;
+const { MATRIZ, TEXTOS, indiceMotivo, dadosDoFormulario, montarDossie, validarCNPJ, formatarCNPJ, sanearCampo } = ctx.__t;
 
 // CB-03: índice do motivo validado (inteiro dentro da matriz); vazio ou qualquer outro valor é -1.
 test('CB-03: indiceMotivo aceita só inteiro canônico dentro da matriz', () => {
@@ -62,4 +62,38 @@ test('CB-01: vínculos só com evidência e documento existentes, sem repetiçã
 test('CB-01: gateway fora da lista não entra no dossiê', () => {
   assert.equal(dadosDoFormulario({ ...BASE, gateway: 'Stripe' }).dados.gateway, 'Stripe');
   assert.equal(dadosDoFormulario({ ...BASE, gateway: 'Outro\n3. Documentos' }).dados.gateway, '');
+});
+
+// CB-05: CNPJ alfanumérico (IN RFB 2.229/2024). Exemplo oficial da Receita: 12.ABC.345/01DE-35
+// (DVs 3 e 5 pelo código do caractere menos 48, com os pesos do CNPJ numérico).
+test('CB-05: validarCNPJ aceita o exemplo oficial alfanumérico, com e sem máscara e em minúsculas', () => {
+  for (const v of ['12.ABC.345/01DE-35', '12ABC34501DE35', '12.abc.345/01de-35', ' 12.ABC.345/01DE-35 ']) assert.equal(validarCNPJ(v), true, v);
+});
+test('CB-05: validarCNPJ recusa DV errado, DV com letra, tamanho errado e letra fora de A-Z', () => {
+  for (const v of ['12.ABC.345/01DE-36', '12.ABC.345/01DE-53', '12.ABC.345/01DE-3A', '12ABC34501DE3', '12ABC34501DE355', '12.ÁBC.345/01DE-35', '12#ABC#345#01DE#35', '123', '', 'CNPJ 11.222.333/0001-81'])
+    assert.equal(validarCNPJ(v), false, v);
+});
+test('CB-05: validarCNPJ numérico continua como antes', () => {
+  for (const v of ['11.222.333/0001-81', '11222333000181', '40000000001935']) assert.equal(validarCNPJ(v), true, v);
+  for (const v of ['11.222.333/0001-82', '00.000.000/0000-00', '11111111111111']) assert.equal(validarCNPJ(v), false, v);
+});
+test('CB-05: formatarCNPJ devolve 00.000.000/0000-00 em maiúsculas', () => {
+  assert.equal(formatarCNPJ('12abc34501de35'), '12.ABC.345/01DE-35');
+  assert.equal(formatarCNPJ('11222333000181'), '11.222.333/0001-81');
+  assert.equal(formatarCNPJ('11.222.333/0001-81'), '11.222.333/0001-81');
+});
+test('CB-05: CNPJ alfanumérico válido no campo CNPJ fica como está, sem aviso', () => {
+  for (const v of ['12.ABC.345/01DE-35', '12ABC34501DE35']) { const r = sanearCampo('cnpj', v); assert.equal(r.texto, v); assert.equal(r.aviso, null); }
+});
+test('CB-05: CNPJ inválido recusa o dossiê; válido sai formatado', () => {
+  for (const v of ['123', '11.222.333/0001-82', '12.ABC.345/01DE-36']) {
+    const r = dadosDoFormulario({ ...BASE, cnpj: v });
+    assert.equal(r.ok, false, v); assert.equal(r.campo, 'cnpj'); assert.match(r.erro, /CNPJ/);
+  }
+  assert.equal(dadosDoFormulario({ ...BASE, cnpj: '12abc34501de35' }).dados.cnpj, '12.ABC.345/01DE-35');
+  assert.equal(dadosDoFormulario({ ...BASE, cnpj: '11222333000181' }).dados.cnpj, '11.222.333/0001-81');
+  assert.equal(dadosDoFormulario({ ...BASE, cnpj: '   ' }).dados.cnpj, '');
+  const t = montarDossie(dadosDoFormulario({ ...BASE, cnpj: '12ABC34501DE35' }).dados).texto;
+  assert.match(t, /^CNPJ do lojista: 12\.ABC\.345\/01DE-35$/m);
+  assert.doesNotMatch(montarDossie(dadosDoFormulario(BASE).dados).texto, /CNPJ do lojista/);
 });

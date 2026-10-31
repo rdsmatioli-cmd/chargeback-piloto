@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-l3WRfQW7MFPTNLkS4tCvuhNEynH7g7DcvCERt7VvjSw='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-4blFoDL2qieCu0hQldj6M7G/wuugS1HSPl5FrVj/j7k='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
 body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
@@ -880,25 +880,39 @@ function controladorCampo(id) {
 
 function validarUltimos4(v) { return v === '' || /^\d{4}$/.test(v); }
 
-// CP-05: CNPJ com dígitos verificadores válidos.
+// CP-05: CNPJ com dígitos verificadores válidos. CB-05: aceita também o CNPJ alfanumérico
+// (IN RFB 2.229/2024): 12 posições de 0-9 ou A-Z e 2 DVs numéricos, calculados com o código do
+// caractere menos 48 e os mesmos pesos (para dígitos, igual ao cálculo numérico). Minúsculas valem
+// como maiúsculas; pontos, barra, hífen e espaços são ignorados.
+function normalizarCNPJ(v) { return String(v).toUpperCase().replace(/[.\/\s-]/g, ''); }
 function validarCNPJ(v) {
-  const d = String(v).replace(/\D/g, '');
-  if (d.length !== 14 || /^(\d)\1{13}$/.test(d)) return false;
+  const c = normalizarCNPJ(v);
+  if (!/^[0-9A-Z]{12}\d{2}$/.test(c) || /^(\d)\1{13}$/.test(c)) return false;
   const dv = (n) => {
     const pesos = n === 12 ? [5,4,3,2,9,8,7,6,5,4,3,2] : [6,5,4,3,2,9,8,7,6,5,4,3,2];
-    const s = pesos.reduce((a, p, i) => a + p * Number(d[i]), 0);
+    const s = pesos.reduce((a, p, i) => a + p * (c.charCodeAt(i) - 48), 0);
     const r = s % 11; return r < 2 ? 0 : 11 - r;
   };
-  return dv(12) === Number(d[12]) && dv(13) === Number(d[13]);
+  return dv(12) === c.charCodeAt(12) - 48 && dv(13) === c.charCodeAt(13) - 48;
+}
+// CB-05: CNPJ do dossiê no formato 00.000.000/0000-00 (ou 12.ABC.345/01DE-35).
+function formatarCNPJ(v) {
+  const c = normalizarCNPJ(v);
+  return `${c.slice(0, 2)}.${c.slice(2, 5)}.${c.slice(5, 8)}/${c.slice(8, 12)}-${c.slice(12)}`;
 }
 
-// CB-01: no campo CNPJ, um CNPJ válido (só dígitos e pontuação de CNPJ) não é tratado
+// CB-01: no campo CNPJ, um CNPJ válido (só caracteres e pontuação de CNPJ) não é tratado
 // como cartão; 14 dígitos com DV válido podem passar no Luhn. Qualquer outro valor é saneado.
-const FORMATO_CNPJ = /^\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}$/;
+// CB-05: as 12 primeiras posições aceitam letras (CNPJ alfanumérico).
+const FORMATO_CNPJ = /^[0-9A-Z]{2}\.?[0-9A-Z]{3}\.?[0-9A-Z]{3}\/?[0-9A-Z]{4}-?\d{2}$/i;
 // Parecer B-02: a exceção não vale quando os 14 dígitos também são um PAN Diners válido
-// (prefixo 30/36/38/39 e Luhn); nesse caso o campo é mascarado como qualquer outro.
+// (prefixo 30/36/38/39 e Luhn); nesse caso o campo é mascarado como qualquer outro. Só CNPJ todo
+// numérico pode ser PAN; o alfanumérico válido fica como está.
 function sanearCampo(id, texto) {
-  if (id === 'cnpj' && FORMATO_CNPJ.test(texto.trim()) && validarCNPJ(texto) && !ehPAN(texto.replace(/\D/g, ''), false)) return { texto, aviso: null, limpo: false };
+  if (id === 'cnpj' && FORMATO_CNPJ.test(texto.trim()) && validarCNPJ(texto)) {
+    const c = normalizarCNPJ(texto);
+    if (!(/^\d{14}$/.test(c) && ehPAN(c, false))) return { texto, aviso: null, limpo: false };
+  }
   return sanear(texto, id !== 'pedido');
 }
 
@@ -962,6 +976,9 @@ function dadosDoFormulario({ pedido = '', ultimos4 = '', cnpj = '', gateway = ''
   const p = valores.pedido.trim();
   if (!p) return recusa('pedido', 'Informe a identificação do pedido.');
   if (!validarUltimos4(ultimos4)) return recusa('ultimos4', 'Informe exatamente os 4 últimos dígitos, ou deixe em branco.');
+  // CB-05: CNPJ é opcional; preenchido, só entra válido e formatado.
+  const c = valores.cnpj.trim();
+  if (c && !validarCNPJ(c)) return recusa('cnpj', 'CNPJ inválido: confira os 14 caracteres ou deixe o campo em branco.');
   const im = indiceMotivo(motivo, matriz);
   if (im < 0) return recusa('motivo', 'Escolha o motivo indicado pela adquirente.');
   const m = matriz[im];
@@ -972,7 +989,7 @@ function dadosDoFormulario({ pedido = '', ultimos4 = '', cnpj = '', gateway = ''
   vinculos.forEach((v) => v.sort((a, b) => a - b));
   return {
     ok: true, valores, avisos,
-    dados: { pedido: p, ultimos4, cnpj: valores.cnpj.trim(), gateway: GATEWAYS.includes(gateway) ? gateway : '', motivo: m, fatos, documentos, vinculos }
+    dados: { pedido: p, ultimos4, cnpj: c ? formatarCNPJ(c) : '', gateway: GATEWAYS.includes(gateway) ? gateway : '', motivo: m, fatos, documentos, vinculos }
   };
 }
 

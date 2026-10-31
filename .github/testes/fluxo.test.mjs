@@ -191,3 +191,27 @@ test('CB-01: o A-3 mostrado na saída do campo continua visível depois de Gerar
   assert.match(p.t.estado.dossie.texto, /^Pedido: PED \*\*\*\* \*\*\*\* \*\*\*\* 1111$/m);
   assert.ok(p.aviso().startsWith(p.t.TEXTOS['A-3']), p.aviso());
 });
+
+// CB-05: P-1 só com CNPJ válido (inclusive alfanumérico); CNPJ preenchido e inválido não gera dossiê.
+test('CB-05: P-1 habilitada só com CNPJ válido, inclusive o alfanumérico', () => {
+  const p = abrir();
+  p.marcar('a1');
+  for (const [v, ok] of [['12.ABC.345/01DE-35', true], ['12abc34501de35', true], ['11.222.333/0001-81', true], ['123', false], ['12.ABC.345/01DE-36', false], ['', false]]) {
+    p.digitar('cnpj', v);
+    assert.equal(p.$('p1').disabled, !ok, v);
+  }
+});
+test('CB-05: Gerar com CNPJ inválido recusa, avisa e põe o foco no campo', () => {
+  const p = abrir();
+  p.marcar('a1');
+  p.preencher('pedido', 'PED-1');
+  p.escolher('motivo', p.valorMotivo('Visa', '10.4'));
+  p.preencher('cnpj', '123');
+  p.clicar('gerar');
+  assert.equal(p.t.estado.dossie, null);
+  assert.match(p.aviso(), /CNPJ/);
+  assert.equal(p.doc.activeElement, p.$('cnpj'));
+  p.preencher('cnpj', '12abc34501de35');
+  p.clicar('gerar');
+  assert.match(p.t.estado.dossie.texto, /^CNPJ do lojista: 12\.ABC\.345\/01DE-35$/m);
+});
