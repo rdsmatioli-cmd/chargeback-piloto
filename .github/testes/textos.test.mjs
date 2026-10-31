@@ -162,3 +162,22 @@ test('CB-TXT-04: Mastercard com a mesma versão e data de conferência no app e 
   assert.equal((t.match(/Merchant Edition \(versão de 13 de maio de 2025, conferida em 15\/10\/2026\)/g) || []).length, 2);
   assert.ok(!/matriz S-01/.test(t));
 });
+
+// CB-TXT-05: termos com lei citada, conferidos na Câmara (norma atualizada) em 31/10/2026.
+// CDC art. 49: 7 dias "a contar de sua assinatura ou do ato de recebimento do produto ou serviço";
+// parágrafo único: valores devolvidos "de imediato, monetariamente atualizados". O T-7 só aparece
+// com cobrança (COBRANCA = false nesta fase), mas fica pronto e correto.
+test('CB-TXT-05: T-7 segue o CDC art. 49 (início do prazo e atualização monetária)', () => {
+  const t7 = TEXTOS['T-7'];
+  assert.ok(t7.includes('em até 7 dias, contados da contratação ou do recebimento do serviço'));
+  assert.ok(t7.includes('monetariamente atualizados (CDC, art. 49)'));
+  assert.ok(!/integral/.test(t7));
+  assert.equal(ctx.__t.COBRANCA, false, 'T-7 só deve aparecer quando houver cobrança (CP-06)');
+});
+// LGPD (Lei 13.709/2018): arts. 42 a 45 = Seção III, Da Responsabilidade e do Ressarcimento de Danos;
+// art. 5º, VI: controlador. CDC art. 51, I: nulidade de cláusula que atenue a responsabilidade.
+test('CB-TXT-05: T-4 e T-5 citam os artigos conferidos', () => {
+  assert.ok(TEXTOS['T-4'].includes('arts. 42 a 45 da Lei nº 13.709/2018'));
+  assert.ok(TEXTOS['T-4'].includes('(art. 51, I)'));
+  assert.ok(TEXTOS['T-5'].includes('O usuário é controlador dos dados do comprador'));
+});
