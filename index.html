@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-qlwMeS9DkOFzub3J3+uuzOXxVyRhikMZC6yZqujVKL0='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-z39fNYjLy34QOUFp7C2e4rT8lC3FD6hFJ2BmORCQX54='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
 body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
@@ -101,14 +101,14 @@ const S01_MOTIVOS = [
   "codigo": "10.4",
   "motivo": "Outra fraude – compra sem cartão presente",
   "evidencias": [
-   "Registro de que a compra foi autenticada pelo Visa Secure no momento da autorização (informar à adquirente).",
-   "Ou: dados de 2 ou mais compras anteriores do mesmo portador, liquidadas entre 120 e 365 dias antes da disputa, sem registro de fraude, com pelo menos 2 elementos iguais aos da compra contestada (ID do dispositivo, impressão digital do dispositivo ou endereço IP), descrição do que foi comprado e data da entrega.",
+   "Registro de que a compra foi autenticada pelo Visa Secure (EMV 3-D Secure, com ECI 5 e CAVV na autorização), informado pela adquirente.",
+   "Ou: dados de 2 compras anteriores com o mesmo cartão ou token, não informadas como fraude, processadas mais de 120 e no máximo 365 dias antes da disputa; a descrição do que foi comprado nelas e na compra contestada e a data da entrega; e, iguais aos da compra contestada, o ID ou a impressão digital do dispositivo, ou o endereço IP, mais pelo menos 1 destes: login do cliente, endereço completo de entrega, ID ou impressão digital do dispositivo, endereço IP (ID e impressão digital do dispositivo contam como um só).",
    "Ou evidências da tabela 'Compelling Evidence' da fonte: e-mail ou foto que ligue quem recebeu ao portador; entrega no endereço com AVS Y ou M; para produto digital: descrição, data e hora do download e 2 ou mais entre IP/localização, ID do dispositivo, nome e e-mail do perfil, perfil verificado antes da compra; entrega em endereço comercial onde o portador trabalhava; pedido assinado (venda por correio ou telefone).",
    "Comprovante de reembolso ou estorno já feito, com valor e data (se houver).",
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Visa Dispute Management Guide for Merchants, versão de outubro de 2026, e Visa Core Rules and Visa Product and Service Rules, edição de 24 de outubro de 2026 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-11.1-1",
@@ -116,11 +116,12 @@ const S01_MOTIVOS = [
   "codigo": "11.1",
   "motivo": "Boletim de recuperação de cartão",
   "evidencias": [
+   "Registro de que o cartão não constava do boletim de recuperação de cartões (CRB) na data-chave da disputa (para hotel, locadora e cruzeiro: check-in, início da locação ou embarque).",
    "Documento de que a compra ocorreu em terminal EMV compatível (quando aplicável).",
    "Comprovante de reembolso ou estorno já feito, com valor e data (se houver)."
   ],
   "observacao": "Geralmente presencial; a adquirente detém o registro.",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Visa Dispute Management Guide for Merchants, versão de outubro de 2026, e Visa Core Rules and Visa Product and Service Rules, edição de 24 de outubro de 2026 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-11.2-2",
@@ -132,7 +133,7 @@ const S01_MOTIVOS = [
    "Comprovante de reembolso ou estorno já feito, com valor e data (se houver)."
   ],
   "observacao": "Registro de autorização é da adquirente.",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Visa Dispute Management Guide for Merchants, versão de outubro de 2026, e Visa Core Rules and Visa Product and Service Rules, edição de 24 de outubro de 2026 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-11.3-3",
@@ -145,7 +146,7 @@ const S01_MOTIVOS = [
    "Comprovante de reembolso ou estorno já feito, com valor e data (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Visa Dispute Management Guide for Merchants, versão de outubro de 2026, e Visa Core Rules and Visa Product and Service Rules, edição de 24 de outubro de 2026 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-12.2-4",
@@ -157,7 +158,7 @@ const S01_MOTIVOS = [
    "Comprovante de reembolso ou estorno já feito, com valor e data (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Visa Dispute Management Guide for Merchants, versão de outubro de 2026, e Visa Core Rules and Visa Product and Service Rules, edição de 24 de outubro de 2026 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-12.3-5",
@@ -171,7 +172,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Visa Dispute Management Guide for Merchants, versão de outubro de 2026, e Visa Core Rules and Visa Product and Service Rules, edição de 24 de outubro de 2026 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-12.4-6",
@@ -185,7 +186,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Visa Dispute Management Guide for Merchants, versão de outubro de 2026, e Visa Core Rules and Visa Product and Service Rules, edição de 24 de outubro de 2026 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-12.5-7",
@@ -198,7 +199,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Visa Dispute Management Guide for Merchants, versão de outubro de 2026, e Visa Core Rules and Visa Product and Service Rules, edição de 24 de outubro de 2026 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-12.6.1-8",
@@ -211,7 +212,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Visa Dispute Management Guide for Merchants, versão de outubro de 2026, e Visa Core Rules and Visa Product and Service Rules, edição de 24 de outubro de 2026 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-12.6.2-9",
@@ -224,7 +225,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Visa Dispute Management Guide for Merchants, versão de outubro de 2026, e Visa Core Rules and Visa Product and Service Rules, edição de 24 de outubro de 2026 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-12.7-10",
@@ -237,7 +238,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Visa Dispute Management Guide for Merchants, versão de outubro de 2026, e Visa Core Rules and Visa Product and Service Rules, edição de 24 de outubro de 2026 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-13.1-11",
@@ -253,7 +254,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Visa Dispute Management Guide for Merchants, versão de outubro de 2026, e Visa Core Rules and Visa Product and Service Rules, edição de 24 de outubro de 2026 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-13.2-12",
@@ -266,7 +267,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Visa Dispute Management Guide for Merchants, versão de outubro de 2026, e Visa Core Rules and Visa Product and Service Rules, edição de 24 de outubro de 2026 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-13.3-13",
@@ -281,7 +282,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Visa Dispute Management Guide for Merchants, versão de outubro de 2026, e Visa Core Rules and Visa Product and Service Rules, edição de 24 de outubro de 2026 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-13.4-14",
@@ -294,7 +295,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Visa Dispute Management Guide for Merchants, versão de outubro de 2026, e Visa Core Rules and Visa Product and Service Rules, edição de 24 de outubro de 2026 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-13.5-15",
@@ -308,7 +309,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Visa Dispute Management Guide for Merchants, versão de outubro de 2026, e Visa Core Rules and Visa Product and Service Rules, edição de 24 de outubro de 2026 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-13.6-16",
@@ -321,7 +322,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Visa Dispute Management Guide for Merchants, versão de outubro de 2026, e Visa Core Rules and Visa Product and Service Rules, edição de 24 de outubro de 2026 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Visa-13.7-17",
@@ -336,7 +337,7 @@ const S01_MOTIVOS = [
    "Mensagem do portador informando que não contesta mais a compra (se houver)."
   ],
   "observacao": "",
-  "rodape_linha": "Fonte: Visa, Dispute Management Guidelines for Visa Merchants, versão de junho de 2024 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
+  "rodape_linha": "Fonte: Visa, Visa Dispute Management Guide for Merchants, versão de outubro de 2026, e Visa Core Rules and Visa Product and Service Rules, edição de 24 de outubro de 2026 (pode haver regra mais recente). Confira no painel da sua adquirente; o prazo dela prevalece."
  },
  {
   "id": "Mastercard-4837-18",
