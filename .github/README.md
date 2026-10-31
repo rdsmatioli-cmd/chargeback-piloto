@@ -26,17 +26,19 @@ Ele reescreve só os hashes do `script-src` do `index.html` e confere todas as p
 
 - `mascara.test.mjs`: máscara de cartão (matrizes dos laudos em `*.json`).
 - `dossie.test.mjs`: funções puras do dossiê (motivo, CNPJ, limpeza de texto, datas, nome do arquivo, `dadosDoFormulario`).
-- `fluxo.test.mjs`: roda o script da página sobre a árvore do próprio `index.html` num DOM mínimo (`dom-minimo.mjs`, que cobre só o que o script usa) e dispara os eventos como o navegador. Confere que qualquer alteração descarta o dossiê, que a D-1 vale para uma geração e que o arquivo baixado é a prévia da tela. Se o script passar a usar outra API do DOM, estenda o `dom-minimo.mjs`.
+- `fluxo.test.mjs`: roda o script da página sobre a árvore do próprio `index.html` num DOM mínimo (`dom-minimo.mjs`, que cobre só o que o script usa) e dispara os eventos como o navegador. Confere que qualquer alteração descarta o dossiê, que a D-1 vale para uma geração e que o arquivo baixado é a prévia da tela; que cada recusa fica junto do campo (`<p id="<campo>-erro">`, `aria-invalid`, `aria-describedby`, foco); e, com `vedadosNaPagina`, que nenhum texto da página fora dos literais aprovados tem termo vedado. Se o script passar a usar outra API do DOM, estenda o `dom-minimo.mjs`.
+- `fluxo-navegador.mjs` (fora do `*.test.mjs`, porque pede Chrome e rede): o mesmo fluxo no Chrome de verdade, com o formulário visível, em 390 e 1280 px. Controla o Chrome por CDP com o WebSocket nativo do Node 22, sem dependências; confere que a mensagem de erro fica dentro da tela, fonte >= 16 px e alvos >= 44 px, e roda o axe-core 4.14.0 (baixado por `npm pack` e conferido pelo sha512) em cada etapa, exigindo 0 violação. Para subir o axe-core, troque a versão e o sha512 (o `integrity` do `npm view axe-core@<versão> dist.integrity`) no topo do script.
 
 Os testes de tempo da máscara (A-03, limite de 100 ms) ficam perto do limite em máquina carregada; se um deles falhar sozinho, rode de novo só ele (`node --test --test-name-pattern='A-03' .github/testes/mascara.test.mjs`).
 
 ## CI (`.github/workflows/ci.yml`)
 
-- `check`: html-validate 9.7.1 (regras em `.htmlvalidate.json`) em todo `.html`, os testes do app (`node --test .github/testes/*.test.mjs`: máscara de cartão, funções do dossiê e fluxo da página num DOM mínimo, sem dependências), o `conferir-csp.mjs` e o zizmor 1.30.1 (modo offline) nos workflows e no `dependabot.yml`, que falha o job em qualquer achado, como action sem SHA ou credencial persistida no checkout. Local, da raiz:
+- `check`: html-validate 9.7.1 (regras em `.htmlvalidate.json`) em todo `.html`, os testes do app (`node --test .github/testes/*.test.mjs`: máscara de cartão, funções do dossiê e fluxo da página num DOM mínimo, sem dependências), o fluxo no Chrome do runner com axe-core (`fluxo-navegador.mjs`), o `conferir-csp.mjs` e o zizmor 1.30.1 (modo offline) nos workflows e no `dependabot.yml`, que falha o job em qualquer achado, como action sem SHA ou credencial persistida no checkout. Local, da raiz:
 
   ```
   find . -name '*.html' -not -path './.git/*' -print0 | xargs -0 npx --yes html-validate@9.7.1 --max-warnings 0 -c .htmlvalidate.json
   node --test .github/testes/*.test.mjs
+  node .github/testes/fluxo-navegador.mjs
   node .github/scripts/conferir-csp.mjs
   uvx zizmor@1.30.1 --offline .github
   ```
@@ -45,7 +47,7 @@ Os testes de tempo da máscara (A-03, limite de 100 ms) ficam perto do limite em
 
 ## Dependabot (`.github/dependabot.yml`)
 
-Só os SHAs das actions do `ci.yml`, todas num PR agrupado, com versões publicadas há pelo menos 14 dias. O html-validate, o Lighthouse e o zizmor, fixados no próprio comando, ficam de fora.
+Só os SHAs das actions do `ci.yml`, todas num PR agrupado, com versões publicadas há pelo menos 14 dias. O html-validate, o Lighthouse, o zizmor e o axe-core, fixados no próprio comando ou script, ficam de fora.
 
 A primeira verificação roda quando este arquivo chega à `main`, sem esperar o dia 1; depois, dia 1 de cada mês às 06:00 de Brasília. O grupo inclui majors, e o checkout e o setup-node já têm v7 publicada há mais de 14 dias: o primeiro PR deve trazer a v7 das duas. Leia as notas de versão e só faça o merge, manual, com o CI verde.
 

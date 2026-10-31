@@ -3,7 +3,8 @@
 // como o navegador (input, change, click) e confere a tela, o estado e o arquivo baixado.
 // CB-01 a CB-06: achados do lote 'Integridade do dossiê baixado' (31/10/2026), citados no index.html
 // como 'CB-0n de 31/10'; não são os CB-xx de laudos anteriores que aparecem nos comentários antigos.
-// CB-07 a CB-10: lote 'Acessibilidade, mensagens de erro e mobile do formulário' (31/10/2026).
+// CB-07 a CB-12: lote 'Acessibilidade, mensagens de erro e mobile do formulário' (31/10/2026). O que
+// depende de layout (fonte, alturas, mensagem dentro da tela) e o axe-core ficam no fluxo-navegador.mjs.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -12,7 +13,7 @@ import { documentoDe, contextoDe, Evento } from './dom-minimo.mjs';
 
 const raiz = new URL('../../', import.meta.url);
 const html = readFileSync(new URL('index.html', raiz), 'utf8');
-const INTERNOS = ['estado', 'MATRIZ', 'TEXTOS', 'validarCNPJ'];
+const INTERNOS = ['estado', 'MATRIZ', 'TEXTOS', 'vedadosNaPagina', 'validarCNPJ'];
 
 function abrir() {
   const doc = documentoDe(html);
@@ -523,4 +524,47 @@ test('CB-10: CNPJ alfanumérico com termo vedado é apontado no campo CNPJ', () 
   assert.match(p.aviso(), /CDC \(no CNPJ\)/);
   assert.equal(p.erro('cnpj'), 'O CNPJ forma termo não permitido no dossiê: CDC.');
   assert.equal(p.doc.activeElement.id, 'cnpj');
+});
+
+// CB-12: os textos que a página mostra (fora a allowlist de literais aprovados) não têm termo vedado.
+// vedadosNaPagina era código morto; aqui ela confere a página depois de passar por todos os motivos,
+// recusas, mensagens de campo, anúncio do fato e aviso de dossiê alterado, com dados neutros.
+function textosDaPagina(doc) {
+  const r = [];
+  const visita = (n) => {
+    for (const f of n.childNodes) {
+      if (f.data !== undefined) { const t = f.data.trim(); if (t) r.push(t); continue; }
+      for (const a of ['aria-label', 'title', 'placeholder']) { const v = f.getAttribute(a); if (v) r.push(v); }
+      visita(f);
+    }
+  };
+  visita(doc.body);
+  return r;
+}
+test('CB-12: vedadosNaPagina não acha termo vedado nos textos da página, em todos os motivos', () => {
+  const p = abrir();
+  const textos = new Set();
+  const colher = () => { for (const t of textosDaPagina(p.doc)) textos.add(t); };
+  colher();
+  p.marcar('a1');
+  p.clicar('gerar'); colher();
+  p.preencher('pedido', 'PED-1'); p.digitar('ultimos4', '12'); p.clicar('gerar'); colher();
+  p.digitar('ultimos4', ''); p.preencher('cnpj', '123'); p.clicar('gerar'); colher();
+  p.preencher('cnpj', ''); p.clicar('gerar'); colher();
+  p.clicar('add-fato'); colher();
+  p.fato('2026-10-01', 'Pedido entregue'); colher();
+  p.anexar([{ name: 'nota.pdf', size: 1 }, { name: 'rastreio.pdf', size: 2 }]);
+  p.t.MATRIZ.forEach((m, i) => {
+    p.escolher('motivo', String(i));
+    const vinculo = p.$('vinculos').querySelector('input');   // motivo da Elo sem lista não tem vínculo
+    if (vinculo) p.marcar(vinculo);
+    p.clicar('gerar'); p.marcar('d1');
+    assert.ok(p.t.estado.dossie, m.id);
+    colher();
+  });
+  p.$('pedido').value = 'PED-2'; p.clicar('baixar'); colher();
+  assert.ok(textos.size > 50);
+  assert.deepEqual(JSON.parse(JSON.stringify(p.t.vedadosNaPagina([...textos], p.t.MATRIZ))), []);
+  // A conferência pega texto fora da allowlist: o próprio termo, numa mensagem qualquer.
+  assert.equal(p.t.vedadosNaPagina([...textos, 'Fale com um advogado'], p.t.MATRIZ).length, 1);
 });

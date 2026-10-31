@@ -2,7 +2,7 @@
 // Carrega o <script> do próprio index.html num vm, como o teste da máscara, e chama as funções da página.
 // CB-01 a CB-06: achados do lote 'Integridade do dossiê baixado' (31/10/2026), citados no index.html
 // como 'CB-0n de 31/10'; não são os CB-xx de laudos anteriores que aparecem nos comentários antigos.
-// CB-10: lote 'Acessibilidade, mensagens de erro e mobile do formulário' (31/10/2026).
+// CB-10 e CB-12: lote 'Acessibilidade, mensagens de erro e mobile do formulário' (31/10/2026).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -11,13 +11,13 @@ import vm from 'node:vm';
 const raiz = new URL('../../', import.meta.url);
 const html = readFileSync(new URL('index.html', raiz), 'utf8');
 const NOMES = ['MATRIZ', 'TEXTOS', 'indiceMotivo', 'dadosDoFormulario', 'montarDossie', 'validarCNPJ', 'formatarCNPJ', 'sanearCampo', 'limparTexto', 'sanearEntrada', 'encontrarVedados',
-  'DATA_MIN', 'hojeLocal', 'validarDataFato', 'dataBR', 'ordenarFatos', 'nomeArquivoDossie'];
+  'DATA_MIN', 'hojeLocal', 'validarDataFato', 'dataBR', 'ordenarFatos', 'nomeArquivoDossie', 'vedadosNaPagina'];
 let src = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 src = src.replace(/\}\)\(\);\s*$/, `globalThis.__t = { ${NOMES.map((n) => `${n}: typeof ${n} === 'undefined' ? undefined : ${n}`).join(', ')} };})();`);
 const ctx = { document: { addEventListener() {} }, console };
 vm.createContext(ctx); vm.runInContext(src, ctx);
 const { MATRIZ, TEXTOS, indiceMotivo, dadosDoFormulario, montarDossie, validarCNPJ, formatarCNPJ, sanearCampo, limparTexto, sanearEntrada, encontrarVedados,
-  DATA_MIN, hojeLocal, validarDataFato, dataBR, ordenarFatos, nomeArquivoDossie } = ctx.__t;
+  DATA_MIN, hojeLocal, validarDataFato, dataBR, ordenarFatos, nomeArquivoDossie, vedadosNaPagina } = ctx.__t;
 
 // CB-03: índice do motivo validado (inteiro dentro da matriz); vazio ou qualquer outro valor é -1.
 test('CB-03: indiceMotivo aceita só inteiro canônico dentro da matriz', () => {
@@ -244,7 +244,26 @@ test('CB-06: nome do arquivo traz o pedido saneado e a data', () => {
     assert.match(nomeArquivoDossie(p, hoje), /^dossie-chargeback-(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,38}[A-Za-z0-9])?-)?\d{4}-\d{2}-\d{2}\.txt$/, p);
 });
 
+// CB-12: nenhum motivo da matriz gera termo vedado no dossiê. Com dados neutros, o texto é só o da matriz e os
+// fixos do dossiê; um termo vedado ali bloquearia o Baixar de todo usuário daquele motivo.
 const json = (v) => JSON.parse(JSON.stringify(v));
+test('CB-12: nenhum motivo da matriz gera termo vedado no dossiê sem dados do usuário', () => {
+  assert.ok(MATRIZ.length >= 37);
+  MATRIZ.forEach((m, i) => {
+    const r = dadosDoFormulario({ pedido: 'PED-1', motivo: String(i) });
+    assert.equal(r.ok, true, m.id);
+    const d = montarDossie(r.dados);
+    assert.deepEqual(json(d.vedados), [], m.id);
+    assert.deepEqual(json(d.origens), [], m.id);
+  });
+});
+test('CB-12: vedadosNaPagina aceita só o literal aprovado inteiro e acusa o resto', () => {
+  assert.ok(encontrarVedados(TEXTOS['T-4']).length > 0, 'T-4 tem termo da lista e é literal aprovado');
+  assert.deepEqual(json(vedadosNaPagina([TEXTOS['T-4'], 'Gerar dossiê'], MATRIZ)), []);
+  const r = json(vedadosNaPagina([`${TEXTOS['T-4']} `, 'Fale com um advogado'], MATRIZ));
+  assert.equal(r.length, 2, 'T-4 com um espaço a mais já não é o literal aprovado');
+  assert.deepEqual(r[1], { texto: 'Fale com um advogado', vedados: ['advogado'] });
+});
 
 // CB-10: montarDossie diz de onde vem cada termo vedado (pedido, CNPJ, fato, documento), e a união das origens
 // é a lista do texto inteiro (nenhum termo vedado atravessa linha: a busca por linha acha o mesmo).
