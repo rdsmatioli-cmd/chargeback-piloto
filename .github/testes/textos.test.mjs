@@ -103,3 +103,23 @@ test('FAQ do JSON-LD repete literalmente as respostas visíveis do artigo', () =
     assert.ok(t.includes(q.acceptedAnswer.text), q.name);
   }
 });
+
+// CB-TXT-02: Resolução BCB nº 522/2025 (DOU de 12/11/2025, em vigor na publicação). Art. 35-G: os
+// regulamentos limitam a responsabilidade financeira dos participantes às contestações iniciadas até
+// 180 dias da autorização. Art. 3º: 180 dias para pedir a adequação; o regulamento vigente vale até a
+// aprovação. O limite de 180 dias não é o prazo do lojista, e o rodapé do app cita a mesma resolução.
+const RES_522 = { citacao: 'Resolução BCB nº 522/2025', data: '10 de novembro de 2025', dou: '12/11/2025', limite: '180 dias da autorização da transação' };
+test('CB-TXT-02: rodapé da matriz e blog citam a mesma Resolução BCB nº 522/2025', () => {
+  assert.ok(RODAPE_MATRIZ.includes(RES_522.citacao));
+  const t = texto(blog);
+  assert.ok(t.includes(`Resolução BCB nº 522, de ${RES_522.data}`));
+  assert.ok(t.includes(`publicada no Diário Oficial da União em ${RES_522.dou}`));
+  assert.ok(t.includes(RES_522.limite));
+  assert.ok(t.includes('Esse limite não é o prazo do lojista para responder'));
+  assert.ok(blog.includes('href="https://www.bcb.gov.br/estabilidadefinanceira/exibenormativo?tipo=Resolu%C3%A7%C3%A3o%20BCB&amp;numero=522"'));
+});
+test('CB-TXT-02: nenhum texto apresenta os 180 dias como prazo de resposta do lojista', () => {
+  for (const h of [texto(app), texto(blog), llms]) {
+    assert.ok(!/(lojista|você|voce)[^.]{0,80}180 dias/i.test(h.replace('Esse limite não é o prazo do lojista para responder', '')));
+  }
+});
