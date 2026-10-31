@@ -19,7 +19,9 @@ jobs:
       # Hash de cada <script> inline no script-src da CSP da página. Sem ele o navegador bloqueia o
       # script e o app fica em branco. Para corrigir: node .github/scripts/conferir-csp.mjs --corrigir
       # Máscara de cartão: matriz de 171 casos do laudo QA 20fa739 e casos B-01/B-02 do parecer.
-      - name: Testes da máscara de cartão
+      # Dossiê: funções puras (dossie.test.mjs) e fluxo da página num DOM mínimo sem dependências
+      # (fluxo.test.mjs + dom-minimo.mjs): o arquivo baixado tem de ser o dossiê da tela.
+      - name: Testes do app (máscara de cartão, dossiê e fluxo)
         run: node --test .github/testes/*.test.mjs
       - name: CSP (hash dos scripts inline)
         run: node .github/scripts/conferir-csp.mjs

@@ -22,12 +22,21 @@ node .github/scripts/conferir-csp.mjs --corrigir
 
 Ele reescreve só os hashes do `script-src` do `index.html` e confere todas as páginas. Sem `--corrigir`, só confere. Vale o repositório inteiro, de qualquer pasta em que se rode.
 
+## Testes do app (`.github/testes/`)
+
+- `mascara.test.mjs`: máscara de cartão (matrizes dos laudos em `*.json`).
+- `dossie.test.mjs`: funções puras do dossiê (motivo, CNPJ, limpeza de texto, datas, nome do arquivo, `dadosDoFormulario`).
+- `fluxo.test.mjs`: roda o script da página sobre a árvore do próprio `index.html` num DOM mínimo (`dom-minimo.mjs`, que cobre só o que o script usa) e dispara os eventos como o navegador. Confere que qualquer alteração descarta o dossiê, que a D-1 vale para uma geração e que o arquivo baixado é a prévia da tela. Se o script passar a usar outra API do DOM, estenda o `dom-minimo.mjs`.
+
+Os testes de tempo da máscara (A-03, limite de 100 ms) ficam perto do limite em máquina carregada; se um deles falhar sozinho, rode de novo só ele (`node --test --test-name-pattern='A-03' .github/testes/mascara.test.mjs`).
+
 ## CI (`.github/workflows/ci.yml`)
 
-- `check`: html-validate 9.7.1 (regras em `.htmlvalidate.json`) em todo `.html`, o `conferir-csp.mjs` e o zizmor 1.30.1 (modo offline) nos workflows e no `dependabot.yml`, que falha o job em qualquer achado, como action sem SHA ou credencial persistida no checkout. Local, da raiz:
+- `check`: html-validate 9.7.1 (regras em `.htmlvalidate.json`) em todo `.html`, os testes do app (`node --test .github/testes/*.test.mjs`: máscara de cartão, funções do dossiê e fluxo da página num DOM mínimo, sem dependências), o `conferir-csp.mjs` e o zizmor 1.30.1 (modo offline) nos workflows e no `dependabot.yml`, que falha o job em qualquer achado, como action sem SHA ou credencial persistida no checkout. Local, da raiz:
 
   ```
   find . -name '*.html' -not -path './.git/*' -print0 | xargs -0 npx --yes html-validate@9.7.1 --max-warnings 0 -c .htmlvalidate.json
+  node --test .github/testes/*.test.mjs
   node .github/scripts/conferir-csp.mjs
   uvx zizmor@1.30.1 --offline .github
   ```
