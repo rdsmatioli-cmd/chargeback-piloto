@@ -22,7 +22,7 @@ jobs:
       # Dossiê: funções puras (dossie.test.mjs) e fluxo da página num DOM mínimo sem dependências
       # (fluxo.test.mjs + dom-minimo.mjs): o arquivo baixado tem de ser o dossiê da tela.
       # Páginas (pagina.test.mjs): <noscript>, aviso de navegador sem suporte, teste de suporte em ES5, CSP com Trusted
-      # Types e símbolo do script sem uso.
+      # Types, símbolo do script sem uso, prévia de link do app e SEO técnico do blog (metas, JSON-LD, sitemap, rel).
       # Um arquivo de cada vez: em paralelo, o fluxo disputava CPU com os testes de tempo da máscara (A-03, < 100 ms).
       - name: Testes do app (máscara de cartão, dossiê, páginas e fluxo)
         run: node --test --test-concurrency=1 .github/testes/*.test.mjs
