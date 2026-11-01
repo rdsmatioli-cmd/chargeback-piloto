@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-mA6vOKbGiu9dpW4lrlRwiCw0cJagJeixo8fmi8M4Zpo='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-kdXD/TNCXfmjGtkiqmxjW/vWcyP1gqlaNL4y6G+nQHk='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
 /* Cores do blog (blog/index.html). CB-11 de 31/10: campos e botões com a fonte da página (16 px; abaixo disso o
@@ -26,10 +26,15 @@ button{padding:.5rem 1rem;border:1px solid var(--txt2);border-radius:4px;backgro
 button:disabled{cursor:not-allowed;opacity:.6}
 :focus-visible{outline:3px solid var(--prim);outline-offset:2px}
 #lista-fatos li{margin:.25rem 0}#lista-fatos button{margin-left:.5rem}
+/* Revisão do lote 2: a legenda longa da evidência, em várias linhas (390 px), era cortada pela borda de cima do fieldset;
+   flutuando, ela fica dentro da caixa, acima das caixas de documento. */
+#vinculos legend{float:left;width:100%;padding:0;margin-bottom:.25rem}#vinculos legend+*{clear:both}
 /* CB-08 de 31/10: mensagem de campo logo depois dele; erro com aria-invalid. */
 .msg{margin:.25rem 0 .75rem;padding:.25rem .5rem;border-left:4px solid var(--txt2)}
 .msg.erro{border-left-color:var(--erro);color:var(--erro)}
 [aria-invalid=true]{border:2px solid var(--erro)}
+/* Revisão do lote 2: o input[type=file]{border:0} é mais específico; sem esta regra o #docs com erro não ganhava borda. */
+input[type=file][aria-invalid=true]{padding:.25rem;border:2px solid var(--erro);border-radius:4px}
 #aviso{border:1px solid var(--txt2);border-left:4px solid var(--prim);padding:.5rem;background:var(--suave)}
 #fato-status{margin:.25rem 0}
 pre{white-space:pre-wrap;border:1px solid #ccc;padding:.5rem}
@@ -1081,9 +1086,17 @@ function onde(o) {
   if (o.campo === 'documento') return `no nome do documento D${o.n}, ${o.nome}`;
   return 'no texto do motivo';
 }
+// Revisão do lote 2: o CNPJ não se altera (a lista de termos não muda neste lote), então nem o aviso geral nem o campo
+// pedem para removê-lo; os dois dizem a mesma frase. As outras origens continuam com 'Remova'.
+function mensagemCNPJVedado(termos) { return `O CNPJ forma ${termos.length > 1 ? 'termos não permitidos' : 'termo não permitido'} no dossiê: ${termos.join(', ')}.`; }
 function mensagemVedados(origens) {
-  const partes = origens.map((o) => `${o.termos.join(', ')} (${onde(o)})`).join('; ');
-  return `Remova os termos não permitidos no dossiê: ${partes}.` + (origens.some((o) => o.campo === 'documento') ? ` ${RENOMEAR}` : '');
+  const outras = origens.filter((o) => o.campo !== 'cnpj'), cnpj = origens.find((o) => o.campo === 'cnpj');
+  const partes = outras.map((o) => `${o.termos.join(', ')} (${onde(o)})`).join('; ');
+  return [
+    outras.length ? `Remova os termos não permitidos no dossiê: ${partes}.` : '',
+    outras.some((o) => o.campo === 'documento') ? RENOMEAR : '',
+    cnpj ? mensagemCNPJVedado(cnpj.termos) : ''
+  ].filter(Boolean).join(' ');
 }
 // Mensagem do seletor de documentos para os nomes com termo vedado (na seleção e ao gerar).
 function mensagemDocumentos(documentos) {
@@ -1163,6 +1176,17 @@ function limparCampo(id) {
 function focarCampo(id) { $(id).focus({ preventScroll: true }); $(`${id}-erro`).scrollIntoView({ block: 'center' }); }
 function erroCampo(id, msg, focar = true) { mensagemCampo(id, msg, true); if (focar) focarCampo(id); }
 function avisoCampo(id, msg) { mensagemCampo(id, msg, false); aviso(msg); }
+// Revisão do lote 2: a saída do campo (change e blur) acontece no mousedown de quem recebe o foco, também no toque.
+// Uma nota (A-3/A-3b) mostrada ali descia o que fica abaixo do campo antes do mouseup: o clique caía na nota e o botão
+// (Adicionar fato, Gerar, uma caixa) não recebia o click. Com o botão pressionado, a nota espera o fim do clique: quem
+// trata o clique (add-fato, gerar) a toma com tomarNotaDaSaida, e o resto aparece logo depois do click.
+let pressionado = false, pressoes = 0;
+const notasDaSaida = new Map();
+function notaDaSaida(id, msg) { if (pressionado) notasDaSaida.set(id, msg); else avisoCampo(id, msg); }
+function tomarNotaDaSaida(id) { const msg = notasDaSaida.get(id) || null; notasDaSaida.delete(id); return msg; }
+function mostrarNotasDaSaida() { pressionado = false; for (const [id, msg] of notasDaSaida) avisoCampo(id, msg); notasDaSaida.clear(); }
+// Nota (não erro) que está junto do campo: vale para o texto atual, porque a próxima edição a apaga.
+function notaNoCampo(id) { const m = $(`${id}-erro`); return !m.hidden && m.getAttribute('class') === 'msg' ? m.textContent : null; }
 
 function iniciar() {
   document.title = TITULO;
@@ -1205,14 +1229,25 @@ function iniciar() {
   $('fato-data').min = DATA_MIN;
   $('fato-data').max = hojeLocal();
 
-  // CP-01: digitar não saneia; paste, saída do campo e geração do dossiê saneiam.
+  // Revisão do lote 2: botão do mouse pressionado (o toque também gera mousedown, mouseup e click). O click sai na
+  // mesma tarefa do mouseup; a nota pendente aparece depois dele. O select nativo abre no mousedown e o mouseup pode
+  // ficar com a lista: a escolha dele ou uma tecla também mostram a nota.
+  // Cada mouseup mostra só o que ficou pendente até ali: se o timer atrasar (aba em segundo plano) e outro clique já
+  // tiver começado, a nota deste espera o mouseup dele.
+  document.addEventListener('mousedown', () => { pressionado = true; pressoes++; }, true);
+  document.addEventListener('mouseup', () => { const n = pressoes; setTimeout(() => { if (n === pressoes) mostrarNotasDaSaida(); }, 0); }, true);
+  document.addEventListener('keydown', mostrarNotasDaSaida, true);
+  document.addEventListener('change', (e) => { if (e.target.tagName === 'SELECT') mostrarNotasDaSaida(); }, true);
+
+  // CP-01: digitar não saneia; paste, saída do campo e geração do dossiê saneiam. A nota do paste aparece na hora; a da
+  // saída do campo espera o fim do clique que tirou o foco (notaDaSaida).
   document.querySelectorAll('input[type=text], textarea').forEach((el) => {
     if (el.id === 'ultimos4') return;
     const ctl = controladorCampo(el.id);
-    const aplicar = (fn) => { const r = fn(el.value); if (r.texto !== el.value) el.value = r.texto; if (r.aviso) avisoCampo(el.id, r.aviso); };
-    el.addEventListener('paste', () => setTimeout(() => aplicar(ctl.aoColar), 0));
-    el.addEventListener('blur', () => aplicar(ctl.aoSair));
-    el.addEventListener('change', () => aplicar(ctl.aoSair));
+    const aplicar = (fn, nota) => { const r = fn(el.value); if (r.texto !== el.value) el.value = r.texto; if (r.aviso) nota(el.id, r.aviso); };
+    el.addEventListener('paste', () => setTimeout(() => aplicar(ctl.aoColar, avisoCampo), 0));
+    el.addEventListener('blur', () => aplicar(ctl.aoSair, notaDaSaida));
+    el.addEventListener('change', () => aplicar(ctl.aoSair, notaDaSaida));
   });
 
   $('cnpj').addEventListener('input', atualizarP1);
@@ -1233,6 +1268,7 @@ function iniciar() {
     $('form').addEventListener(tipo, (e) => { if (e.target.id !== 'd1' && e.target.id !== 'baixar') invalidarDossie(); });
   }
 
+  let avisoDocs = '';
   $('docs').addEventListener('change', (e) => {
     // Só nome e tamanho; o conteúdo do arquivo não é lido. CB-04 de 31/10: o nome passa pela mesma limpeza
     // e máscara dos campos, e nome mascarado mostra o A-3 como eles (antes o aviso era descartado).
@@ -1243,11 +1279,17 @@ function iniciar() {
       return { nome: r.texto || '[nome removido]', tamanho: f.size };
     });
     limparCampo('docs');
+    // O aviso geral da seleção anterior não vale para a nova.
+    if (avisoDocs && $('aviso').textContent === avisoDocs) aviso('');
+    avisoDocs = '';
     const a3 = avisos.length ? (avisos.includes(TEXTOS['A-3']) ? TEXTOS['A-3'] : avisos[0]) : '';
-    if (a3) avisoCampo('docs', a3);
     // CB-10 de 31/10: nome com termo vedado bloquearia o Baixar; avisa já na seleção, com o documento e a saída.
+    // Revisão do lote 2: o foco já está no seletor quando o diálogo de arquivos fecha, e focar de novo não faz o leitor
+    // de tela ler a mensagem. Ela vai também para o aviso geral (role=alert), como a nota do A-3.
     const vedados = mensagemDocumentos(estado.documentos);
-    if (vedados) erroCampo('docs', [a3, vedados].filter(Boolean).join(' '));
+    const msg = [a3, vedados].filter(Boolean).join(' ');
+    if (vedados) { erroCampo('docs', msg); aviso(msg); } else if (a3) avisoCampo('docs', a3);
+    avisoDocs = msg;
     invalidarDossie();
     renderVinculos();
   });
@@ -1255,13 +1297,15 @@ function iniciar() {
 
   $('add-fato').addEventListener('click', () => {
     // CB-09 de 31/10: cada tentativa recomeça as mensagens dos dois campos; o que falta (data, descrição) ou o termo
-    // vedado vai para o campo, com foco no primeiro. O A-3 do saneamento fica no aviso geral e junto do fato.
-    // O blur do campo roda antes do clique e já mascarou o cartão; aqui sanear() não devolve mais o A-3.
+    // vedado vai para o campo, com foco no primeiro. A saída do campo roda antes do clique e já mascarou o cartão, então
+    // sanear() aqui não devolve mais o A-3: ele vem da nota que esperava o fim deste clique (revisão do lote 2) ou da
+    // que já estava junto do fato (saída pelo Tab, ou erro só na data na tentativa anterior).
+    const nota = tomarNotaDaSaida('fato-desc') || notaNoCampo('fato-desc');
     limparCampo('fato-data'); limparCampo('fato-desc'); txt('fato-status', '');
     const data = $('fato-data').value;
     const desc = sanearEntrada('fato-desc', $('fato-desc').value);
     $('fato-desc').value = desc.texto;
-    if (desc.aviso) avisoCampo('fato-desc', desc.aviso);
+    const a3 = desc.aviso || nota;
     // CB-06 de 31/10: data real entre 01/01/2000 e hoje. O máximo é recalculado (a página pode virar o dia aberta).
     const hoje = hojeLocal();
     $('fato-data').max = hoje;
@@ -1271,16 +1315,19 @@ function iniciar() {
     const vedados = encontrarVedados(desc.texto);
     if (!desc.texto.trim()) erros.push(['fato-desc', 'Descreva o fato.']);
     else if (vedados.length) erros.push(['fato-desc', `Remova os termos não permitidos no fato: ${vedados.join(', ')}.`]);
+    // Fato recusado: o A-3 fica junto do fato (sozinho ou antes do erro dele) e no aviso geral.
     if (erros.length) {
-      for (const [id, msg] of erros) erroCampo(id, id === 'fato-desc' && desc.aviso ? `${desc.aviso} ${msg}` : msg, false);
+      if (a3) avisoCampo('fato-desc', a3);
+      for (const [id, msg] of erros) erroCampo(id, id === 'fato-desc' && a3 ? `${a3} ${msg}` : msg, false);
       return focarCampo(erros[0][0]);
     }
     estado.fatos.push({ data, descricao: desc.texto.trim() });
     $('fato-desc').value = '';
     invalidarDossie();
     renderFatos();
-    // CB-09 de 31/10: anúncio em role=status e foco de volta na data, para o próximo fato.
-    txt('fato-status', 'Fato adicionado.');
+    // CB-09 de 31/10: anúncio em role=status e foco de volta na data, para o próximo fato. Revisão do lote 2: o A-3 do
+    // fato que entrou mascarado vai no mesmo anúncio, logo abaixo do botão; o campo vazio fica sem nota.
+    txt('fato-status', a3 ? `Fato adicionado. ${a3}` : 'Fato adicionado.');
     $('fato-data').focus();
   });
 
@@ -1358,9 +1405,10 @@ function invalidarDossie() {
 }
 
 function gerar() {
-  // O blur do campo roda antes do clique e já mascarou o cartão e mostrou o A-3; o texto chega
-  // mascarado e o saneamento não devolve mais o A-3. Ele continua visível (como no add-fato).
-  const a3Visivel = !$('aviso').hidden && $('aviso').textContent.startsWith(TEXTOS['A-3']);
+  // A saída do campo roda antes do clique e já mascarou o cartão; o texto chega mascarado e o saneamento não devolve
+  // mais o A-3. Ele vem da nota que esperava o fim deste clique (revisão do lote 2) ou do aviso já visível.
+  const notas = CAMPOS_COM_MENSAGEM.map(tomarNotaDaSaida).filter(Boolean);
+  const a3Visivel = notas.includes(TEXTOS['A-3']) || (!$('aviso').hidden && $('aviso').textContent.startsWith(TEXTOS['A-3']));
   invalidarDossie();
   aviso('');
   for (const id of CAMPOS_COM_MENSAGEM) limparCampo(id);
@@ -1382,7 +1430,7 @@ function gerar() {
   const campos = [];
   for (const o of d.origens) {
     const lista = `${o.termos.length > 1 ? 'termos não permitidos' : 'termo não permitido'} no dossiê: ${o.termos.join(', ')}.`;
-    const msg = o.campo === 'documento' ? mensagemDocumentos(r.dados.documentos) : o.campo === 'cnpj' ? `O CNPJ forma ${lista}` : `Remova ${o.termos.length > 1 ? 'os' : 'o'} ${lista}`;
+    const msg = o.campo === 'documento' ? mensagemDocumentos(r.dados.documentos) : o.campo === 'cnpj' ? mensagemCNPJVedado(o.termos) : `Remova ${o.termos.length > 1 ? 'os' : 'o'} ${lista}`;
     const id = o.campo === 'documento' ? 'docs' : o.campo;
     if (CAMPOS_COM_MENSAGEM.includes(id) && !campos.includes(id)) { erroCampo(id, msg, false); campos.push(id); }
   }

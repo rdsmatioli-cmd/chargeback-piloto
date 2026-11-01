@@ -144,6 +144,8 @@ async function abrir(tela) {
   });
   await Promise.all([env('Page.enable'), env('Runtime.enable'), env('Log.enable'), env('DOM.enable')]);
   await env('Emulation.setDeviceMetricsOverride', { width: tela.width, height: tela.height, deviceScaleFactor: tela.deviceScaleFactor, mobile: tela.mobile });
+  // Tela de celular aceita toque (Input.dispatchTouchEvent); o mouse continua valendo.
+  if (tela.mobile) await env('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   const carregou = cdp.esperar('Page.loadEventFired', sessionId);
   await env('Page.navigate', { url: `${base}/` });
   await carregou;
@@ -157,10 +159,18 @@ async function abrir(tela) {
     async fechar() { await cdp.enviar('Target.closeTarget', { targetId }); },
     // Clique de mouse no centro do elemento, depois de trazê-lo para a tela: se outro elemento o cobre, o clique
     // vai para o outro e o teste percebe.
-    async clicar(id) {
-      const r = await js(`(() => { const e = document.getElementById(${JSON.stringify(id)}); e.scrollIntoView({ block: 'center' }); const b = e.getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; })()`);
+    // rolar=false: clica onde o elemento está, sem trazê-lo ao meio da tela.
+    async clicar(id, rolar = true) {
+      const r = await p.centro(id, rolar);
       for (const type of ['mousePressed', 'mouseReleased']) await env('Input.dispatchMouseEvent', { type, x: r.x, y: r.y, button: 'left', clickCount: 1 });
     },
+    // Toque no centro do elemento (só em tela mobile): o Chrome gera mousedown, mouseup e click depois do touchend.
+    async tocar(id, rolar = true) {
+      const r = await p.centro(id, rolar);
+      await env('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: r.x, y: r.y }] });
+      await env('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    },
+    centro: (id, rolar = true) => js(`(() => { const e = document.getElementById(${JSON.stringify(id)}); if (${rolar}) e.scrollIntoView({ block: 'center' }); const b = e.getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; })()`),
     // Digitação: foco pelo clique, texto atual selecionado e o novo inserido como teclado (gera input).
     async digitar(id, texto) {
       await p.clicar(id);
@@ -259,9 +269,13 @@ for (const tela of TELAS) {
       assert.ok(await p.visivel('docs-erro'));
       assert.match(await p.texto('docs-erro'), /D2 \(processo-entrega\.pdf\).*Renomeie o arquivo/);
       assert.ok(await p.naTela('docs-erro'), 'docs-erro dentro da tela');
+      // Revisão do lote 2: o seletor com erro ganha a borda de erro (input[type=file]{border:0} vencia o [aria-invalid]).
+      assert.deepEqual(await p.js(`(({ borderTopWidth: w, borderTopColor: c }) => [w, c])(getComputedStyle(document.getElementById('docs')))`), ['2px', 'rgb(176, 0, 32)']);
       await semViolacoes(p, 'erro nos documentos');
       await p.anexar(['nota-fiscal.pdf', 'rastreio.pdf']);
       assert.equal(await p.visivel('docs-erro'), false);
+      // Revisão do lote 2: legenda de evidência em várias linhas fica dentro do fieldset (a borda de cima a cortava).
+      assert.deepEqual(await p.js(`[...document.querySelectorAll('#vinculos fieldset')].filter((f) => { const l = f.querySelector('legend').getBoundingClientRect(), b = f.getBoundingClientRect(); return l.top < b.top + parseFloat(getComputedStyle(f).borderTopWidth) || l.right > b.right; }).map((f) => f.querySelector('legend').textContent.slice(0, 40))`), []);
       await p.js(`document.querySelector('#vinculos input').id = 'vinculo-1'`);
       await p.clicar('vinculo-1');
 
@@ -291,4 +305,65 @@ for (const tela of TELAS) {
       await p.fechar();
     }
   });
+}
+
+// Revisão do lote 2: a saída do campo com número de cartão mostrava a nota A-3 junto do campo no mousedown do botão;
+// o botão descia antes do mouseup, o clique (ou o toque) caía na nota e não chegava ao botão. O fato com cartão entra
+// no primeiro clique e no primeiro toque; sem data, o mesmo clique mostra o erro da data (CB-09).
+async function fatoComCartao(p, acionar) {
+  const n = await p.js(`document.querySelectorAll('#lista-fatos li').length`);
+  await p.escolher('fato-data', '2026-10-01');
+  await p.digitar('fato-desc', 'Cliente pagou com 5555 5555 5555 4444 e recebeu');
+  await acionar('add-fato');
+  assert.equal(await p.js(`document.querySelectorAll('#lista-fatos li').length`), n + 1, 'o fato entra no primeiro clique');
+  assert.match(await p.texto('lista-fatos'), /Cliente pagou com \*{4} \*{4} \*{4} 4444 e recebeu/);
+  assert.match(await p.texto('fato-status'), /^Fato adicionado\. Removemos um dado de cartão do texto\./);
+  assert.equal(await p.visivel('fato-desc-erro'), false, 'o campo vazio fica sem nota');
+  await p.escolher('fato-data', '');
+  await p.digitar('fato-desc', 'Outro pagamento com 4111 1111 1111 1111');
+  await acionar('add-fato');
+  await erroNoCampo(p, 'fato-data', /^Informe a data do fato/);
+  assert.match(await p.texto('fato-desc-erro'), /^Removemos um dado de cartão do texto\./, 'A-3 junto do fato');
+  assert.equal(await p.js(`document.getElementById('fato-desc').getAttribute('aria-invalid')`), null);
+  assert.equal(await p.js(`document.querySelectorAll('#lista-fatos li').length`), n + 1);
+}
+for (const tela of TELAS) {
+  test(`fato com número de cartão entra no primeiro clique${tela.mobile ? ' e no primeiro toque' : ''} em ${tela.nome}`, async () => {
+    const p = await abrir(tela);
+    try {
+      await p.clicar('a1');
+      await fatoComCartao(p, p.clicar);
+      if (tela.mobile) await fatoComCartao(p, p.tocar);
+      await semViolacoes(p, 'fato com cartão');
+      assert.deepEqual(p.erros, [], 'nenhum erro no console');
+    } finally {
+      await p.fechar();
+    }
+  });
+}
+
+// O mesmo com o pedido e o CNPJ antes do Gerar, em tela alta (o campo e o botão visíveis juntos): na base, o clique em
+// Gerar também se perdia. Gerar recusa no campo seguinte (CNPJ inválido ou motivo), e o A-3 vai para o aviso geral.
+const ALTAS = [{ nome: '1280 x 1400 px', width: 1280, height: 1400, mobile: false, deviceScaleFactor: 1 }, { nome: '390 x 1400 px', width: 390, height: 1400, mobile: true, deviceScaleFactor: 3 }];
+for (const tela of ALTAS) {
+  for (const campo of ['pedido', 'cnpj']) {
+    test(`cartão no ${campo} e Gerar no primeiro ${tela.mobile ? 'toque' : 'clique'} em ${tela.nome}`, async () => {
+      const p = await abrir(tela);
+      try {
+        await p.clicar('a1');
+        if (campo === 'cnpj') await p.digitar('pedido', 'PED-1');
+        await p.digitar(campo, 'PED 5555 5555 5555 4444');
+        await p.js(`document.getElementById('gerar').scrollIntoView({ block: 'end' })`);
+        assert.ok(await p.naTela(campo) && await p.naTela('gerar'), 'campo e Gerar na mesma tela');
+        await (tela.mobile ? p.tocar('gerar', false) : p.clicar('gerar', false));
+        // Gerar chegou: recusa o CNPJ (não é CNPJ válido) ou, com o pedido, o motivo que falta.
+        if (campo === 'cnpj') await erroNoCampo(p, 'cnpj', /^CNPJ inválido/); else await erroNoCampo(p, 'motivo', /motivo/);
+        assert.match(await p.texto('aviso'), /^Removemos um dado de cartão do texto\./);
+        assert.equal(await p.js(`document.getElementById(${JSON.stringify(campo)}).value`), 'PED **** **** **** 4444');
+        assert.deepEqual(p.erros, [], 'nenhum erro no console');
+      } finally {
+        await p.fechar();
+      }
+    });
+  }
 }

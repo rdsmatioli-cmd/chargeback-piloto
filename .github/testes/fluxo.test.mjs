@@ -34,6 +34,9 @@ function abrir() {
     // Como o clique do navegador: o estado muda antes do click, depois vêm input e change.
     marcar(x, v = true) { const c = el(x); if (c.disabled || c.checked === v) return; c.checked = v; disparar(c, 'click', 'input', 'change'); },
     clicar(id) { $(id).click(); },
+    disparar,
+    // Timers na fila, em vez do setTimeout síncrono do contexto: a função devolvida roda os que estão na fila.
+    timersNaFila() { const fila = []; ctx.setTimeout = (fn) => { fila.push(fn); return fila.length; }; return () => { for (const fn of fila.splice(0)) fn(); }; },
     anexar(arquivos) { $('docs').files = arquivos; disparar('docs', 'input', 'change'); },
     valorMotivo(bandeira, codigo) { const o = $('motivo').options.find((x) => x.textContent.startsWith(`Motivo ${codigo} da ${bandeira}:`)); return o.value; },
     fato(data, desc) { p.preencher('fato-data', data); p.preencher('fato-desc', desc); p.clicar('add-fato'); },
@@ -482,6 +485,139 @@ test('CB-09: fato adicionado é anunciado em role=status e o foco volta para a d
   assert.equal(p.$('fato-status').textContent, '', 'o anúncio sai na próxima edição do fato');
 });
 
+// Revisão do lote 2: a saída do campo (change e blur) roda no mousedown do botão. A nota A-3 mostrada ali descia o
+// botão antes do mouseup e o clique se perdia (fato com cartão só entrava no segundo clique; Gerar também). Com o botão
+// pressionado nada muda na página até o click; quem trata o click toma a nota e o resto aparece depois do mouseup.
+const CARTAO = 'Cliente pagou com 5555 5555 5555 4444 e recebeu';
+const MASCARADO = 'Cliente pagou com **** **** **** 4444 e recebeu';
+// Clique do navegador num botão com o foco num campo: mousedown, saída do campo, mouseup e click na mesma tarefa.
+function cliqueSaindoDe(p, campo, botao, antesDoClick = () => {}) {
+  p.disparar(botao, 'mousedown');
+  p.sair(campo);
+  antesDoClick();
+  p.disparar(botao, 'mouseup');
+  p.clicar(botao);
+}
+test('revisão do lote 2: fato com cartão entra no primeiro clique; a nota não aparece entre o mousedown e o click', () => {
+  const p = abrir();
+  const rodarTimers = p.timersNaFila();
+  p.marcar('a1');
+  p.preencher('fato-data', '2026-10-01');
+  p.digitar('fato-desc', CARTAO);
+  cliqueSaindoDe(p, 'fato-desc', 'add-fato', () => {
+    assert.equal(p.$('fato-desc').value, MASCARADO, 'a saída do campo já mascarou');
+    assert.equal(p.erro('fato-desc'), '', 'nada aparece acima do botão durante o clique');
+    assert.equal(p.aviso(), '');
+  });
+  rodarTimers();
+  assert.deepEqual([...p.t.estado.fatos.map((f) => f.descricao)], [MASCARADO]);
+  assert.equal(p.$('fato-status').textContent, `Fato adicionado. ${p.t.TEXTOS['A-3']}`);
+  assert.equal(p.erro('fato-desc'), '', 'o campo vazio fica sem nota');
+  // Sem data: o clique chega, o erro da data aparece e o A-3 fica junto do fato e no aviso geral.
+  p.preencher('fato-data', '');
+  p.digitar('fato-desc', CARTAO);
+  cliqueSaindoDe(p, 'fato-desc', 'add-fato', () => assert.equal(p.erro('fato-desc'), ''));
+  rodarTimers();
+  assert.equal(p.t.estado.fatos.length, 1);
+  assert.match(p.erro('fato-data'), /^Informe a data do fato/);
+  assert.equal(p.doc.activeElement.id, 'fato-data');
+  assert.equal(p.erro('fato-desc'), p.t.TEXTOS['A-3']);
+  assert.equal(p.invalido('fato-desc'), false);
+  assert.equal(p.aviso(), p.t.TEXTOS['A-3']);
+  // Com a data, o mesmo texto (já mascarado) entra e leva o A-3 que estava junto dele.
+  p.preencher('fato-data', '2026-10-02');
+  p.clicar('add-fato');
+  assert.equal(p.t.estado.fatos.length, 2);
+  assert.equal(p.$('fato-status').textContent, `Fato adicionado. ${p.t.TEXTOS['A-3']}`);
+});
+test('revisão do lote 2: cartão e termo vedado no fato: o A-3 vem antes do erro do fato, no primeiro clique', () => {
+  const p = abrir();
+  const rodarTimers = p.timersNaFila();
+  p.marcar('a1');
+  p.preencher('fato-data', '2026-10-01');
+  p.digitar('fato-desc', `${CARTAO} conforme o processo`);
+  cliqueSaindoDe(p, 'fato-desc', 'add-fato');
+  rodarTimers();
+  assert.equal(p.t.estado.fatos.length, 0);
+  assert.equal(p.erro('fato-desc'), `${p.t.TEXTOS['A-3']} Remova os termos não permitidos no fato: processo.`);
+  assert.ok(p.invalido('fato-desc'));
+});
+test('revisão do lote 2: saída pelo Tab mostra a nota na hora, e o fato adicionado a repete no anúncio', () => {
+  const p = abrir();
+  p.marcar('a1');
+  p.preencher('fato-data', '2026-10-01');
+  p.preencher('fato-desc', CARTAO);
+  assert.equal(p.erro('fato-desc'), p.t.TEXTOS['A-3']);
+  assert.equal(p.aviso(), p.t.TEXTOS['A-3']);
+  p.clicar('add-fato');
+  assert.equal(p.t.estado.fatos.length, 1);
+  assert.equal(p.$('fato-status').textContent, `Fato adicionado. ${p.t.TEXTOS['A-3']}`);
+  assert.equal(p.erro('fato-desc'), '');
+  // Clicar de novo sem texto não repete o A-3 do fato que já entrou.
+  p.clicar('add-fato');
+  assert.equal(p.erro('fato-desc'), 'Descreva o fato.');
+});
+test('revisão do lote 2: cartão no pedido e clique em Gerar: Gerar roda no primeiro clique e o A-3 vai para o aviso', () => {
+  const p = abrir();
+  const rodarTimers = p.timersNaFila();
+  p.marcar('a1');
+  p.digitar('pedido', 'PED 5555 5555 5555 4444');
+  cliqueSaindoDe(p, 'pedido', 'gerar', () => { assert.equal(p.erro('pedido'), ''); assert.equal(p.aviso(), ''); });
+  rodarTimers();
+  assert.equal(p.$('pedido').value, 'PED **** **** **** 4444');
+  assert.match(p.erro('motivo'), /motivo/);
+  assert.equal(p.aviso(), p.t.TEXTOS['A-3']);
+  assert.equal(p.erro('pedido'), '');
+});
+test('revisão do lote 2: clique fora de botão mostra a nota depois do mouseup; timer atrasado não adianta a nota do clique seguinte', () => {
+  const p = abrir();
+  const rodarTimers = p.timersNaFila();
+  p.marcar('a1');
+  p.digitar('fato-desc', CARTAO);
+  p.disparar('o1', 'mousedown');
+  p.sair('fato-desc');
+  assert.equal(p.erro('fato-desc'), '');
+  p.disparar('o1', 'mouseup');
+  rodarTimers();
+  assert.equal(p.erro('fato-desc'), p.t.TEXTOS['A-3']);
+  assert.equal(p.aviso(), p.t.TEXTOS['A-3']);
+  // mouseup de um clique, timer ainda na fila, e o mousedown seguinte já tirou o foco do pedido com cartão.
+  p.digitar('pedido', 'PED 5555 5555 5555 4444');
+  p.disparar('o1', 'mousedown'); p.disparar('o1', 'mouseup');
+  p.disparar('add-fato', 'mousedown');
+  p.sair('pedido');
+  rodarTimers();
+  assert.equal(p.erro('pedido'), '', 'o timer do clique anterior não mostra a nota no meio deste');
+  p.disparar('add-fato', 'mouseup');
+  rodarTimers();
+  assert.equal(p.erro('pedido'), p.t.TEXTOS['A-3']);
+});
+test('revisão do lote 2: tecla ou escolha no select mostram a nota pendente; o paste mostra na hora', () => {
+  const p = abrir();
+  const rodarTimers = p.timersNaFila();
+  p.marcar('a1');
+  p.digitar('pedido', 'PED 5555 5555 5555 4444');
+  p.disparar('motivo', 'mousedown');                       // o select abre a lista e o mouseup fica com ela
+  p.sair('pedido');
+  assert.equal(p.erro('pedido'), '');
+  p.escolher('motivo', p.valorMotivo('Visa', '10.4'));
+  assert.equal(p.erro('pedido'), p.t.TEXTOS['A-3']);
+  p.digitar('cnpj', '4111 1111 1111 1111');
+  p.disparar('cnpj', 'mousedown');
+  p.disparar('gerar', 'mousedown');
+  p.sair('cnpj');
+  assert.equal(p.erro('cnpj'), '');
+  p.disparar('gerar', 'keydown');
+  assert.equal(p.erro('cnpj'), p.t.TEXTOS['A-3']);
+  // Botão direito no campo e Colar do menu: o mouseup pode não voltar à página, e a nota do paste não espera.
+  p.disparar('fato-desc', 'mousedown');
+  p.$('fato-desc').value = CARTAO;
+  p.disparar('fato-desc', 'paste');
+  rodarTimers();
+  assert.equal(p.$('fato-desc').value, MASCARADO);
+  assert.equal(p.erro('fato-desc'), p.t.TEXTOS['A-3']);
+});
+
 // CB-10: termo vedado em nome de arquivo, pedido ou CNPJ: a mensagem diz onde está e como resolver.
 test('CB-10: nome de arquivo com termo vedado avisa já na seleção, junto do seletor de documentos', () => {
   const p = abrir();
@@ -491,9 +627,19 @@ test('CB-10: nome de arquivo com termo vedado avisa já na seleção, junto do s
   assert.match(p.erro('docs'), /: processo\./);
   assert.match(p.erro('docs'), /Renomeie o arquivo no seu dispositivo e selecione de novo todos os documentos\./);
   assert.ok(p.invalido('docs'));
+  // Revisão do lote 2: o foco já está no seletor depois do diálogo de arquivos; a mensagem vai também para o aviso
+  // geral (role=alert), que o leitor de tela anuncia. A nova seleção sem o termo tira as duas.
+  assert.equal(p.aviso(), p.erro('docs'));
   p.anexar([{ name: 'nota.pdf', size: 1 }]);
   assert.equal(p.erro('docs'), '');
   assert.equal(p.invalido('docs'), false);
+  assert.equal(p.aviso(), '');
+  // Nome com cartão e termo vedado: A-3 e o termo, no campo e no aviso geral.
+  p.anexar([{ name: 'processo 4111 1111 1111 1111.pdf', size: 1 }]);
+  assert.match(p.erro('docs'), /^Removemos um dado de cartão do texto\. .* O nome do documento D1 \(processo \*{4} \*{4} \*{4} 1111\.pdf\)/);
+  assert.equal(p.aviso(), p.erro('docs'));
+  p.anexar([{ name: 'nota.pdf', size: 1 }]);
+  assert.equal(p.aviso(), '');
 });
 test('CB-10: Gerar com termo vedado cita a origem (documento, pedido) e marca o campo', () => {
   const p = abrir();
@@ -521,9 +667,16 @@ test('CB-10: CNPJ alfanumérico com termo vedado é apontado no campo CNPJ', () 
   p.preencher('cnpj', cnpj);
   p.escolher('motivo', p.valorMotivo('Visa', '10.4'));
   p.clicar('gerar');
-  assert.match(p.aviso(), /CDC \(no CNPJ\)/);
+  // Revisão do lote 2: o aviso geral (role=alert) dizia 'Remova os termos... CDC (no CNPJ)', e o campo, que o CNPJ forma
+  // o termo. Os dois dizem agora a mesma frase, sem pedir para apagar o CNPJ.
   assert.equal(p.erro('cnpj'), 'O CNPJ forma termo não permitido no dossiê: CDC.');
+  assert.equal(p.aviso(), p.erro('cnpj'));
   assert.equal(p.doc.activeElement.id, 'cnpj');
+  p.preencher('pedido', 'processo 77');
+  p.clicar('gerar');
+  assert.equal(p.aviso(), 'Remova os termos não permitidos no dossiê: processo (no pedido). O CNPJ forma termo não permitido no dossiê: CDC.');
+  assert.doesNotMatch(p.aviso(), /\(no CNPJ\)/);
+  assert.equal(p.erro('cnpj'), 'O CNPJ forma termo não permitido no dossiê: CDC.');
 });
 
 // CB-12: os textos que a página mostra (fora a allowlist de literais aprovados) não têm termo vedado.
