@@ -17,6 +17,15 @@
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--txt);font:400 1rem/1.5 var(--fonte);-webkit-font-smoothing:antialiased}
+nav.topo{background:var(--tinta)}
+nav.topo div{display:flex;align-items:center;gap:6px;max-width:820px;margin:0 auto;padding:10px 20px}
+nav.topo a{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;border-radius:10px;color:#fff;font-weight:700;text-decoration:none}
+nav.topo a:first-child{margin-left:-10px;gap:10px;font-weight:800;letter-spacing:-.02em}
+nav.topo a:first-child::before{content:"";width:28px;height:28px;border-radius:8px;background:linear-gradient(var(--tinta),var(--tinta)) 7px 9px/14px 3px no-repeat,linear-gradient(var(--tinta),var(--tinta)) 7px 16px/8px 3px no-repeat,var(--lima)}
+nav.topo a:hover{background:rgba(255,255,255,.08)}
+/* CB-13: sem suporte, a página mostra só o título e o aviso; o menu sai junto. */
+body:has(#sem-suporte:not([hidden])) nav.topo{display:none}
+@media (min-width:700px){nav.topo div{padding:6px 20px}nav.topo a{min-height:32px}}
 main{max-width:820px;margin:0 auto;padding:32px 20px 56px}
 h1{margin:0 0 14px;font-size:30px;line-height:34px;letter-spacing:-.035em;font-weight:800;color:var(--tinta);text-wrap:balance}
 h2{display:flex;align-items:center;gap:12px;margin:18px 0 10px;padding-top:12px;border-top:1px solid var(--borda);font-size:1.2rem;line-height:1.25;letter-spacing:-.02em;color:var(--tinta)}
@@ -27,7 +36,7 @@ p{margin:0 0 14px}
 #form{margin-top:24px;padding:28px 24px;border-radius:24px;background:var(--sup);box-shadow:0 1px 2px rgba(3,20,13,.04),0 18px 40px -24px rgba(3,20,13,.3),0 0 0 1px #EBF0EB}
 label{display:block;margin:10px 0;font-size:.9375rem;line-height:1.4;font-weight:650;color:var(--txt)}
 label>input:not([type=checkbox]),label>select,label>textarea{display:block;width:100%;margin-top:6px}
-input,select,textarea{max-width:100%;min-height:46px;padding:10px 14px;border:1.5px solid var(--borda2);border-radius:12px;background:var(--sup);color:var(--txt);font:500 1rem/1.4 var(--fonte)}
+input,select,textarea{max-width:100%;min-height:46px;padding:10px 14px;border:1.5px solid #7E8E87;border-radius:12px;background:var(--sup);color:var(--txt);font:500 1rem/1.4 var(--fonte)}
 textarea{min-height:64px;line-height:22px;resize:vertical}
 input[type=date]{height:46px}
 select{width:100%;-webkit-appearance:none;appearance:none;padding-right:46px;background-color:var(--sup);background-image:linear-gradient(45deg,transparent 50%,var(--txt2) 50%),linear-gradient(135deg,var(--txt2) 50%,transparent 50%);background-position:calc(100% - 24px) 52%,calc(100% - 18px) 52%;background-size:6px 6px;background-repeat:no-repeat;text-overflow:ellipsis}
@@ -62,11 +71,13 @@ pre:empty{display:none}
 #etapa-d1{margin-top:16px}
 details{margin:20px 0 0;padding:0 18px;border-radius:16px;background:var(--sup);box-shadow:0 0 0 1px var(--borda)}
 summary{display:flex;align-items:center;min-height:52px;font-weight:700;cursor:pointer}
+summary::after{content:"";width:9px;height:9px;margin:0 4px 0 auto;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg)}
+details[open]>summary::after{transform:rotate(-135deg)}
 details[open]{padding-bottom:12px}
 #termos{font-size:.9375rem;color:var(--txt2)}
 a{color:var(--prim);text-underline-offset:3px}
 footer{max-width:820px;margin:0 auto;padding:22px 20px 40px;border-top:1px solid var(--borda);font-size:.875rem;line-height:1.55;color:var(--suave)}
-@media (min-width:700px){#form{padding:36px 40px}main{padding-top:32px}h1{font-size:40px;line-height:44px}}
+@media (min-width:700px){#form{padding:36px 40px}main{padding-top:16px}h1{font-size:38px;line-height:42px;margin-bottom:10px}#o1{font-size:17px;line-height:26px;margin-bottom:10px}#ag1{margin-bottom:10px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 /* Regras da main (#11: CB-08, CB-11 e revisão do lote 2) na família visual: mensagem de campo logo depois dele, erro com
    aria-invalid, opção com caixa de seleção, status do fato e prévia vazia oculta. */
@@ -82,6 +93,7 @@ input[type=file][aria-invalid=true]{border:2px solid var(--erro)}
 </head>
 <body>
 <noscript><p class="msg erro">Esta ferramenta precisa de JavaScript ativado. Ative o JavaScript no navegador e recarregue a página.</p></noscript>
+<nav class="topo" aria-label="Site"><div><a href="/">Piloto Chargeback</a><a href="/blog/">Blog</a></div></nav>
 <main hidden>
 <h1 id="titulo">Organize as provas da sua disputa de chargeback</h1>
 <p id="sem-suporte" class="msg erro" hidden>Esta ferramenta não funciona nesta versão do navegador. Atualize o navegador ou abra a página em outro; no iPhone e no iPad, atualize o iOS para a versão 16.4 ou mais recente.</p>
