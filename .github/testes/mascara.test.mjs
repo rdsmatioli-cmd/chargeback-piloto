@@ -8,7 +8,7 @@ import vm from 'node:vm';
 
 const raiz = new URL('../../', import.meta.url);
 const html = readFileSync(new URL('index.html', raiz), 'utf8');
-let src = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+let src = html.match(/<script>("use strict";[\s\S]*?)<\/script>/)[1]; // o script principal (o primeiro <script> é o teste de suporte do CB-13)
 src = src.replace(/\}\)\(\);\s*$/, 'globalThis.__t = { sanearCampo, sanear, mascararCartao };})();');
 const ctx = { document: { addEventListener() {} }, console };
 vm.createContext(ctx); vm.runInContext(src, ctx);

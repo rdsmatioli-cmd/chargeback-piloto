@@ -4,44 +4,45 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-qlwMeS9DkOFzub3J3+uuzOXxVyRhikMZC6yZqujVKL0='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-c8ip4dFYpe1oH/gkm+uVmOa/XO/kXRFqgdvNbGTcSRU=' 'sha256-J1NEG3RfMkeHu+cPkaGsYEdZGhMPc96Dhl3k5DVC/wE='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'; require-trusted-types-for 'script'; trusted-types 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
+<!-- CB-15 de 01/11: prévia do link (WhatsApp, canal do piloto), com o TITULO e o O-1 do script. Sem canonical nem og:url: noindex. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Organize as provas da sua disputa de chargeback">
+<meta property="og:description" content="Organize as provas da sua disputa de chargeback. Você informa o motivo indicado pela sua adquirente e anexa seus documentos; a ferramenta lista as evidências pedidas para aquele motivo, monta a cronologia e gera um dossiê para você mesmo enviar pelo painel da sua adquirente. Grátis nesta fase. Não acessamos sua conta e não enviamos nada em seu nome. O resultado da disputa é decidido pelo banco emissor do cartão.">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:site_name" content="Piloto Chargeback">
 <style>
 :root{color-scheme:light;--bg:#F3F5F1;--sup:#FFFFFF;--sup2:#F7F9F6;--txt:#0A1411;--txt2:#3A4842;--suave:#54625B;--borda:#E1E7E2;--borda2:#C6D1CA;--tinta:#03140D;--tinta2:#062519;--prim:#137447;--prim2:#1C9561;--lima:#C9F36A;--aviso:#FFF6E3;--aviso-b:#F0D7A2;--aviso-t:#5E3A00;--fonte:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--txt);font:400 1rem/1.6 var(--fonte);-webkit-font-smoothing:antialiased}
-nav.topo{background:var(--tinta)}
-nav.topo div{display:flex;align-items:center;gap:6px;max-width:820px;margin:0 auto;padding:10px 20px}
-nav.topo a{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;border-radius:10px;color:#fff;font-weight:700;text-decoration:none}
-nav.topo a:first-child{margin-left:-10px;gap:10px;font-weight:800;letter-spacing:-.02em}
-nav.topo a:first-child::before{content:"";width:28px;height:28px;border-radius:8px;background:var(--lima)}
-nav.topo a:hover{background:rgba(255,255,255,.08)}
+body{margin:0;background:var(--bg);color:var(--txt);font:400 1rem/1.5 var(--fonte);-webkit-font-smoothing:antialiased}
 main{max-width:820px;margin:0 auto;padding:32px 20px 56px}
-h1{margin:0 0 14px;font-size:clamp(1.85rem,1.3rem + 2.4vw,2.6rem);line-height:1.08;letter-spacing:-.035em;font-weight:800;color:var(--tinta);text-wrap:balance}
-h2{display:flex;align-items:center;gap:12px;margin:36px 0 14px;padding-top:28px;border-top:1px solid var(--borda);font-size:1.3rem;line-height:1.25;letter-spacing:-.02em;color:var(--tinta)}
+h1{margin:0 0 14px;font-size:30px;line-height:34px;letter-spacing:-.035em;font-weight:800;color:var(--tinta);text-wrap:balance}
+h2{display:flex;align-items:center;gap:12px;margin:18px 0 10px;padding-top:12px;border-top:1px solid var(--borda);font-size:1.2rem;line-height:1.25;letter-spacing:-.02em;color:var(--tinta)}
 #form>h2:first-child{margin-top:0;padding-top:0;border-top:0}
 p{margin:0 0 14px}
-#o1{font-size:1.125rem;line-height:1.6;color:var(--txt2)}
+#o1{font-size:1.125rem;line-height:1.5;color:var(--txt2)}
 #ag1{color:var(--txt2)}
 #form{margin-top:24px;padding:28px 24px;border-radius:24px;background:var(--sup);box-shadow:0 1px 2px rgba(3,20,13,.04),0 18px 40px -24px rgba(3,20,13,.3),0 0 0 1px #EBF0EB}
-label{display:block;margin:14px 0;font-weight:650;color:var(--txt)}
-label>input:not([type=checkbox]),label>select,label>textarea{display:block;width:100%;margin-top:7px}
-input,select,textarea{max-width:100%;min-height:48px;padding:10px 14px;border:1.5px solid var(--borda2);border-radius:12px;background:var(--sup);color:var(--txt);font:500 1rem/1.4 var(--fonte)}
-textarea{min-height:96px;resize:vertical}
+label{display:block;margin:10px 0;font-size:.9375rem;line-height:1.4;font-weight:650;color:var(--txt)}
+label>input:not([type=checkbox]),label>select,label>textarea{display:block;width:100%;margin-top:6px}
+input,select,textarea{max-width:100%;min-height:46px;padding:10px 14px;border:1.5px solid var(--borda2);border-radius:12px;background:var(--sup);color:var(--txt);font:500 1rem/1.4 var(--fonte)}
+textarea{min-height:64px;line-height:22px;resize:vertical}
+input[type=date]{height:46px}
 select{width:100%;-webkit-appearance:none;appearance:none;padding-right:46px;background-color:var(--sup);background-image:linear-gradient(45deg,transparent 50%,var(--txt2) 50%),linear-gradient(135deg,var(--txt2) 50%,transparent 50%);background-position:calc(100% - 24px) 52%,calc(100% - 18px) 52%;background-size:6px 6px;background-repeat:no-repeat;text-overflow:ellipsis}
 input[type=file]::file-selector-button{margin:0 12px 0 0;min-height:40px;padding:0 16px;border:0;border-radius:10px;background:var(--tinta2);color:#fff;font:700 .9375rem/1 var(--fonte);cursor:pointer}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--prim2);box-shadow:0 0 0 4px rgba(28,149,97,.18)}
-input[type=checkbox]{width:22px;height:22px;min-height:0;margin:2px 10px 0 0;padding:0;accent-color:var(--prim);flex:none}
-label:has(>input[type=checkbox]){display:flex;align-items:flex-start;padding:14px 16px;border-radius:14px;background:var(--sup2);box-shadow:inset 0 0 0 1px var(--borda);font-weight:500;line-height:1.55}
+input[type=checkbox]{width:24px;height:24px;min-height:0;margin:2px 10px 0 0;padding:0;accent-color:var(--prim);flex:none}
+label:has(>input[type=checkbox]){display:flex;align-items:flex-start;padding:10px 14px;border-radius:14px;background:var(--sup2);box-shadow:inset 0 0 0 1px var(--borda);font-size:.875rem;font-weight:500;line-height:1.5}
 main>label:has(>input[type=checkbox]){margin:18px 0 0;background:var(--sup);box-shadow:0 0 0 1px var(--borda)}
-input[type=file]{width:100%;padding:12px;border-style:dashed;background:var(--sup2);cursor:pointer}
-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;margin:6px 0;padding:0 22px;border:0;border-radius:14px;background:var(--tinta2);color:#fff;font:700 1rem/1 var(--fonte);cursor:pointer}
+input[type=file]{width:100%;padding:8px;border-style:dashed;background:var(--sup2);cursor:pointer}
+button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;margin:6px 0;padding:0 22px;border:0;border-radius:14px;background:var(--tinta2);color:#fff;font:700 1rem/1 var(--fonte);cursor:pointer;vertical-align:top}
 button:hover{background:#0A3424}
 button:disabled{opacity:.55;cursor:not-allowed}
 #add-fato{background:var(--sup);color:var(--txt);box-shadow:inset 0 0 0 1.5px var(--borda2)}
 #add-fato:hover{background:var(--sup2)}
-#gerar,#baixar{width:100%;min-height:54px;margin-top:18px}
+#gerar,#baixar{width:100%;min-height:54px;margin-top:12px}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--prim2);outline-offset:2px}
 fieldset{margin:12px 0;padding:14px 16px;border:0;border-radius:14px;background:var(--sup2);box-shadow:inset 0 0 0 1px var(--borda)}
 legend{padding:0 6px;font-weight:750}
@@ -52,10 +53,11 @@ legend{padding:0 6px;font-weight:750}
 #vinculos legend+*{clear:both}
 #lista-fatos{margin:12px 0 0;padding-left:20px}
 #lista-fatos li{margin:6px 0}
-#lista-fatos button{min-height:36px;margin:0 0 0 10px;padding:0 12px;border-radius:10px;background:var(--sup);color:var(--txt);box-shadow:inset 0 0 0 1px var(--borda2);font-size:.875rem}
+#lista-fatos button{min-height:44px;margin:0 0 0 10px;padding:0 14px;border-radius:10px;background:var(--sup);color:var(--txt);box-shadow:inset 0 0 0 1px var(--borda2);font-size:1rem}
 #aviso{margin:16px 0;padding:12px 16px;border-radius:14px;background:var(--aviso);box-shadow:inset 0 0 0 1px var(--aviso-b);color:var(--aviso-t);font-weight:600}
-#fonte-motivo,#secao-motivo,#obs-motivo,#rodape-elo,#rodape-prazos{font-size:.9375rem;color:var(--suave)}
-pre{margin:18px 0 0;padding:18px;white-space:pre-wrap;border-radius:16px;background:var(--sup2);box-shadow:inset 0 0 0 1px var(--borda);font:400 .875rem/1.6 var(--mono);color:var(--txt)}
+#fonte-motivo,#secao-motivo,#obs-motivo,#rodape-elo,#rodape-prazos{font-size:.875rem;line-height:1.5;color:var(--suave)}
+#a2-texto{font-size:.875rem;line-height:1.5}
+pre{margin:18px 0 0;padding:18px;white-space:pre-wrap;border-radius:16px;background:var(--sup2);box-shadow:inset 0 0 0 1px var(--borda);font:400 .875rem/1.5 var(--mono);color:var(--txt)}
 pre:empty{display:none}
 #etapa-d1{margin-top:16px}
 details{margin:20px 0 0;padding:0 18px;border-radius:16px;background:var(--sup);box-shadow:0 0 0 1px var(--borda)}
@@ -64,26 +66,40 @@ details[open]{padding-bottom:12px}
 #termos{font-size:.9375rem;color:var(--txt2)}
 a{color:var(--prim);text-underline-offset:3px}
 footer{max-width:820px;margin:0 auto;padding:22px 20px 40px;border-top:1px solid var(--borda);font-size:.875rem;line-height:1.55;color:var(--suave)}
-@media (min-width:700px){#form{padding:36px 40px}main{padding-top:48px}}
+@media (min-width:700px){#form{padding:36px 40px}main{padding-top:32px}h1{font-size:40px;line-height:44px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* Regras da main (#11: CB-08, CB-11 e revisão do lote 2) na família visual: mensagem de campo logo depois dele, erro com
+   aria-invalid, opção com caixa de seleção, status do fato e prévia vazia oculta. */
+:root{--erro:#B00020;--erro-sup:#FCEDEA}
+label.opcao{display:flex;gap:10px;align-items:flex-start}
+.msg{margin:6px 0 12px;padding:8px 12px;border-radius:10px;background:var(--sup2);box-shadow:inset 3px 0 0 var(--txt2);font-size:.9375rem;line-height:1.4}
+.msg.erro{background:var(--erro-sup);box-shadow:inset 3px 0 0 var(--erro);color:var(--erro)}
+[aria-invalid=true]{border:2px solid var(--erro)}
+input[type=file][aria-invalid=true]{border:2px solid var(--erro)}
+#fato-status{margin:6px 0}
+#previa:empty{display:none}
 </style>
 </head>
 <body>
-<nav class="topo" aria-label="Site"><div><a href="/">Piloto Chargeback</a><a href="/blog/">Blog</a></div></nav>
+<noscript><p class="msg erro">Esta ferramenta precisa de JavaScript ativado. Ative o JavaScript no navegador e recarregue a página.</p></noscript>
 <main hidden>
 <h1 id="titulo">Organize as provas da sua disputa de chargeback</h1>
+<p id="sem-suporte" class="msg erro" hidden>Esta ferramenta não funciona nesta versão do navegador. Atualize o navegador ou abra a página em outro; no iPhone e no iPad, atualize o iOS para a versão 16.4 ou mais recente.</p>
 <p id="o1"></p>
 <p id="ag1"></p>
-<p id="aviso" role="alert" hidden></p>
-<label><input type="checkbox" id="a1"> <span id="a1-texto"></span></label>
+<label class="opcao"><input type="checkbox" id="a1"> <span id="a1-texto"></span></label>
 <section id="form" hidden>
   <h2>1. Identificação</h2>
   <label>Identificação do pedido <input type="text" id="pedido" autocomplete="off"></label>
+  <p id="pedido-erro" class="msg" hidden></p>
   <label>4 últimos dígitos do cartão (opcional) <input type="text" id="ultimos4" inputmode="numeric" autocomplete="off"></label>
+  <p id="ultimos4-erro" class="msg" hidden></p>
   <label>CNPJ (opcional) <input type="text" id="cnpj" autocomplete="off"></label>
-  <label><input type="checkbox" id="p1" disabled> <span id="p1-texto"></span></label>
+  <p id="cnpj-erro" class="msg" hidden></p>
+  <label class="opcao"><input type="checkbox" id="p1" disabled> <span id="p1-texto"></span></label>
   <label>Gateway ou adquirente <select id="gateway"><option value="">(não informar)</option></select></label>
-  <label>Motivo indicado pela adquirente <select id="motivo"></select></label>
+  <label>Motivo indicado pela adquirente <select id="motivo"><option value="">(selecione o motivo)</option></select></label>
+  <p id="motivo-erro" class="msg" hidden></p>
   <p id="fonte-motivo"></p>
   <p id="secao-motivo" hidden></p>
   <p id="obs-motivo" hidden></p>
@@ -92,22 +108,39 @@ footer{max-width:820px;margin:0 auto;padding:22px 20px 40px;border-top:1px solid
   <h2>2. Cronologia</h2>
   <p id="a2-texto"></p>
   <label>Data <input type="date" id="fato-data"></label>
+  <p id="fato-data-erro" class="msg" hidden></p>
   <label>Fato <textarea id="fato-desc" rows="3"></textarea></label>
+  <p id="fato-desc-erro" class="msg" hidden></p>
   <button type="button" id="add-fato">Adicionar fato</button>
+  <p id="fato-status" role="status"></p>
   <ul id="lista-fatos"></ul>
-  <h2>3. Documentos</h2>
-  <input type="file" id="docs" multiple>
+  <h2 id="docs-titulo">3. Documentos</h2>
+  <input type="file" id="docs" multiple aria-labelledby="docs-titulo">
+  <p id="docs-erro" class="msg" hidden></p>
   <h2>4. Evidências do motivo</h2>
   <div id="vinculos"></div>
   <button type="button" id="gerar">Gerar dossiê</button>
+  <p id="aviso" role="alert" hidden></p>
   <pre id="previa"></pre>
   <div id="etapa-d1" hidden>
-    <label><input type="checkbox" id="d1"> <span id="d1-texto"></span></label>
+    <label class="opcao"><input type="checkbox" id="d1"> <span id="d1-texto"></span></label>
     <button type="button" id="baixar" disabled>Baixar dossiê</button>
   </div>
 </section>
 <details><summary>Termos</summary><div id="termos"></div></details>
 </main>
+<script>
+// CB-13 de 01/11: o script principal usa lookbehind e \p{} em regex. O navegador sem suporte (Safari antes do 16.4)
+// recusa o script inteiro ao ler, e a página ficava em branco. Este teste, em ES5, mostra o título e o aviso no lugar.
+// Os outros filhos do <main> saem por style.display: o hidden perderia para regras como label.opcao{display:flex}.
+(function () {
+  try { new RegExp('(?<=\\p{L})a', 'u'); return; } catch (e) {}
+  var m = document.querySelector('main'), f = m.children;
+  for (var i = 0; i < f.length; i++) if (f[i].id !== 'titulo' && f[i].id !== 'sem-suporte') f[i].style.display = 'none';
+  document.getElementById('sem-suporte').hidden = false;
+  m.hidden = false;
+})();
+</script>
 <footer hidden><p id="r1"></p><p id="r2"></p></footer>
 <script>"use strict";
 (() => {
@@ -143,9 +176,6 @@ const VEDADOS_EXTRA = ["advogada"];
 const TEXTOS_REVISAO = { "A-3b": "Atenção: nunca informe número completo, código de segurança ou validade do cartão." };
 
 // GERADO por gerar-matriz.mjs. Não editar. Fonte: fontes/chargeback-S01-matriz-2026-10-15.json sha256 ee178219593727edaffb923ea2aa7e7b0f1814ea8db0a19d24b8045b53fe4fb7
-const S01_SHA256 = "ee178219593727edaffb923ea2aa7e7b0f1814ea8db0a19d24b8045b53fe4fb7";
-const S01_RODAPE_MATRIZ = "Prazos e responsabilidade entre emissor, credenciador e bandeira seguem o regulamento do arranjo, que está em adequação à Resolução BCB nº 522/2025. Confira no painel da sua adquirente; o prazo dela prevalece.";
-const S01_RODAPE_R2 = "Visa, Mastercard e Elo são marcas de seus titulares, citadas apenas para identificar regras públicas de disputa. A LCM não tem vínculo com elas nem com as adquirentes citadas.";
 const S01_RODAPE_ELO = "As regras de disputa da Elo constam de manual não público; os códigos sem lista de evidências devem ser tratados diretamente com a sua adquirente.";
 const S01_RODAPE_PRAZOS = "Esta matriz não informa prazos. O prazo para responder é o informado pela sua adquirente no aviso da disputa; perder o prazo costuma encerrar a defesa.";
 const S01_MOTIVOS = [
@@ -639,7 +669,6 @@ const S01_MOTIVOS = [
 ];
 
 // GERADO por gerar-matriz.mjs. Não editar. Fonte: fontes/chargeback-C3-quadro-gateways-2026-10-15.md sha256 67745fea151d99bde2b6a9a7d2039b525e3f0d38f04d124e8d615bb397dbff7e
-const C3_SHA256 = "67745fea151d99bde2b6a9a7d2039b525e3f0d38f04d124e8d615bb397dbff7e";
 const AG1 = "Esta ferramenta funciona só no seu navegador: nada do que você digitar é enviado à LCM nem guardado por ela. Os dados do comprador continuam sob sua responsabilidade. Use-os apenas para responder à disputa junto ao seu gateway ou adquirente, e confira no contrato dele as regras de sigilo antes de compartilhar o dossiê com qualquer outra pessoa.";
 const GATEWAYS = ["Mercado Pago","PagBank (PagSeguro)","Stripe","Pagar.me","Hotmart","Eduzz","Kiwify"];
 
@@ -657,6 +686,14 @@ function rotuloMotivo(m) { return `Motivo ${m.codigo} da ${m.bandeira}: ${m.moti
 
 function matrizTemExemplo(matriz = MATRIZ) {
   return matriz.some((m) => m.id === ID_EXEMPLO);
+}
+
+// CB-03 de 31/10: valor do select de motivo -> índice na matriz. Só inteiro canônico dentro da matriz; o
+// valor vazio de '(selecione o motivo)' e qualquer outro dão -1 (sem motivo escolhido).
+function indiceMotivo(valor, matriz = MATRIZ) {
+  if (typeof valor !== 'string' || !/^(?:0|[1-9]\d{0,5})$/.test(valor)) return -1;
+  const i = Number(valor);
+  return i < matriz.length ? i : -1;
 }
 
 
@@ -757,7 +794,6 @@ function textoDeAnalise(t) {
   a = a.replace(/(?<![\p{L}\p{N}])E\d{8}20\d{2}[01]\d[0-3]\d[A-Za-z0-9]{8,}(?![\p{L}\p{N}])/gu, (w) => FORA.repeat(w.length));
   return a;
 }
-function digitosAscii(t) { return textoDeAnalise(t); }
 
 // Luhn de qualquer janela de um grupo em O(1), com somas acumuladas por paridade.
 function luhnJanelas(d) {
@@ -913,38 +949,83 @@ function sanear(texto, livre = true) {
   return { texto: m.texto, aviso: temMencao(m.texto) ? TEXTOS_REVISAO['A-3b'] : null, limpo: false };
 }
 
+// CB-04 de 31/10: caracteres que enganam quem lê o dossiê. Saem os controles bidi (U+202A-202E,
+// U+2066-2069, U+200E/200F, U+061C), os de largura zero (U+200B-200D, U+2060, U+FEFF) e as demais
+// formatações invisíveis (categoria Cf, como as tags U+E0020-E007F), os controles C0/C1 e o uso
+// privado (Co: o U+E000 é o marcador interno da máscara e, digitado, partia o PAN). Revisão do lote:
+// saem também os ignoráveis por padrão do Unicode de outras categorias (seletores de variação
+// U+FE00-FE0F, U+E0100-E01EF e U+180B-180F; preenchedores Hangul U+115F, U+1160, U+3164 e U+FFA0;
+// U+034F) e o braille em branco U+2800, que no meio de uma palavra escondiam termo vedado. As quebras de
+// linha viram \n (CR, VT, FF, NEL, U+2028/2029) e a tabulação, espaço; em campo de uma linha
+// (pedido, CNPJ, nome de arquivo) a quebra também vira espaço. Roda antes de sanear(): remover
+// depois da máscara poderia juntar as partes de um PAN que ela não viu.
+const QUEBRAS = /\r\n|[\r\v\f\u{85}\u{2028}\u{2029}]/gu;
+const INVISIVEIS = /[\p{Cc}\p{Cf}\p{Co}\p{Cs}\p{Default_Ignorable_Code_Point}\u{2800}]/gu;
+function limparTexto(texto, umaLinha = false) {
+  let t = String(texto).replace(QUEBRAS, '\n').replace(/\t/g, ' ');
+  if (umaLinha) t = t.replace(/\n/g, ' ');
+  return t.replace(INVISIVEIS, (c) => (c === '\n' ? c : ''));
+}
+// CB-04 de 31/10: toda entrada de texto da página (campos, fatos, nomes de arquivo) passa por aqui:
+// primeiro limparTexto, depois a máscara de cartão (sanearCampo). Só o fato é de várias linhas.
+function sanearEntrada(id, texto) { return sanearCampo(id, limparTexto(texto, id !== 'fato-desc')); }
+
 // Controlador de campo (CP-01): digitar não altera o valor; paste, blur e
 // geração do dossiê saneiam. CB-01: recebe o id do campo, para a exceção de CNPJ
 // (sanearCampo) valer no mesmo caminho que a página usa.
 function controladorCampo(id) {
   return {
     aoDigitar: (v) => ({ texto: v, aviso: null }),
-    aoColar: (v) => sanearCampo(id, v),
-    aoSair: (v) => sanearCampo(id, v)
+    aoColar: (v) => sanearEntrada(id, v),
+    aoSair: (v) => sanearEntrada(id, v)
   };
 }
 
 function validarUltimos4(v) { return v === '' || /^\d{4}$/.test(v); }
 
-// CP-05: CNPJ com dígitos verificadores válidos.
+// CP-05: CNPJ com dígitos verificadores válidos. CB-05 de 31/10: aceita também o CNPJ alfanumérico
+// (IN RFB 2.229/2024): 12 posições de 0-9 ou A-Z e 2 DVs numéricos, calculados com o código do
+// caractere menos 48 e os mesmos pesos (para dígitos, igual ao cálculo numérico). Minúsculas valem
+// como maiúsculas; pontos, barra, hífen e espaços são ignorados.
+function normalizarCNPJ(v) { return String(v).toUpperCase().replace(/[.\/\s-]/g, ''); }
 function validarCNPJ(v) {
-  const d = String(v).replace(/\D/g, '');
-  if (d.length !== 14 || /^(\d)\1{13}$/.test(d)) return false;
+  const c = normalizarCNPJ(v);
+  if (!/^[0-9A-Z]{12}\d{2}$/.test(c) || /^(\d)\1{13}$/.test(c)) return false;
   const dv = (n) => {
     const pesos = n === 12 ? [5,4,3,2,9,8,7,6,5,4,3,2] : [6,5,4,3,2,9,8,7,6,5,4,3,2];
-    const s = pesos.reduce((a, p, i) => a + p * Number(d[i]), 0);
+    const s = pesos.reduce((a, p, i) => a + p * (c.charCodeAt(i) - 48), 0);
     const r = s % 11; return r < 2 ? 0 : 11 - r;
   };
-  return dv(12) === Number(d[12]) && dv(13) === Number(d[13]);
+  return dv(12) === c.charCodeAt(12) - 48 && dv(13) === c.charCodeAt(13) - 48;
+}
+// CB-05 de 31/10: CNPJ do dossiê no formato 00.000.000/0000-00 (ou 12.ABC.345/01DE-35).
+function formatarCNPJ(v) {
+  const c = normalizarCNPJ(v);
+  return `${c.slice(0, 2)}.${c.slice(2, 5)}.${c.slice(5, 8)}/${c.slice(8, 12)}-${c.slice(12)}`;
 }
 
-// CB-01: no campo CNPJ, um CNPJ válido (só dígitos e pontuação de CNPJ) não é tratado
+// CB-01: no campo CNPJ, um CNPJ válido (só caracteres e pontuação de CNPJ) não é tratado
 // como cartão; 14 dígitos com DV válido podem passar no Luhn. Qualquer outro valor é saneado.
-const FORMATO_CNPJ = /^\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}$/;
+// CB-05 de 31/10: as 12 primeiras posições aceitam letras (CNPJ alfanumérico).
+const FORMATO_CNPJ = /^[0-9A-Z]{2}\.?[0-9A-Z]{3}\.?[0-9A-Z]{3}\/?[0-9A-Z]{4}-?\d{2}$/i;
 // Parecer B-02: a exceção não vale quando os 14 dígitos também são um PAN Diners válido
 // (prefixo 30/36/38/39 e Luhn); nesse caso o campo é mascarado como qualquer outro.
+// Revisão do lote (decisão C-01, PAN mascarado em qualquer lugar): no CNPJ com letra, a exceção só
+// vale se a própria máscara não acha PAN, nem no texto digitado nem no CNPJ formatado que vai ao
+// dossiê. A máscara lê O/o como 0 e I/l como 1, então '36O00000000438' (válido como CNPJ
+// alfanumérico) é o PAN Diners 36000000000438; e o 'i' minúsculo vira 'I' no dossiê. O CNPJ todo
+// numérico segue o B-02 como na main (só os 14 dígitos), para não mascarar CNPJ real à toa.
 function sanearCampo(id, texto) {
-  if (id === 'cnpj' && FORMATO_CNPJ.test(texto.trim()) && validarCNPJ(texto) && !ehPAN(texto.replace(/\D/g, ''), false)) return { texto, aviso: null, limpo: false };
+  if (id === 'cnpj' && FORMATO_CNPJ.test(texto.trim()) && validarCNPJ(texto)) {
+    const c = normalizarCNPJ(texto);
+    if (/^\d{14}$/.test(c)) {
+      if (!ehPAN(c, false)) return { texto, aviso: null, limpo: false };
+    } else {
+      const formatado = formatarCNPJ(c);
+      if (!temPAN(texto) && !temPAN(formatado)) return { texto, aviso: null, limpo: false };
+      if (!temPAN(texto)) return sanear(formatado, true);
+    }
+  }
   return sanear(texto, id !== 'pedido');
 }
 
@@ -969,31 +1050,135 @@ function vedadosNaPagina(textos, matriz) {
   return textos.filter((t) => !ok.has(t) && encontrarVedados(t).length).map((t) => ({ texto: t, vedados: encontrarVedados(t) }));
 }
 
+// CB-06 de 31/10: datas da cronologia. O campo de data aceita ano de até 6 dígitos e data futura; o fato só
+// entra com data real entre 01/01/2000 e hoje (data local), sempre AAAA-MM-DD no estado, o que
+// deixa a ordem alfabética igual à cronológica. Na tela e no dossiê, DD/MM/AAAA.
+const DATA_MIN = '2000-01-01';
+const doisDigitos = (n) => String(n).padStart(2, '0');
+function hojeLocal(agora = new Date()) { return `${agora.getFullYear()}-${doisDigitos(agora.getMonth() + 1)}-${doisDigitos(agora.getDate())}`; }
+function validarDataFato(iso, hoje = hojeLocal()) {
+  if (typeof iso !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+  const [a, m, d] = iso.split('-').map(Number);
+  const dt = new Date(Date.UTC(a, m - 1, d));
+  if (dt.getUTCFullYear() !== a || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return false;
+  return iso >= DATA_MIN && iso <= hoje;
+}
+function dataBR(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso); return m ? `${m[3]}/${m[2]}/${m[1]}` : iso; }
+// Ordem cronológica, estável no mesmo dia (ordem de inclusão); data fora do formato vai para o fim.
+function ordenarFatos(fatos) {
+  const chave = (f) => (/^\d{4}-\d{2}-\d{2}$/.test(f.data) ? f.data : `~${f.data}`);
+  return [...fatos].sort((x, y) => (chave(x) < chave(y) ? -1 : chave(x) > chave(y) ? 1 : 0));
+}
+// CB-06 de 31/10: dossie-chargeback-<pedido>-<AAAA-MM-DD>.txt, com o pedido (já mascarado) reduzido a
+// [A-Za-z0-9-], até 40 caracteres; sem nada aproveitável, só a data.
+function nomeArquivoDossie(pedido, hoje = hojeLocal()) {
+  const p = String(pedido).normalize('NFKD').replace(/\p{M}/gu, '').replace(/[^A-Za-z0-9]+/g, '-')
+    .replace(/^-+/, '').slice(0, 40).replace(/-+$/, '');
+  return `dossie-chargeback-${p ? `${p}-` : ''}${hoje}.txt`;
+}
+
 // Dossiê (CB-02). P-1 não entra (CP-09).
+// CB-10 de 31/10: cada linha leva a origem (campo do formulário; sem origem, texto fixo do dossiê ou do motivo) e
+// o dossiê devolve, além da lista de termos vedados do texto inteiro, os termos por origem, para a mensagem dizer
+// onde está cada um. Nenhum termo da lista tem quebra de linha: a busca linha a linha acha o mesmo que no texto.
 function montarDossie({ pedido, ultimos4, cnpj, gateway, motivo, fatos, documentos, vinculos }) {
-  const ordenados = [...fatos].sort((a, b) => a.data.localeCompare(b.data));
+  const ordenados = ordenarFatos(fatos);
   const L = [];
-  L.push('DOSSIÊ DE DISPUTA DE CHARGEBACK', '', '1. Identificação do pedido');
-  L.push(`Pedido: ${pedido}`);
-  if (ultimos4) L.push(`Cartão: **** **** **** ${ultimos4}`);
-  if (cnpj) L.push(`CNPJ do lojista: ${cnpj}`);
-  if (gateway) L.push(`Gateway ou adquirente: ${gateway}`);
-  L.push(`Motivo informado: ${rotuloMotivo(motivo)}`, '', '2. Cronologia');
-  for (const f of ordenados) L.push(`${f.data}: ${f.descricao}`);
-  L.push('', '3. Documentos anexados pelo lojista');
-  documentos.forEach((d, i) => L.push(`D${i + 1}. ${d.nome} (${d.tamanho} bytes)`));
-  L.push('', '4. Correspondência documento x requisito de evidência');
+  const add = (origem, ...linhas) => { for (const t of linhas) L.push({ t, origem }); };
+  add(null, 'DOSSIÊ DE DISPUTA DE CHARGEBACK', '', '1. Identificação do pedido');
+  add({ campo: 'pedido' }, `Pedido: ${pedido}`);
+  if (ultimos4) add({ campo: 'ultimos4' }, `Cartão: **** **** **** ${ultimos4}`);
+  if (cnpj) add({ campo: 'cnpj' }, `CNPJ do lojista: ${cnpj}`);
+  if (gateway) add(null, `Gateway ou adquirente: ${gateway}`);
+  add(null, `Motivo informado: ${rotuloMotivo(motivo)}`, '', '2. Cronologia');
+  // CB-04 de 31/10: fato de várias linhas sai com as linhas seguintes recuadas, para não imitar cabeçalho
+  // de seção nem item de documento do dossiê.
+  ordenados.forEach((f, i) => {
+    const [primeira, ...resto] = f.descricao.split('\n');
+    add({ campo: 'fato', n: i + 1, data: f.data }, `${dataBR(f.data)}: ${primeira}`, ...resto.map((l) => (l ? `  ${l}` : '')));
+  });
+  add(null, '', '3. Documentos anexados pelo lojista');
+  documentos.forEach((d, i) => add({ campo: 'documento', n: i + 1, nome: d.nome }, `D${i + 1}. ${d.nome} (${d.tamanho} bytes)`));
+  add(null, '', '4. Correspondência documento x requisito de evidência');
   motivo.evidencias.forEach((ev, i) => {
     const ds = (vinculos[i] || []).map((k) => `D${k + 1}`);
-    L.push(`${ev}: ${ds.length ? ds.join(', ') : 'nenhum documento anexado'}`);
+    add(null, `${ev}: ${ds.length ? ds.join(', ') : 'nenhum documento anexado'}`);
   });
-  if (motivo.observacao && motivo.observacao !== linhaFonte(motivo)) L.push(motivo.observacao);
-  L.push(linhaFonte(motivo));
-  if (motivo.secao_pagina) L.push(motivo.secao_pagina);
-  L.push(RODAPE_MATRIZ, RODAPE_PRAZOS);
-  if (motivo.bandeira === 'Elo') L.push(RODAPE_ELO);
-  const texto = L.join('\n') + '\n';
-  return { texto, vedados: encontrarVedados(texto) };
+  if (motivo.observacao && motivo.observacao !== linhaFonte(motivo)) add(null, motivo.observacao);
+  add(null, linhaFonte(motivo));
+  if (motivo.secao_pagina) add(null, motivo.secao_pagina);
+  add(null, RODAPE_MATRIZ, RODAPE_PRAZOS);
+  if (motivo.bandeira === 'Elo') add(null, RODAPE_ELO);
+  const texto = L.map((l) => l.t).join('\n') + '\n';
+  const origens = [];
+  for (const { t, origem } of L) {
+    const termos = encontrarVedados(t);
+    if (!termos.length) continue;
+    const o = origem || { campo: 'fixo' };
+    const mesma = origens.find((x) => x.campo === o.campo && x.n === o.n);
+    if (mesma) mesma.termos.push(...termos.filter((v) => !mesma.termos.includes(v)));
+    else origens.push({ ...o, termos: [...termos] });
+  }
+  return { texto, vedados: encontrarVedados(texto), origens };
+}
+
+// CB-10 de 31/10: mensagens de termo vedado com a origem. O nome do arquivo não se edita na página: a saída é
+// renomear o arquivo e selecionar de novo (a seleção substitui a lista inteira).
+const RENOMEAR = 'Renomeie o arquivo no seu dispositivo e selecione de novo todos os documentos.';
+function onde(o) {
+  if (o.campo === 'pedido') return 'no pedido';
+  if (o.campo === 'ultimos4') return 'nos 4 últimos dígitos';
+  if (o.campo === 'cnpj') return 'no CNPJ';
+  if (o.campo === 'fato') return `no fato de ${dataBR(o.data)}`;
+  if (o.campo === 'documento') return `no nome do documento D${o.n}, ${o.nome}`;
+  return 'no texto do motivo';
+}
+// Revisão do lote 2: o CNPJ não se altera (a lista de termos não muda neste lote), então nem o aviso geral nem o campo
+// pedem para removê-lo; os dois dizem a mesma frase. As outras origens continuam com 'Remova'.
+function mensagemCNPJVedado(termos) { return `O CNPJ forma ${termos.length > 1 ? 'termos não permitidos' : 'termo não permitido'} no dossiê: ${termos.join(', ')}.`; }
+function mensagemVedados(origens) {
+  const outras = origens.filter((o) => o.campo !== 'cnpj'), cnpj = origens.find((o) => o.campo === 'cnpj');
+  const partes = outras.map((o) => `${o.termos.join(', ')} (${onde(o)})`).join('; ');
+  return [
+    outras.length ? `Remova os termos não permitidos no dossiê: ${partes}.` : '',
+    outras.some((o) => o.campo === 'documento') ? RENOMEAR : '',
+    cnpj ? mensagemCNPJVedado(cnpj.termos) : ''
+  ].filter(Boolean).join(' ');
+}
+// Mensagem do seletor de documentos para os nomes com termo vedado (na seleção e ao gerar).
+function mensagemDocumentos(documentos) {
+  const ruins = documentos.map((d, i) => ({ n: i + 1, nome: d.nome, termos: encontrarVedados(d.nome) })).filter((d) => d.termos.length);
+  if (!ruins.length) return '';
+  return ruins.map((d) => `O nome do documento D${d.n} (${d.nome}) tem termo não permitido no dossiê: ${d.termos.join(', ')}.`).join(' ') + ` ${RENOMEAR}`;
+}
+
+// CB-01 de 31/10: dados do dossiê a partir dos valores do formulário, sem tocar na página. gerar() usa para
+// montar o dossiê e baixar() para conferir, na hora do download, que o arquivo ainda é o do formulário.
+// Devolve { ok, dados } ou { ok: false, campo, erro }; em ambos, os valores saneados dos campos de
+// texto (para gerar() gravar de volta) e os avisos de cartão (A-3/A-3b) do saneamento.
+function dadosDoFormulario({ pedido = '', ultimos4 = '', cnpj = '', gateway = '', motivo = '', fatos = [], documentos = [], marcados = [] }, matriz = MATRIZ) {
+  const avisos = [];
+  const sanearValor = (id, v) => { const r = sanearEntrada(id, String(v)); if (r.aviso && !avisos.includes(r.aviso)) avisos.push(r.aviso); return r.texto; };
+  const valores = { pedido: sanearValor('pedido', pedido), cnpj: sanearValor('cnpj', cnpj) };
+  const recusa = (campo, erro) => ({ ok: false, campo, erro, valores, avisos });
+  const p = valores.pedido.trim();
+  if (!p) return recusa('pedido', 'Informe a identificação do pedido.');
+  if (!validarUltimos4(ultimos4)) return recusa('ultimos4', 'Informe exatamente os 4 últimos dígitos, ou deixe em branco.');
+  // CB-05 de 31/10: CNPJ é opcional; preenchido, só entra válido e formatado.
+  const c = valores.cnpj.trim();
+  if (c && !validarCNPJ(c)) return recusa('cnpj', 'CNPJ inválido: confira os 14 caracteres ou deixe o campo em branco.');
+  const im = indiceMotivo(motivo, matriz);
+  if (im < 0) return recusa('motivo', 'Escolha o motivo indicado pela adquirente.');
+  const m = matriz[im];
+  const vinculos = m.evidencias.map(() => []);
+  for (const [ev, doc] of marcados) {
+    if (Number.isInteger(ev) && Number.isInteger(doc) && ev >= 0 && ev < vinculos.length && doc >= 0 && doc < documentos.length && !vinculos[ev].includes(doc)) vinculos[ev].push(doc);
+  }
+  vinculos.forEach((v) => v.sort((a, b) => a - b));
+  return {
+    ok: true, valores, avisos,
+    dados: { pedido: p, ultimos4, cnpj: c ? formatarCNPJ(c) : '', gateway: GATEWAYS.includes(gateway) ? gateway : '', motivo: m, fatos, documentos, vinculos }
+  };
 }
 
 // CP-04: em build de piloto, a linha de exemplo bloqueia o dossiê.
@@ -1012,7 +1197,43 @@ const $ = (id) => document.getElementById(id);
 const estado = { documentos: [], fatos: [], dossie: null };
 
 function txt(id, t) { $(id).textContent = t; }
-function aviso(msg) { const a = $('aviso'); a.textContent = msg || ''; a.hidden = !msg; }
+// CB-08 de 31/10: o aviso geral (role=alert) fica logo depois do botão Gerar, onde está quem clicou em Gerar ou
+// Baixar; rolar=true o traz para o meio da tela quando não há campo para focar. No topo, ficava fora da tela.
+function aviso(msg, rolar = false) {
+  const a = $('aviso'); a.textContent = msg || ''; a.hidden = !msg;
+  if (msg && rolar) a.scrollIntoView({ block: 'center' });
+}
+
+// CB-08 de 31/10: mensagem de campo num <p id="<id>-erro"> logo depois dele, ligada por aria-describedby. Erro marca
+// aria-invalid; nota (A-3/A-3b do saneamento daquele campo) não, e vai também para o aviso geral, que o leitor de
+// tela anuncia. A próxima edição do campo limpa a mensagem (ouvinte em iniciar()).
+const CAMPOS_COM_MENSAGEM = ['pedido', 'ultimos4', 'cnpj', 'motivo', 'fato-data', 'fato-desc', 'docs'];
+function mensagemCampo(id, msg, erro) {
+  const el = $(id), m = $(`${id}-erro`);
+  m.textContent = msg; m.hidden = false; m.setAttribute('class', erro ? 'msg erro' : 'msg');
+  el.setAttribute('aria-describedby', m.id);
+  if (erro) el.setAttribute('aria-invalid', 'true'); else el.removeAttribute('aria-invalid');
+}
+function limparCampo(id) {
+  const el = $(id), m = $(`${id}-erro`);
+  m.textContent = ''; m.hidden = true; m.setAttribute('class', 'msg');
+  el.removeAttribute('aria-invalid'); el.removeAttribute('aria-describedby');
+}
+// Foco no campo e a mensagem dele no meio da tela (o campo fica logo acima dela).
+function focarCampo(id) { $(id).focus({ preventScroll: true }); $(`${id}-erro`).scrollIntoView({ block: 'center' }); }
+function erroCampo(id, msg, focar = true) { mensagemCampo(id, msg, true); if (focar) focarCampo(id); }
+function avisoCampo(id, msg) { mensagemCampo(id, msg, false); aviso(msg); }
+// Revisão do lote 2: a saída do campo (change e blur) acontece no mousedown de quem recebe o foco, também no toque.
+// Uma nota (A-3/A-3b) mostrada ali descia o que fica abaixo do campo antes do mouseup: o clique caía na nota e o botão
+// (Adicionar fato, Gerar, uma caixa) não recebia o click. Com o botão pressionado, a nota espera o fim do clique: quem
+// trata o clique (add-fato, gerar) a toma com tomarNotaDaSaida, e o resto aparece logo depois do click.
+let pressionado = false, pressoes = 0;
+const notasDaSaida = new Map();
+function notaDaSaida(id, msg) { if (pressionado) notasDaSaida.set(id, msg); else avisoCampo(id, msg); }
+function tomarNotaDaSaida(id) { const msg = notasDaSaida.get(id) || null; notasDaSaida.delete(id); return msg; }
+function mostrarNotasDaSaida() { pressionado = false; for (const [id, msg] of notasDaSaida) avisoCampo(id, msg); notasDaSaida.clear(); }
+// Nota (não erro) que está junto do campo: vale para o texto atual, porque a próxima edição a apaga.
+function notaNoCampo(id) { const m = $(`${id}-erro`); return !m.hidden && m.getAttribute('class') === 'msg' ? m.textContent : null; }
 
 function iniciar() {
   document.title = TITULO;
@@ -1045,18 +1266,37 @@ function iniciar() {
 
   $('a1').addEventListener('change', () => { $('form').hidden = !$('a1').checked; });
 
-  // CP-01: digitar não saneia; paste, saída do campo e geração do dossiê saneiam.
+  // CB-08 de 31/10: a próxima edição do campo limpa a mensagem dele. Registrado antes dos outros ouvintes, que
+  // podem escrever uma mensagem nova no mesmo evento (A-3 dos 4 últimos dígitos). CB-09: editar o fato tira o
+  // anúncio 'Fato adicionado.'.
+  for (const id of CAMPOS_COM_MENSAGEM) $(id).addEventListener('input', () => limparCampo(id));
+  for (const id of ['fato-data', 'fato-desc']) $(id).addEventListener('input', () => txt('fato-status', ''));
+
+  // CB-06 de 31/10: o seletor de data já limita o intervalo; o add-fato confere de novo.
+  $('fato-data').min = DATA_MIN;
+  $('fato-data').max = hojeLocal();
+
+  // Revisão do lote 2: botão do mouse pressionado (o toque também gera mousedown, mouseup e click). O click sai na
+  // mesma tarefa do mouseup; a nota pendente aparece depois dele. O select nativo abre no mousedown e o mouseup pode
+  // ficar com a lista: a escolha dele ou uma tecla também mostram a nota.
+  // Cada mouseup mostra só o que ficou pendente até ali: se o timer atrasar (aba em segundo plano) e outro clique já
+  // tiver começado, a nota deste espera o mouseup dele.
+  document.addEventListener('mousedown', () => { pressionado = true; pressoes++; }, true);
+  document.addEventListener('mouseup', () => { const n = pressoes; setTimeout(() => { if (n === pressoes) mostrarNotasDaSaida(); }, 0); }, true);
+  document.addEventListener('keydown', mostrarNotasDaSaida, true);
+  document.addEventListener('change', (e) => { if (e.target.tagName === 'SELECT') mostrarNotasDaSaida(); }, true);
+
+  // CP-01: digitar não saneia; paste, saída do campo e geração do dossiê saneiam. A nota do paste aparece na hora; a da
+  // saída do campo espera o fim do clique que tirou o foco (notaDaSaida).
   document.querySelectorAll('input[type=text], textarea').forEach((el) => {
     if (el.id === 'ultimos4') return;
     const ctl = controladorCampo(el.id);
-    const aplicar = (fn) => { const r = fn(el.value); if (r.aviso) aviso(r.aviso); if (r.texto !== el.value) el.value = r.texto; };
-    el.addEventListener('paste', () => setTimeout(() => aplicar(ctl.aoColar), 0));
-    el.addEventListener('blur', () => aplicar(ctl.aoSair));
-    el.addEventListener('change', () => aplicar(ctl.aoSair));
+    const aplicar = (fn, nota) => { const r = fn(el.value); if (r.texto !== el.value) el.value = r.texto; if (r.aviso) nota(el.id, r.aviso); };
+    el.addEventListener('paste', () => setTimeout(() => aplicar(ctl.aoColar, avisoCampo), 0));
+    el.addEventListener('blur', () => aplicar(ctl.aoSair, notaDaSaida));
+    el.addEventListener('change', () => aplicar(ctl.aoSair, notaDaSaida));
   });
 
-  // CP-05: P-1 só com CNPJ válido; continua opcional e desmarcado.
-  const atualizarP1 = () => { const ok = validarCNPJ($('cnpj').value); $('p1').disabled = !ok; if (!ok) $('p1').checked = false; };
   $('cnpj').addEventListener('input', atualizarP1);
   $('cnpj').addEventListener('change', atualizarP1);
   atualizarP1();
@@ -1064,55 +1304,106 @@ function iniciar() {
   // Só os 4 últimos dígitos: mais de 4 dígitos (PAN digitado ou colado) limpa o campo + A-3.
   const ultimos4 = () => {
     const el = $('ultimos4'); const d = el.value.replace(/\D/g, '');
-    if (d.length > 4) { el.value = ''; aviso(TEXTOS['A-3']); } else if (el.value !== d) el.value = d;
+    if (d.length > 4) { el.value = ''; avisoCampo('ultimos4', TEXTOS['A-3']); } else if (el.value !== d) el.value = d;
   };
   $('ultimos4').addEventListener('input', ultimos4);
   $('ultimos4').addEventListener('paste', () => setTimeout(ultimos4, 0));
 
+  // CB-01 de 31/10: input ou change em qualquer controle do formulário (campos, motivo, gateway, documentos,
+  // vínculos) descarta o dossiê gerado. Ficam de fora a D-1 e o Baixar, que são a etapa do dossiê.
+  for (const tipo of ['input', 'change']) {
+    $('form').addEventListener(tipo, (e) => { if (e.target.id !== 'd1' && e.target.id !== 'baixar') invalidarDossie(); });
+  }
+
+  let avisoDocs = '';
   $('docs').addEventListener('change', (e) => {
-    // Só nome e tamanho; o conteúdo do arquivo não é lido.
-    estado.documentos = [...e.target.files].map((f) => ({ nome: sanear(f.name).texto || '[nome removido]', tamanho: f.size }));
+    // Só nome e tamanho; o conteúdo do arquivo não é lido. CB-04 de 31/10: o nome passa pela mesma limpeza
+    // e máscara dos campos, e nome mascarado mostra o A-3 como eles (antes o aviso era descartado).
+    const avisos = [];
+    estado.documentos = [...e.target.files].map((f) => {
+      const r = sanearEntrada('arquivo', f.name);
+      if (r.aviso) avisos.push(r.aviso);
+      return { nome: r.texto || '[nome removido]', tamanho: f.size };
+    });
+    limparCampo('docs');
+    // O aviso geral da seleção anterior não vale para a nova.
+    if (avisoDocs && $('aviso').textContent === avisoDocs) aviso('');
+    avisoDocs = '';
+    const a3 = avisos.length ? (avisos.includes(TEXTOS['A-3']) ? TEXTOS['A-3'] : avisos[0]) : '';
+    // CB-10 de 31/10: nome com termo vedado bloquearia o Baixar; avisa já na seleção, com o documento e a saída.
+    // Revisão do lote 2: o foco já está no seletor quando o diálogo de arquivos fecha, e focar de novo não faz o leitor
+    // de tela ler a mensagem. Ela vai também para o aviso geral (role=alert), como a nota do A-3.
+    const vedados = mensagemDocumentos(estado.documentos);
+    const msg = [a3, vedados].filter(Boolean).join(' ');
+    if (vedados) { erroCampo('docs', msg); aviso(msg); } else if (a3) avisoCampo('docs', a3);
+    avisoDocs = msg;
+    invalidarDossie();
     renderVinculos();
   });
-  $('motivo').addEventListener('change', renderVinculos);
+  $('motivo').addEventListener('change', () => { invalidarDossie(); renderVinculos(); });
 
   $('add-fato').addEventListener('click', () => {
-    // CB-02: o blur do campo roda antes do clique e já mascarou o cartão e mostrou o A-3;
-    // aqui o texto chega mascarado e sanear() não devolve mais o A-3.
-    const a3Visivel = !$('aviso').hidden && $('aviso').textContent.startsWith(TEXTOS['A-3']);
+    // CB-09 de 31/10: cada tentativa recomeça as mensagens dos dois campos; o que falta (data, descrição) ou o termo
+    // vedado vai para o campo, com foco no primeiro. A saída do campo roda antes do clique e já mascarou o cartão, então
+    // sanear() aqui não devolve mais o A-3: ele vem da nota que esperava o fim deste clique (revisão do lote 2) ou da
+    // que já estava junto do fato (saída pelo Tab, ou erro só na data na tentativa anterior).
+    const nota = tomarNotaDaSaida('fato-desc') || notaNoCampo('fato-desc');
+    limparCampo('fato-data'); limparCampo('fato-desc'); txt('fato-status', '');
     const data = $('fato-data').value;
-    const desc = sanear($('fato-desc').value);
-    if (desc.aviso) aviso(desc.aviso);
+    const desc = sanearEntrada('fato-desc', $('fato-desc').value);
     $('fato-desc').value = desc.texto;
-    if (!data || !desc.texto.trim()) return;
+    const a3 = desc.aviso || nota;
+    // CB-06 de 31/10: data real entre 01/01/2000 e hoje. O máximo é recalculado (a página pode virar o dia aberta).
+    const hoje = hojeLocal();
+    $('fato-data').max = hoje;
+    const erros = [];
+    if (!validarDataFato(data, hoje)) erros.push(['fato-data', `Informe a data do fato entre ${dataBR(DATA_MIN)} e hoje (${dataBR(hoje)}).`]);
     // CB-02: fato com termo vedado não entra; o texto fica no campo para edição.
-    // A recusa se soma ao A-3 que estava visível, em vez de substituí-lo.
     const vedados = encontrarVedados(desc.texto);
-    if (vedados.length) return aviso([a3Visivel ? TEXTOS['A-3'] : desc.aviso, `Remova os termos não permitidos no fato: ${vedados.join(', ')}.`].filter(Boolean).join(' '));
+    if (!desc.texto.trim()) erros.push(['fato-desc', 'Descreva o fato.']);
+    else if (vedados.length) erros.push(['fato-desc', `Remova os termos não permitidos no fato: ${vedados.join(', ')}.`]);
+    // Fato recusado: o A-3 fica junto do fato (sozinho ou antes do erro dele) e no aviso geral.
+    if (erros.length) {
+      if (a3) avisoCampo('fato-desc', a3);
+      for (const [id, msg] of erros) erroCampo(id, id === 'fato-desc' && a3 ? `${a3} ${msg}` : msg, false);
+      return focarCampo(erros[0][0]);
+    }
     estado.fatos.push({ data, descricao: desc.texto.trim() });
     $('fato-desc').value = '';
+    invalidarDossie();
     renderFatos();
+    // CB-09 de 31/10: anúncio em role=status e foco de volta na data, para o próximo fato. Revisão do lote 2: o A-3 do
+    // fato que entrou mascarado vai no mesmo anúncio, logo abaixo do botão; o campo vazio fica sem nota.
+    txt('fato-status', a3 ? `Fato adicionado. ${a3}` : 'Fato adicionado.');
+    $('fato-data').focus();
   });
 
   $('gerar').addEventListener('click', gerar);
   $('d1').addEventListener('change', atualizarBaixar);
   $('baixar').addEventListener('click', baixar);
   renderVinculos();
+
+  // CB-17 de 01/11: o link '/#form' do blog caía no topo, porque o #form fica oculto até o aceite A-1. A página leva ao
+  // A-1, que continua obrigatório: foco na caixa e o rótulo no meio da tela. Espera o load: depois do DOMContentLoaded,
+  // o navegador processa o '#form' e, com o alvo oculto, tira o foco de onde estiver.
+  if (location.hash === '#form') {
+    addEventListener('load', () => { $('a1').focus({ preventScroll: true }); $('a1').parentElement.scrollIntoView({ block: 'center' }); }, { once: true });
+  }
 }
 
 function renderFatos() {
   const ul = $('lista-fatos'); ul.textContent = '';
-  const ordenados = [...estado.fatos].sort((a, b) => a.data.localeCompare(b.data));
+  const ordenados = ordenarFatos(estado.fatos);
   ordenados.forEach((f, i) => {
-    const li = document.createElement('li'); li.textContent = `${f.data}: ${f.descricao} `;
+    const li = document.createElement('li'); li.textContent = `${dataBR(f.data)}: ${f.descricao} `;
     // CB-02: remover o fato invalida o dossiê já gerado, que ainda o contém.
     const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remover';
     // Nome próprio por botão: data do fato e, se houver mais de um no dia, a ordem.
     const doDia = ordenados.filter((g) => g.data === f.data);
-    rm.setAttribute('aria-label', `Remover fato de ${f.data.split('-').reverse().join('/')}` + (doDia.length > 1 ? ` (${doDia.indexOf(f) + 1}º do dia)` : ''));
+    rm.setAttribute('aria-label', `Remover fato de ${dataBR(f.data)}` + (doDia.length > 1 ? ` (${doDia.indexOf(f) + 1}º do dia)` : ''));
     rm.addEventListener('click', () => {
       estado.fatos.splice(estado.fatos.indexOf(f), 1);
-      estado.dossie = null; $('previa').textContent = ''; $('etapa-d1').hidden = true; atualizarBaixar(); aviso('');
+      invalidarDossie(); aviso(''); txt('fato-status', '');
       renderFatos();
       // O botão focado foi recriado: foco no Remover seguinte, ou no anterior; sem fatos, no campo do fato.
       const bs = $('lista-fatos').querySelectorAll('button');
@@ -1123,17 +1414,20 @@ function renderFatos() {
 }
 
 function renderVinculos() {
-  const m = MATRIZ[Number($('motivo').value) || 0];
-  txt('fonte-motivo', linhaFonte(m));
-  const sp = $('secao-motivo'); sp.textContent = m.secao_pagina || ''; sp.hidden = !sp.textContent;
-  const obs = $('obs-motivo'); obs.textContent = m.observacao && m.observacao !== linhaFonte(m) ? m.observacao : ''; obs.hidden = !obs.textContent;
-  const elo = $('rodape-elo'); elo.textContent = m.bandeira === 'Elo' ? RODAPE_ELO : ''; elo.hidden = !elo.textContent;
+  // CB-03 de 31/10: sem motivo escolhido, nenhuma evidência nem fonte; fica só o rodapé de prazos.
+  const i = indiceMotivo($('motivo').value);
+  const m = i < 0 ? null : MATRIZ[i];
+  const fonte = $('fonte-motivo'); fonte.textContent = m ? linhaFonte(m) : ''; fonte.hidden = !m;
+  const sp = $('secao-motivo'); sp.textContent = (m && m.secao_pagina) || ''; sp.hidden = !sp.textContent;
+  const obs = $('obs-motivo'); obs.textContent = m && m.observacao && m.observacao !== linhaFonte(m) ? m.observacao : ''; obs.hidden = !obs.textContent;
+  const elo = $('rodape-elo'); elo.textContent = m && m.bandeira === 'Elo' ? RODAPE_ELO : ''; elo.hidden = !elo.textContent;
   const box = $('vinculos'); box.textContent = '';
+  if (!m) return;
   m.evidencias.forEach((ev, i) => {
     const fs = document.createElement('fieldset');
     const lg = document.createElement('legend'); lg.textContent = ev; fs.appendChild(lg);
     estado.documentos.forEach((d, k) => {
-      const l = document.createElement('label');
+      const l = document.createElement('label'); l.setAttribute('class', 'opcao');
       const c = document.createElement('input'); c.type = 'checkbox'; c.dataset.ev = String(i); c.dataset.doc = String(k);
       l.appendChild(c); l.append(` D${k + 1}. ${d.nome}`); fs.appendChild(l);
     });
@@ -1141,26 +1435,63 @@ function renderVinculos() {
   });
 }
 
+// CB-01 de 31/10: valores atuais do formulário, como estão na tela, para dadosDoFormulario().
+function lerFormulario() {
+  return {
+    pedido: $('pedido').value, ultimos4: $('ultimos4').value, cnpj: $('cnpj').value, gateway: $('gateway').value, motivo: $('motivo').value,
+    fatos: estado.fatos, documentos: estado.documentos,
+    marcados: [...document.querySelectorAll('#vinculos input:checked')].map((c) => [Number(c.dataset.ev), Number(c.dataset.doc)])
+  };
+}
+
+// CP-05: P-1 só com CNPJ válido; continua opcional e desmarcado. Roda no input e change do CNPJ e depois
+// de gerar() gravar no campo o valor saneado (revisão do lote: a escrita não dispara evento).
+function atualizarP1() { const ok = validarCNPJ($('cnpj').value); $('p1').disabled = !ok; if (!ok) $('p1').checked = false; }
+
+// CB-01 de 31/10: descarta o dossiê gerado (estado, prévia e etapa da D-1). A D-1 declara o conteúdo gerado,
+// por isso volta desmarcada (CB-02 de 31/10).
+function invalidarDossie() {
+  estado.dossie = null;
+  $('previa').textContent = '';
+  $('etapa-d1').hidden = true;
+  $('d1').checked = false;
+  atualizarBaixar();
+}
+
 function gerar() {
+  // A saída do campo roda antes do clique e já mascarou o cartão; o texto chega mascarado e o saneamento não devolve
+  // mais o A-3. Ele vem da nota que esperava o fim deste clique (revisão do lote 2) ou do aviso já visível.
+  const notas = CAMPOS_COM_MENSAGEM.map(tomarNotaDaSaida).filter(Boolean);
+  const a3Visivel = notas.includes(TEXTOS['A-3']) || (!$('aviso').hidden && $('aviso').textContent.startsWith(TEXTOS['A-3']));
+  invalidarDossie();
   aviso('');
-  if (dossieBloqueadoPorExemplo(PILOTO, MATRIZ)) return aviso('Build de piloto com linha de exemplo na matriz: dossiê bloqueado.');
-  let alerta = null;
-  for (const id of ['pedido', 'cnpj']) { const r = sanearCampo(id, $(id).value); $(id).value = r.texto; if (r.aviso) alerta = r.aviso; }
-  if (alerta) aviso(alerta);
-  const pedido = $('pedido').value.trim();
-  const u4 = $('ultimos4').value;
-  if (!pedido) return aviso('Informe a identificação do pedido.');
-  if (!validarUltimos4(u4)) return aviso('Informe exatamente os 4 últimos dígitos, ou deixe em branco.');
-  const motivo = MATRIZ[Number($('motivo').value) || 0];
-  const vinculos = motivo.evidencias.map(() => []);
-  document.querySelectorAll('#vinculos input:checked').forEach((c) => vinculos[Number(c.dataset.ev)].push(Number(c.dataset.doc)));
-  const d = montarDossie({
-    pedido, ultimos4: u4, cnpj: $('cnpj').value.trim(), gateway: $('gateway').value,
-    motivo, fatos: estado.fatos, documentos: estado.documentos, vinculos
-  });
+  for (const id of CAMPOS_COM_MENSAGEM) limparCampo(id);
+  if (dossieBloqueadoPorExemplo(PILOTO, MATRIZ)) return aviso('Build de piloto com linha de exemplo na matriz: dossiê bloqueado.', true);
+  const r = dadosDoFormulario(lerFormulario());
+  if (a3Visivel && !r.avisos.includes(TEXTOS['A-3'])) r.avisos.unshift(TEXTOS['A-3']);
+  // Gravar o valor saneado no campo não dispara input/change: não descarta o que se está gerando.
+  for (const id of ['pedido', 'cnpj']) if ($(id).value !== r.valores[id]) $(id).value = r.valores[id];
+  atualizarP1();
+  // CB-08 de 31/10: a recusa vai para o campo (mensagem logo depois dele, aria-invalid, foco e rolagem); o A-3 do
+  // saneamento fica no aviso geral, junto do botão.
+  if (!r.ok) { aviso(r.avisos.join(' ')); erroCampo(r.campo, r.erro); return; }
+  const d = montarDossie(r.dados);
+  d.nomeArquivo = nomeArquivoDossie(r.dados.pedido);   // CB-06 de 31/10: um nome por disputa
   estado.dossie = d;
   $('previa').textContent = d.texto;
-  if (d.vedados.length) aviso(`Remova os termos não permitidos no dossiê: ${d.vedados.join(', ')}.`);
+  // CB-10 de 31/10: termo vedado com a origem no aviso geral e no campo de onde veio, com foco no primeiro.
+  // O CNPJ não se altera: a mensagem só diz o termo (a lista de termos não muda neste lote).
+  const campos = [];
+  for (const o of d.origens) {
+    const lista = `${o.termos.length > 1 ? 'termos não permitidos' : 'termo não permitido'} no dossiê: ${o.termos.join(', ')}.`;
+    const msg = o.campo === 'documento' ? mensagemDocumentos(r.dados.documentos) : o.campo === 'cnpj' ? mensagemCNPJVedado(o.termos) : `Remova ${o.termos.length > 1 ? 'os' : 'o'} ${lista}`;
+    const id = o.campo === 'documento' ? 'docs' : o.campo;
+    if (CAMPOS_COM_MENSAGEM.includes(id) && !campos.includes(id)) { erroCampo(id, msg, false); campos.push(id); }
+  }
+  aviso([...r.avisos, d.origens.length ? mensagemVedados(d.origens) : ''].filter(Boolean).join(' '), !campos.length);
+  if (campos.length) focarCampo(CAMPOS_COM_MENSAGEM.find((id) => campos.includes(id)));
+  // CB-02 de 31/10: cada geração pede nova D-1; Baixar fica desabilitado até ela ser marcada de novo.
+  $('d1').checked = false;
   $('etapa-d1').hidden = false;
   atualizarBaixar();
 }
@@ -1170,9 +1501,16 @@ function atualizarBaixar() {
 }
 
 function baixar() {
-  if ($('baixar').disabled) return;
+  if ($('baixar').disabled || !estado.dossie) return;
+  // CB-01 de 31/10: defesa extra. O dossiê é remontado com o formulário atual; se o texto mudou (alteração que
+  // não passou pelos eventos, como autopreenchimento), o download é recusado e o dossiê descartado.
+  const r = dadosDoFormulario(lerFormulario());
+  if (!r.ok || montarDossie(r.dados).texto !== estado.dossie.texto) {
+    invalidarDossie();
+    return aviso('Os dados do formulário mudaram depois da geração. Gere o dossiê de novo.', true);
+  }
   const blob = new Blob([estado.dossie.texto], { type: 'text/plain;charset=utf-8' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'dossie-chargeback.txt';
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = estado.dossie.nomeArquivo;
   a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
