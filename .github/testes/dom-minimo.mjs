@@ -1,8 +1,9 @@
 // DOM mínimo para o teste de fluxo do app (index.html), sem dependências. Cobre só o que o <script>
 // da página usa: getElementById, createElement, querySelector(All) com seletores simples, eventos com
 // propagação, textContent, value/checked/disabled/hidden, dataset, atributos (set/get/has/remove), select
-// com options, foco, scrollIntoView (registrado em document.rolagens) e download por <a download>. A
-// árvore vem do <body> do próprio HTML, para os ids e a estrutura serem os da página.
+// com options, foco, scrollIntoView (registrado em document.rolagens), style (só guarda o que se grava; o teste de
+// suporte do CB-13 usa) e download por <a download>. A árvore vem do <body> do próprio HTML, para os ids e a
+// estrutura serem os da página.
 const VAZIOS = new Set(['input', 'meta', 'br', 'hr', 'img', 'link', 'source', 'wbr']);
 const SEM_BOLHA = new Set(['focus', 'blur']);
 const ENTIDADES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: '\u{A0}' };
@@ -44,7 +45,7 @@ class Texto extends No {
 class Elemento extends No {
   constructor(doc, tag, attrs = {}) {
     super(doc);
-    this.tagName = tag.toUpperCase(); this.attrs = {}; this.dataset = {}; this.files = [];
+    this.tagName = tag.toUpperCase(); this.attrs = {}; this.dataset = {}; this.files = []; this.style = {};
     this._valor = null; this._sel = null;
     for (const [k, v] of Object.entries(attrs)) this.setAttribute(k, v);
     this.checked = 'checked' in attrs; this.disabled = 'disabled' in attrs; this.hidden = 'hidden' in attrs;

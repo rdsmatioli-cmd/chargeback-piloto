@@ -18,7 +18,7 @@ const INTERNOS = ['estado', 'MATRIZ', 'TEXTOS', 'vedadosNaPagina', 'validarCNPJ'
 function abrir() {
   const doc = documentoDe(html);
   const ctx = contextoDe(doc);
-  let src = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+  let src = html.match(/<script>("use strict";[\s\S]*?)<\/script>/)[1]; // o script principal (o primeiro <script> é o teste de suporte do CB-13)
   src = src.replace(/\}\)\(\);\s*$/, `globalThis.__t = { ${INTERNOS.map((n) => `${n}: typeof ${n} === 'undefined' ? undefined : ${n}`).join(', ')} };})();`);
   vm.createContext(ctx); vm.runInContext(src, ctx);
   doc.dispatchEvent(new Evento('DOMContentLoaded'));

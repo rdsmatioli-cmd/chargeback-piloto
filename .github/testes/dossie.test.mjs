@@ -12,7 +12,7 @@ const raiz = new URL('../../', import.meta.url);
 const html = readFileSync(new URL('index.html', raiz), 'utf8');
 const NOMES = ['MATRIZ', 'TEXTOS', 'indiceMotivo', 'dadosDoFormulario', 'montarDossie', 'validarCNPJ', 'formatarCNPJ', 'sanearCampo', 'limparTexto', 'sanearEntrada', 'encontrarVedados',
   'DATA_MIN', 'hojeLocal', 'validarDataFato', 'dataBR', 'ordenarFatos', 'nomeArquivoDossie', 'vedadosNaPagina'];
-let src = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+let src = html.match(/<script>("use strict";[\s\S]*?)<\/script>/)[1]; // o script principal (o primeiro <script> é o teste de suporte do CB-13)
 src = src.replace(/\}\)\(\);\s*$/, `globalThis.__t = { ${NOMES.map((n) => `${n}: typeof ${n} === 'undefined' ? undefined : ${n}`).join(', ')} };})();`);
 const ctx = { document: { addEventListener() {} }, console };
 vm.createContext(ctx); vm.runInContext(src, ctx);

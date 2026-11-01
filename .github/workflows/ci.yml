@@ -21,12 +21,14 @@ jobs:
       # Máscara de cartão: matriz de 171 casos do laudo QA 20fa739 e casos B-01/B-02 do parecer.
       # Dossiê: funções puras (dossie.test.mjs) e fluxo da página num DOM mínimo sem dependências
       # (fluxo.test.mjs + dom-minimo.mjs): o arquivo baixado tem de ser o dossiê da tela.
+      # Páginas (pagina.test.mjs): <noscript>, aviso de navegador sem suporte e teste de suporte em ES5.
       # Um arquivo de cada vez: em paralelo, o fluxo disputava CPU com os testes de tempo da máscara (A-03, < 100 ms).
-      - name: Testes do app (máscara de cartão, dossiê e fluxo)
+      - name: Testes do app (máscara de cartão, dossiê, páginas e fluxo)
         run: node --test --test-concurrency=1 .github/testes/*.test.mjs
       # Fluxo no Chrome do runner, com o formulário visível (o Lighthouse e o html-validate só veem o estado inicial):
       # recusas com a mensagem junto do campo e dentro da tela, fato, documentos, geração e invalidação, fonte >= 16 px
       # e alvos >= 44 px, em 390 e 1280 px, e axe-core 4.14.0 (npm pack, sha512 conferido) sem violação em cada etapa.
+      # Também sem JavaScript (<noscript>) e sem lookbehind em regex (aviso de navegador sem suporte).
       # Local, da raiz: node .github/testes/fluxo-navegador.mjs (Chrome no PATH ou em CHROME_PATH).
       - name: Fluxo no Chrome e axe-core (formulário visível)
         run: node .github/testes/fluxo-navegador.mjs

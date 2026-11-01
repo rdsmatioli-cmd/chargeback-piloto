@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-kdXD/TNCXfmjGtkiqmxjW/vWcyP1gqlaNL4y6G+nQHk='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-c8ip4dFYpe1oH/gkm+uVmOa/XO/kXRFqgdvNbGTcSRU=' 'sha256-kdXD/TNCXfmjGtkiqmxjW/vWcyP1gqlaNL4y6G+nQHk='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
 /* Cores do blog (blog/index.html). CB-11 de 31/10: campos e botões com a fonte da página (16 px; abaixo disso o
@@ -43,8 +43,10 @@ footer{margin-top:2rem;font-size:.85rem;border-top:1px solid #ccc}
 </style>
 </head>
 <body>
+<noscript><p class="msg erro">Esta ferramenta precisa de JavaScript ativado. Ative o JavaScript no navegador e recarregue a página.</p></noscript>
 <main hidden>
 <h1 id="titulo">Organize as provas da sua disputa de chargeback</h1>
+<p id="sem-suporte" class="msg erro" hidden>Esta ferramenta não funciona nesta versão do navegador. Atualize o navegador ou abra a página em outro; no iPhone e no iPad, atualize o iOS para a versão 16.4 ou mais recente.</p>
 <p id="o1"></p>
 <p id="ag1"></p>
 <label class="opcao"><input type="checkbox" id="a1"> <span id="a1-texto"></span></label>
@@ -89,6 +91,18 @@ footer{margin-top:2rem;font-size:.85rem;border-top:1px solid #ccc}
 </section>
 <details><summary>Termos</summary><div id="termos"></div></details>
 </main>
+<script>
+// CB-13 de 01/11: o script principal usa lookbehind e \p{} em regex. O navegador sem suporte (Safari antes do 16.4)
+// recusa o script inteiro ao ler, e a página ficava em branco. Este teste, em ES5, mostra o título e o aviso no lugar.
+// Os outros filhos do <main> saem por style.display: o hidden perderia para regras como label.opcao{display:flex}.
+(function () {
+  try { new RegExp('(?<=\\p{L})a', 'u'); return; } catch (e) {}
+  var m = document.querySelector('main'), f = m.children;
+  for (var i = 0; i < f.length; i++) if (f[i].id !== 'titulo' && f[i].id !== 'sem-suporte') f[i].style.display = 'none';
+  document.getElementById('sem-suporte').hidden = false;
+  m.hidden = false;
+})();
+</script>
 <footer hidden><p id="r1"></p><p id="r2"></p></footer>
 <script>"use strict";
 (() => {

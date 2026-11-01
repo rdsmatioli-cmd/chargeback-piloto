@@ -132,7 +132,9 @@ after(() => {
 });
 
 // Abre o app numa aba com a tela dada e devolve as ações do usuário e as consultas à página.
-async function abrir(tela) {
+// Opções (CB-13 e CB-17 de 01/11): caminho (com fragmento, como o '/#form' do blog), semJs (scripts da página
+// desligados), antes (script que roda antes dos da página) e esperarMain (false: não espera o <main> aparecer).
+async function abrir(tela, { caminho = '/', semJs = false, antes = null, esperarMain = true } = {}) {
   const { targetId } = await cdp.enviar('Target.createTarget', { url: 'about:blank' });
   const { sessionId } = await cdp.enviar('Target.attachToTarget', { targetId, flatten: true });
   const env = (m, p) => cdp.enviar(m, p, sessionId);
@@ -146,8 +148,10 @@ async function abrir(tela) {
   await env('Emulation.setDeviceMetricsOverride', { width: tela.width, height: tela.height, deviceScaleFactor: tela.deviceScaleFactor, mobile: tela.mobile });
   // Tela de celular aceita toque (Input.dispatchTouchEvent); o mouse continua valendo.
   if (tela.mobile) await env('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  if (semJs) await env('Emulation.setScriptExecutionDisabled', { value: true });
+  if (antes) await env('Page.addScriptToEvaluateOnNewDocument', { source: antes });
   const carregou = cdp.esperar('Page.loadEventFired', sessionId);
-  await env('Page.navigate', { url: `${base}/` });
+  await env('Page.navigate', { url: `${base}${caminho}` });
   await carregou;
   const js = async (expr) => {
     const r = await env('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true });
@@ -208,7 +212,7 @@ async function abrir(tela) {
       return r;
     })`)
   };
-  await js(`new Promise((ok, erro) => { const t = Date.now(); (function v() { if (!document.querySelector('main').hidden) return ok(); if (Date.now() - t > 10000) return erro(new Error('main continua oculto: o script não rodou (CSP?)')); setTimeout(v, 50); })(); })`);
+  if (esperarMain) await js(`new Promise((ok, erro) => { const t = Date.now(); (function v() { if (!document.querySelector('main').hidden) return ok(); if (Date.now() - t > 10000) return erro(new Error('main continua oculto: o script não rodou (CSP?)')); setTimeout(v, 50); })(); })`);
   return p;
 }
 
@@ -232,6 +236,9 @@ for (const tela of TELAS) {
     try {
       await semViolacoes(p, 'estado inicial');
       assert.equal(await p.visivel('form'), false);
+      // CB-13: no caminho normal, nem o aviso de navegador sem suporte nem o do <noscript> aparecem.
+      assert.equal(await p.visivel('sem-suporte'), false, 'CB-13: #sem-suporte oculto');
+      assert.equal(await p.js(`document.body.innerText.includes('precisa de JavaScript')`), false, 'CB-13: <noscript> não aparece');
 
       await p.clicar('a1');
       assert.ok(await p.visivel('form'), 'A-1 mostra o formulário');
@@ -366,4 +373,45 @@ for (const tela of ALTAS) {
       }
     });
   }
+}
+
+// CB-13 de 01/11: sem JavaScript, a página ficava em branco (main e footer saem do HTML com hidden). O <noscript> avisa.
+for (const tela of TELAS) {
+  test(`CB-13: sem JavaScript, o aviso do <noscript> aparece em ${tela.nome}`, async () => {
+    const p = await abrir(tela, { semJs: true, esperarMain: false });
+    try {
+      const texto = await p.js('document.body.innerText.trim()');
+      assert.match(texto, /^Esta ferramenta precisa de JavaScript ativado\./);
+      assert.equal(await p.js(`document.querySelector('main').hidden`), true);
+    } finally {
+      await p.fechar();
+    }
+  });
+}
+
+// CB-13 de 01/11: navegador sem lookbehind em regex (Safari < 16.4) recusa o script principal ao ler. Aqui, o RegExp
+// que recusa lookbehind roda antes da página: o script principal para no primeiro RegExp com lookbehind (no navegador
+// antigo ele nem começa) e o teste de suporte mostra o aviso, em vez da página em branco.
+const SEM_LOOKBEHIND = `(() => {
+  const Original = RegExp;
+  globalThis.RegExp = new Proxy(Original, { construct(alvo, args) {
+    if (/\\(\\?<[=!]/.test(String(args[0]))) throw new SyntaxError('Invalid regular expression: invalid group specifier name');
+    return Reflect.construct(alvo, args);
+  } });
+})();`;
+for (const tela of TELAS) {
+  test(`CB-13: navegador sem lookbehind mostra o aviso de navegador sem suporte em ${tela.nome}`, async () => {
+    const p = await abrir(tela, { antes: SEM_LOOKBEHIND, esperarMain: false });
+    try {
+      assert.ok(await p.visivel('sem-suporte'), '#sem-suporte visível');
+      assert.match(await p.texto('sem-suporte'), /iOS para a versão 16\.4 ou mais recente/);
+      assert.equal(await p.texto('o1'), '', 'o script principal não rodou');
+      // Só o título e o aviso: o aceite A-1 (label.opcao com display:flex) e os Termos somem.
+      assert.equal(await p.js(`document.body.innerText.trim()`), `${await p.texto('titulo')}\n\n${await p.texto('sem-suporte')}`);
+      assert.ok(await p.naTela('sem-suporte'), 'o aviso está na tela');
+      await semViolacoes(p, 'navegador sem suporte');
+    } finally {
+      await p.fechar();
+    }
+  });
 }
