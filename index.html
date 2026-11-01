@@ -52,17 +52,18 @@ noscript .msg.erro{max-width:var(--larg);margin:0 auto -40px}
 noscript .msg.erro::before,#sem-suporte::before{content:"";flex:none;width:24px;height:24px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--erro);background:linear-gradient(var(--erro),var(--erro)) 11px 6px/2px 8px no-repeat,linear-gradient(var(--erro),var(--erro)) 11px 16px/2px 2px no-repeat}
 body:has(#sem-suporte:not([hidden])) #titulo{padding-bottom:72px}
 #sem-suporte{margin-top:-40px}
-/* Cartão da ferramenta no celular: aceite A-1 no alto (na borda da faixa), garantia embaixo dele, depois o
-   formulário, tudo num cartão só. A ordem visual muda só aqui; no DOM a garantia continua antes do aceite. */
+/* Cartão da ferramenta abaixo de 1024 px: aceite A-1 no alto (na borda da faixa) e a garantia embaixo dele.
+   Marcado o A-1, o passo 1 entra logo abaixo do aceite e a garantia desce para o fim do cartão (perto do Baixar,
+   onde a frase sobre compartilhar o dossiê pesa). Só a ordem visual muda; no DOM a garantia continua antes. */
 .inicio-col{display:contents}
 .inicio{order:1;grid-column:content;position:relative;margin-top:-40px;padding:20px 18px;border-radius:24px 24px 0 0;background:var(--card);box-shadow:var(--sombra-alta);clip-path:inset(-80px -80px 0 -80px);color:var(--txt2);font:400 15px/22px var(--fonte);transition:background-color .15s}
 .garantia{order:2;grid-column:content;position:relative;padding:14px 18px 18px;border-top:1px solid var(--borda);border-radius:0 0 24px 24px;background:var(--sup2);box-shadow:var(--sombra-alta);clip-path:inset(0 -80px -80px -80px)}
-main:has(>#form:not([hidden])) .garantia{border-radius:0;clip-path:inset(0 -80px 0 -80px)}
+main:has(>#form:not([hidden])) .garantia{order:4}
 .garantia-caixa{display:flex;align-items:flex-start;gap:12px}
-.garantia svg{width:32px;height:32px;padding:7px;border-radius:9px;background:var(--verde-claro);color:var(--verde)}
+.garantia svg{width:26px;height:26px;margin-top:-3px;padding:4px;border-radius:8px;background:var(--verde-claro);color:var(--verde)}
 #ag1{margin:0;color:var(--txt2);font-size:14px;line-height:20px;text-wrap:pretty}
-#form{order:3;position:relative;padding:24px 18px;border-top:1px solid var(--borda);border-radius:0 0 24px 24px;background:var(--card);box-shadow:var(--sombra-alta);clip-path:inset(0 -80px -80px -80px)}
-.termos{order:4}
+#form{order:3;position:relative;padding:24px 18px;border-top:1px solid var(--borda);background:var(--card);box-shadow:var(--sombra-alta);clip-path:inset(0 -80px 0 -80px)}
+.termos{order:5}
 @media (hover:hover){.inicio:hover input:not(:checked){outline:2px solid var(--verde-500);outline-offset:1px}}
 label{display:block;color:var(--tinta);font:600 15px/20px var(--fonte)}
 label.opcao{display:flex;align-items:flex-start;gap:12px;cursor:pointer}
@@ -72,8 +73,8 @@ input[type=checkbox]:disabled{cursor:not-allowed}
 label.opcao>input{margin-top:-2px}
 .inicio>input{width:26px;height:26px}
 /* Passos: nó numerado (o número é o do próprio h2; o ponto fica no DOM, oculto) e trilho entre os passos. */
-.passo{position:relative;padding-bottom:24px}
-.passo::after{content:"";position:absolute;left:13px;bottom:6px;width:2px;height:12px;border-radius:1px;background:var(--borda2)}
+.passo{position:relative;padding-bottom:20px}
+.passo::after{content:"";position:absolute;left:13px;bottom:4px;width:2px;height:12px;border-radius:1px;background:var(--borda2)}
 .passo:has(.concluir){padding-bottom:0}
 .passo:has(.concluir)::after{display:none}
 .passo h2{display:flex;align-items:flex-start;gap:12px;margin:0 0 12px;color:var(--tinta);font:700 18px/24px var(--fonte);letter-spacing:-.015em;text-wrap:balance}
@@ -84,7 +85,7 @@ label.opcao>input{margin-top:-2px}
 .ponto{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 #a2-texto{margin:-2px 0 14px;color:var(--txt2);font-size:14px;line-height:20px;text-wrap:pretty}
 /* Campos: largura conforme o dado. */
-.campo{margin-top:14px}
+.campo{margin-top:12px}
 .passo-corpo>.campo:first-child{margin-top:0}
 .campo input,.campo select,.campo textarea{display:block;width:100%;height:48px;margin-top:6px;padding:0 14px;border:1.5px solid var(--campo);border-radius:12px;background:var(--card);color:var(--tinta);font:500 16px/22px var(--fonte);transition:border-color .15s,box-shadow .15s}
 .campo textarea{height:auto;min-height:72px;padding:12px 14px;resize:vertical}
@@ -96,19 +97,20 @@ label.opcao>input{margin-top:-2px}
 .campo :focus{outline:none;border-color:var(--verde);box-shadow:0 0 0 1px var(--verde),0 0 0 5px rgba(19,116,71,.14)}
 .campo [aria-invalid=true]{border:2px solid var(--erro)}
 .campo [aria-invalid=true]:focus{box-shadow:0 0 0 5px rgba(176,0,32,.12)}
-.declara{margin-top:14px;color:var(--txt2);font:500 14px/20px var(--fonte)}
+.declara{margin-top:12px;color:var(--txt2);font:500 14px/20px var(--fonte)}
 .declara:has(:disabled){color:var(--suave);cursor:not-allowed}
-/* Nota de fonte: quieta, com ícone. Nota de prazo: o aviso mais importante do passo 1, em âmbar e em tinta. */
+/* Nota de fonte: quieta, com ícone. Nota de prazo: o aviso mais importante do passo 1, no aviso âmbar, com relógio. */
 .nota{display:flex;gap:10px;margin-top:12px;color:var(--suave);font-size:13px;line-height:19px}
 .nota svg{margin-top:2px}
 .nota p{margin:0;text-wrap:pretty}
 .fontes>div{display:grid;gap:6px}
 .fontes:not(:has(p:not([hidden]):not(:empty))){display:none}
-.prazo{margin-top:14px;padding:10px 12px;border-radius:12px;background:var(--aviso);box-shadow:inset 0 0 0 1px #EBD3A0;color:var(--tinta);font-size:14px;line-height:20px}
+.prazo{margin-top:12px;font-weight:500;font-size:14px;line-height:20px}
 .prazo svg{color:#8A5300}
-/* Mensagens junto do campo (CB-08): nota A-3 em âmbar, erro em vermelho. */
-.msg{margin:8px 0 0;padding:10px 12px 10px 14px;border-radius:10px;background:var(--aviso);box-shadow:inset 3px 0 0 var(--aviso-b);color:var(--aviso-t);font:500 14px/20px var(--fonte)}
-.msg.erro{background:var(--erro-sup);box-shadow:inset 3px 0 0 var(--erro);color:var(--erro)}
+/* Aviso âmbar, um só desenho para as notas A-3 junto do campo, o prazo e o aviso geral; erro (CB-08) com barra vermelha. */
+.msg,#aviso,.prazo{padding:10px 12px;border-radius:12px;background:var(--aviso);box-shadow:inset 0 0 0 1px #EBD3A0;color:var(--aviso-t);font:500 14px/20px var(--fonte)}
+.msg{margin:8px 0 0}
+.msg.erro{padding-left:14px;background:var(--erro-sup);box-shadow:inset 3px 0 0 var(--erro);color:var(--erro)}
 /* Botões. */
 button{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:48px;margin:0;padding:0 20px;border:0;border-radius:14px;background:var(--botao);color:#fff;font:700 16px/20px var(--fonte);cursor:pointer;transition:background-color .15s,box-shadow .15s}
 button:hover{background:var(--botao-h)}
@@ -137,6 +139,7 @@ button:disabled{cursor:not-allowed}
 #docs::file-selector-button{height:40px;margin:0 12px 0 0;padding:0 16px;border:0;border-radius:10px;background:var(--botao);color:#fff;font:700 15px/20px var(--fonte);cursor:pointer}
 #docs:focus-visible{outline:3px solid var(--verde-500);outline-offset:2px}
 #docs[aria-invalid=true]{border:2px solid var(--erro);background:var(--erro-sup)}
+.zona:has(#docs[aria-invalid=true])>svg{color:var(--erro)}
 /* Evidências: checklist; o círculo vira check quando um documento é ligado. Legenda flutuada fica dentro do fieldset.
    Documentos: no celular, lista agrupada (linhas unidas, largura total); de 600 px em diante, grade de colunas iguais. */
 #vinculos:empty{display:none}
@@ -155,13 +158,14 @@ button:disabled{cursor:not-allowed}
 #vinculos label.opcao:has(:checked){position:relative;z-index:1;border-color:var(--verde);background:var(--verde-50);color:var(--tinta)}
 #vinculos label.opcao:has(:focus-visible){position:relative;z-index:2;outline:3px solid var(--verde-500);outline-offset:2px}
 #vinculos input:focus-visible{outline:none}
+@media (max-width:599px){#vinculos label.opcao:has(:focus-visible){outline-offset:-3px}}
 /* Rodapé do formulário: Gerar separado do passo 4 por um fio; o aviso geral logo depois do botão (CB-08). */
 .concluir{margin-top:16px;padding-top:16px;border-top:1px solid var(--borda)}
 #gerar{width:100%;height:56px;font-size:17px}
-#aviso{margin:12px 0 0;padding:12px 14px;border-radius:12px;background:var(--aviso);box-shadow:inset 0 0 0 1px var(--aviso-b);color:var(--aviso-t);font:600 14px/20px var(--fonte)}
+#aviso{margin:12px 0 0}
 /* Mesa do dossiê: a faixa volta; a folha é papel (raio 3, fio duplo de timbre no alto, sombra de papel, mono).
    O timbre fica na margem de cima, onde não cruza o título quando ele quebra em duas linhas. */
-.mesa{margin:24px -18px -24px;padding:20px 12px 24px;border-radius:0 0 24px 24px;background:var(--faixa)}
+.mesa{margin:24px -18px -24px;padding:20px 12px 24px;background:var(--faixa)}
 .mesa:has(#previa:empty){display:none}
 #previa{--m:18px;--t:40px;--l:20px;max-width:720px;margin:0 auto;padding:var(--t) var(--m) 28px;border-radius:3px;background:linear-gradient(var(--botao),var(--botao)) var(--m) calc(var(--t) - 20px)/calc(100% - 2 * var(--m)) 2px no-repeat,linear-gradient(var(--botao),var(--botao)) var(--m) calc(var(--t) - 15px)/calc(100% - 2 * var(--m)) 1px no-repeat,#fff;color:#16211C;font:400 13px/var(--l) var(--mono);white-space:pre-wrap;overflow-wrap:anywhere;box-shadow:0 24px 48px -16px rgba(0,0,0,.7),0 2px 6px rgba(0,0,0,.35);animation:folha .4s cubic-bezier(.2,.7,.2,1)}
 @keyframes folha{from{opacity:0;transform:translateY(16px)}}
@@ -200,8 +204,7 @@ footer p{margin:0;max-width:80ch;text-wrap:pretty}
 #a1-texto{max-width:34rem}
 .garantia{padding:18px 28px 22px;border-radius:0 0 28px 28px}
 .garantia-caixa{max-width:34rem}
-.garantia svg{width:36px;height:36px;padding:8px;border-radius:10px}
-#form{padding:32px 28px 28px;border-radius:0 0 28px 28px}
+#form{padding:32px 28px 28px}
 .campo:has(#pedido) input,.medio{max-width:360px}
 .campo:has(#pedido)+.msg,.curto+.msg,.medio+.msg,.data+.msg{max-width:360px}
 .data input{max-width:220px}
@@ -209,7 +212,7 @@ footer p{margin:0;max-width:80ch;text-wrap:pretty}
 #vinculos legend{margin-bottom:2px}
 #vinculos label.opcao,#vinculos legend+label.opcao,#vinculos label.opcao:last-child{margin:0;border-radius:10px}
 .concluir{margin-top:24px;padding-top:24px}
-.mesa{margin:32px -28px -28px;padding:32px 28px;border-radius:0 0 28px 28px}
+.mesa{margin:32px -28px -28px;padding:32px 28px}
 #previa{--m:40px;--t:52px;--l:22px;padding-bottom:40px;font-size:14px}
 footer{grid-template-columns:3fr 2fr;gap:32px}
 }
@@ -221,8 +224,6 @@ footer{grid-template-columns:3fr 2fr;gap:32px}
 #a2-texto{margin:16px 0 0;padding-left:44px}
 .passo-corpo{padding-top:6px}
 /* Prazo na coluna do passo 1, embaixo do título (como o texto do passo 2): preenche o trilho e sobe o aviso. */
-.passo-corpo>.prazo{position:absolute;left:44px;top:46px;width:calc(var(--col-passo) - 44px);margin:0;padding:12px 14px 14px 12px}
-@media (max-width:1023px){.passo-corpo>.prazo{flex-direction:column;gap:6px;padding:12px 12px 14px}}
 .concluir{grid-column:1/-1;display:grid;grid-template-columns:subgrid;margin-top:32px;padding-top:32px}
 .concluir>*{grid-column:2}
 }
@@ -234,16 +235,16 @@ main{grid-template-columns:[full-start] minmax(var(--calha),1fr) [content-start]
 #titulo{grid-row:1;padding-top:64px;font-size:50px;line-height:54px}
 #o1{grid-row:2;padding-top:24px;padding-bottom:96px;font-size:17px;line-height:27px}
 .inicio-col{display:flex;flex-direction:column;gap:16px;grid-column:aside;grid-row:1/3;align-self:start;margin:64px 0 96px}
-.garantia{order:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;clip-path:none}
-main:has(>#form:not([hidden])) .garantia{clip-path:none}
+.garantia,main:has(>#form:not([hidden])) .garantia{order:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;clip-path:none}
 .garantia-caixa{padding:14px 16px 14px 14px;border:1px solid var(--fio-faixa);border-radius:16px;background:rgba(255,255,255,.035)}
-.garantia svg{background:rgba(201,243,106,.12);color:var(--lima)}
+.garantia svg{width:36px;height:36px;margin-top:0;padding:8px;border-radius:10px;background:rgba(201,243,106,.12);color:var(--lima)}
 #ag1{color:var(--na-faixa);font-size:15px;line-height:23px}
 .inicio{order:0;margin:0;padding:28px;border-radius:24px;clip-path:none}
 .inicio:has(:checked){box-shadow:var(--sombra-alta),0 0 0 2px var(--verde-500)}
 .inicio:has(:focus-visible){box-shadow:var(--sombra-alta),0 0 0 3px var(--verde-500)}
 .inicio input:focus-visible{outline:none}
 #form{grid-row:3;margin-top:-48px;padding:48px;border:0;border-radius:28px;clip-path:none}
+.passo-corpo>.prazo{position:absolute;left:44px;top:46px;width:calc(var(--col-passo) - 44px);margin:0}
 .termos{grid-row:4}
 .mesa{margin:40px -48px -48px;padding:48px;border-radius:0 0 28px 28px}
 #previa{--m:56px;--t:64px;padding-bottom:52px}
