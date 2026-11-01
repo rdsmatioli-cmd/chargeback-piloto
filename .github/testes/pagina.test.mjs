@@ -63,3 +63,37 @@ test('CB-13: sem lookbehind (ou sem \\p{} e flag u), aparecem só o título e o 
     assert.deepEqual(r.globais, []);
   }
 });
+
+// CB-14: CSP do app com Trusted Types. O script só usa textContent, setAttribute e createObjectURL; com
+// require-trusted-types-for, um innerHTML (ou outro destino de HTML ou script) que entrar depois é recusado pelo navegador.
+const csp = html.match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)">/)[1];
+const diretivas = new Map(csp.split(';').map((d) => d.trim().split(/\s+/)).filter((d) => d[0]).map(([nome, ...fontes]) => [nome, fontes]));
+test('CB-14: CSP do app com require-trusted-types-for \'script\' e trusted-types \'none\'', () => {
+  assert.deepEqual(diretivas.get('require-trusted-types-for'), ["'script'"]);
+  assert.deepEqual(diretivas.get('trusted-types'), ["'none'"]);
+  // O resto continua como estava: nada sai da página e só os dois scripts com hash rodam.
+  assert.deepEqual(diretivas.get('default-src'), ["'none'"]);
+  assert.deepEqual(diretivas.get('connect-src'), ["'none'"]);
+  assert.equal(diretivas.get('script-src').length, 2);
+  assert.ok(diretivas.get('script-src').every((f) => /^'sha256-[A-Za-z0-9+/]+={0,2}'$/.test(f)));
+});
+test('CB-14: o script principal não usa innerHTML, outerHTML, insertAdjacentHTML, document.write nem eval', () => {
+  assert.doesNotMatch(principal.src, /\.(?:inner|outer)HTML\b|insertAdjacentHTML|document\.write|\beval\s*\(|new Function\b|setTimeout\(\s*['"`]/);
+});
+
+// CB-14: símbolos de nível de topo do script principal sem uso (restos do build antigo, como S01_SHA256). Cada um
+// tem de ser usado no próprio script ou pelos testes (vedadosNaPagina e allowlist servem ao teste CB-12).
+const testes = ['dossie.test.mjs', 'fluxo.test.mjs', 'mascara.test.mjs'].map((f) => readFileSync(new URL(f, import.meta.url), 'utf8')).join('\n');
+function usos(nome, texto) {
+  let n = 0;
+  for (const m of texto.matchAll(new RegExp(`(?<![\\w$])${nome.replace(/\$/g, '\\$')}(?![\\w$])`, 'g'))) {
+    // obj.nome é propriedade de outro objeto; ...nome (espalhamento) é uso.
+    if (texto[m.index - 1] !== '.' || texto.slice(m.index - 3, m.index) === '...') n++;
+  }
+  return n;
+}
+test('CB-14: todo símbolo de nível de topo do script principal é usado no script ou nos testes', () => {
+  const nomes = [...principal.src.matchAll(/^(?:const|let|var|function|class)\s+([A-Za-z_$][\w$]*)/gm)].map((m) => m[1]);
+  assert.ok(nomes.length > 50, `${nomes.length} símbolos lidos`);
+  assert.deepEqual(nomes.filter((n) => usos(n, principal.src) < 2 && usos(n, testes) === 0), []);
+});

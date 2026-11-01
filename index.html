@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-c8ip4dFYpe1oH/gkm+uVmOa/XO/kXRFqgdvNbGTcSRU=' 'sha256-kdXD/TNCXfmjGtkiqmxjW/vWcyP1gqlaNL4y6G+nQHk='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-c8ip4dFYpe1oH/gkm+uVmOa/XO/kXRFqgdvNbGTcSRU=' 'sha256-+RwPJY/Avlm7cmf2D1JkuoxHUvlGcm5bZq43j2KC4dk='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'; require-trusted-types-for 'script'; trusted-types 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
 /* Cores do blog (blog/index.html). CB-11 de 31/10: campos e botões com a fonte da página (16 px; abaixo disso o
@@ -138,9 +138,6 @@ const VEDADOS_EXTRA = ["advogada"];
 const TEXTOS_REVISAO = { "A-3b": "Atenção: nunca informe número completo, código de segurança ou validade do cartão." };
 
 // GERADO por gerar-matriz.mjs. Não editar. Fonte: fontes/chargeback-S01-matriz-2026-10-15.json sha256 ee178219593727edaffb923ea2aa7e7b0f1814ea8db0a19d24b8045b53fe4fb7
-const S01_SHA256 = "ee178219593727edaffb923ea2aa7e7b0f1814ea8db0a19d24b8045b53fe4fb7";
-const S01_RODAPE_MATRIZ = "Prazos e responsabilidade entre emissor, credenciador e bandeira seguem o regulamento do arranjo, que está em adequação à Resolução BCB nº 522/2025. Confira no painel da sua adquirente; o prazo dela prevalece.";
-const S01_RODAPE_R2 = "Visa, Mastercard e Elo são marcas de seus titulares, citadas apenas para identificar regras públicas de disputa. A LCM não tem vínculo com elas nem com as adquirentes citadas.";
 const S01_RODAPE_ELO = "As regras de disputa da Elo constam de manual não público; os códigos sem lista de evidências devem ser tratados diretamente com a sua adquirente.";
 const S01_RODAPE_PRAZOS = "Esta matriz não informa prazos. O prazo para responder é o informado pela sua adquirente no aviso da disputa; perder o prazo costuma encerrar a defesa.";
 const S01_MOTIVOS = [
@@ -634,7 +631,6 @@ const S01_MOTIVOS = [
 ];
 
 // GERADO por gerar-matriz.mjs. Não editar. Fonte: fontes/chargeback-C3-quadro-gateways-2026-10-15.md sha256 67745fea151d99bde2b6a9a7d2039b525e3f0d38f04d124e8d615bb397dbff7e
-const C3_SHA256 = "67745fea151d99bde2b6a9a7d2039b525e3f0d38f04d124e8d615bb397dbff7e";
 const AG1 = "Esta ferramenta funciona só no seu navegador: nada do que você digitar é enviado à LCM nem guardado por ela. Os dados do comprador continuam sob sua responsabilidade. Use-os apenas para responder à disputa junto ao seu gateway ou adquirente, e confira no contrato dele as regras de sigilo antes de compartilhar o dossiê com qualquer outra pessoa.";
 const GATEWAYS = ["Mercado Pago","PagBank (PagSeguro)","Stripe","Pagar.me","Hotmart","Eduzz","Kiwify"];
 
@@ -760,7 +756,6 @@ function textoDeAnalise(t) {
   a = a.replace(/(?<![\p{L}\p{N}])E\d{8}20\d{2}[01]\d[0-3]\d[A-Za-z0-9]{8,}(?![\p{L}\p{N}])/gu, (w) => FORA.repeat(w.length));
   return a;
 }
-function digitosAscii(t) { return textoDeAnalise(t); }
 
 // Luhn de qualquer janela de um grupo em O(1), com somas acumuladas por paridade.
 function luhnJanelas(d) {

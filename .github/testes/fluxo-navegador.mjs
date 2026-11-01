@@ -415,3 +415,16 @@ for (const tela of TELAS) {
     }
   });
 }
+
+// CB-14 de 01/11: a CSP do app exige Trusted Types. HTML em texto num destino como o innerHTML é recusado pelo navegador
+// (o script da página não usa nenhum: o fluxo acima roda sem erro no console); sem a diretiva, era aceito em silêncio.
+test('CB-14: Trusted Types aplicados no app (innerHTML com texto é recusado)', async () => {
+  const p = await abrir(TELAS[1]);
+  try {
+    const r = await p.js(`(() => { try { document.createElement('div').innerHTML = '<b>x</b>'; return 'aceito'; } catch (e) { return e.name + ': ' + e.message; } })()`);
+    assert.match(r, /^TypeError: .*TrustedHTML/);
+    assert.equal(await p.js(`(() => { try { trustedTypes.createPolicy('x', {}); return 'criada'; } catch (e) { return e.name; } })()`), 'TypeError', "trusted-types 'none': nenhuma política");
+  } finally {
+    await p.fechar();
+  }
+});
