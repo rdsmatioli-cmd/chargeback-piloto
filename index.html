@@ -7,15 +7,69 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-qlwMeS9DkOFzub3J3+uuzOXxVyRhikMZC6yZqujVKL0='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
-body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
-fieldset{margin:.5rem 0}label{display:block;margin:.3rem 0}
-input,select,textarea{max-width:100%;box-sizing:border-box}select{width:100%}
-#aviso{border:1px solid #888;padding:.5rem;background:#f4f4f4}
-pre{white-space:pre-wrap;border:1px solid #ccc;padding:.5rem}
-footer{margin-top:2rem;font-size:.85rem;border-top:1px solid #ccc}
+:root{color-scheme:light;--bg:#F3F5F1;--sup:#FFFFFF;--sup2:#F7F9F6;--txt:#0A1411;--txt2:#3A4842;--suave:#54625B;--borda:#E1E7E2;--borda2:#C6D1CA;--tinta:#03140D;--tinta2:#062519;--prim:#137447;--prim2:#1C9561;--lima:#C9F36A;--aviso:#FFF6E3;--aviso-b:#F0D7A2;--aviso-t:#5E3A00;--fonte:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--txt);font:400 1rem/1.6 var(--fonte);-webkit-font-smoothing:antialiased}
+nav.topo{background:var(--tinta)}
+nav.topo div{display:flex;align-items:center;gap:6px;max-width:820px;margin:0 auto;padding:10px 20px}
+nav.topo a{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;border-radius:10px;color:#fff;font-weight:700;text-decoration:none}
+nav.topo a:first-child{margin-left:-10px;gap:10px;font-weight:800;letter-spacing:-.02em}
+nav.topo a:first-child::before{content:"";width:28px;height:28px;border-radius:8px;background:var(--lima)}
+nav.topo a:hover{background:rgba(255,255,255,.08)}
+main{max-width:820px;margin:0 auto;padding:32px 20px 56px}
+h1{margin:0 0 14px;font-size:clamp(1.85rem,1.3rem + 2.4vw,2.6rem);line-height:1.08;letter-spacing:-.035em;font-weight:800;color:var(--tinta);text-wrap:balance}
+h2{display:flex;align-items:center;gap:12px;margin:36px 0 14px;padding-top:28px;border-top:1px solid var(--borda);font-size:1.3rem;line-height:1.25;letter-spacing:-.02em;color:var(--tinta)}
+#form>h2:first-child{margin-top:0;padding-top:0;border-top:0}
+p{margin:0 0 14px}
+#o1{font-size:1.125rem;line-height:1.6;color:var(--txt2)}
+#ag1{color:var(--txt2)}
+#form{margin-top:24px;padding:28px 24px;border-radius:24px;background:var(--sup);box-shadow:0 1px 2px rgba(3,20,13,.04),0 18px 40px -24px rgba(3,20,13,.3),0 0 0 1px #EBF0EB}
+label{display:block;margin:14px 0;font-weight:650;color:var(--txt)}
+label>input:not([type=checkbox]),label>select,label>textarea{display:block;width:100%;margin-top:7px}
+input,select,textarea{max-width:100%;min-height:48px;padding:10px 14px;border:1.5px solid var(--borda2);border-radius:12px;background:var(--sup);color:var(--txt);font:500 1rem/1.4 var(--fonte)}
+textarea{min-height:96px;resize:vertical}
+select{width:100%;-webkit-appearance:none;appearance:none;padding-right:46px;background-color:var(--sup);background-image:linear-gradient(45deg,transparent 50%,var(--txt2) 50%),linear-gradient(135deg,var(--txt2) 50%,transparent 50%);background-position:calc(100% - 24px) 52%,calc(100% - 18px) 52%;background-size:6px 6px;background-repeat:no-repeat;text-overflow:ellipsis}
+input[type=file]::file-selector-button{margin:0 12px 0 0;min-height:40px;padding:0 16px;border:0;border-radius:10px;background:var(--tinta2);color:#fff;font:700 .9375rem/1 var(--fonte);cursor:pointer}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--prim2);box-shadow:0 0 0 4px rgba(28,149,97,.18)}
+input[type=checkbox]{width:22px;height:22px;min-height:0;margin:2px 10px 0 0;padding:0;accent-color:var(--prim);flex:none}
+label:has(>input[type=checkbox]){display:flex;align-items:flex-start;padding:14px 16px;border-radius:14px;background:var(--sup2);box-shadow:inset 0 0 0 1px var(--borda);font-weight:500;line-height:1.55}
+main>label:has(>input[type=checkbox]){margin:18px 0 0;background:var(--sup);box-shadow:0 0 0 1px var(--borda)}
+input[type=file]{width:100%;padding:12px;border-style:dashed;background:var(--sup2);cursor:pointer}
+button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;margin:6px 0;padding:0 22px;border:0;border-radius:14px;background:var(--tinta2);color:#fff;font:700 1rem/1 var(--fonte);cursor:pointer}
+button:hover{background:#0A3424}
+button:disabled{opacity:.55;cursor:not-allowed}
+#add-fato{background:var(--sup);color:var(--txt);box-shadow:inset 0 0 0 1.5px var(--borda2)}
+#add-fato:hover{background:var(--sup2)}
+#gerar,#baixar{width:100%;min-height:54px;margin-top:18px}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--prim2);outline-offset:2px}
+fieldset{margin:12px 0;padding:14px 16px;border:0;border-radius:14px;background:var(--sup2);box-shadow:inset 0 0 0 1px var(--borda)}
+legend{padding:0 6px;font-weight:750}
+#vinculos fieldset{position:relative;margin:10px 0;padding:14px 16px 14px 46px}
+#vinculos fieldset::before{content:"";position:absolute;left:16px;top:16px;width:18px;height:18px;border-radius:6px;background:var(--lima)}
+#vinculos fieldset::after{content:"";display:table;clear:both}
+#vinculos legend{float:left;width:100%;padding:0;font-weight:600;line-height:1.5;color:var(--txt)}
+#vinculos legend+*{clear:both}
+#lista-fatos{margin:12px 0 0;padding-left:20px}
+#lista-fatos li{margin:6px 0}
+#lista-fatos button{min-height:36px;margin:0 0 0 10px;padding:0 12px;border-radius:10px;background:var(--sup);color:var(--txt);box-shadow:inset 0 0 0 1px var(--borda2);font-size:.875rem}
+#aviso{margin:16px 0;padding:12px 16px;border-radius:14px;background:var(--aviso);box-shadow:inset 0 0 0 1px var(--aviso-b);color:var(--aviso-t);font-weight:600}
+#fonte-motivo,#secao-motivo,#obs-motivo,#rodape-elo,#rodape-prazos{font-size:.9375rem;color:var(--suave)}
+pre{margin:18px 0 0;padding:18px;white-space:pre-wrap;border-radius:16px;background:var(--sup2);box-shadow:inset 0 0 0 1px var(--borda);font:400 .875rem/1.6 var(--mono);color:var(--txt)}
+pre:empty{display:none}
+#etapa-d1{margin-top:16px}
+details{margin:20px 0 0;padding:0 18px;border-radius:16px;background:var(--sup);box-shadow:0 0 0 1px var(--borda)}
+summary{display:flex;align-items:center;min-height:52px;font-weight:700;cursor:pointer}
+details[open]{padding-bottom:12px}
+#termos{font-size:.9375rem;color:var(--txt2)}
+a{color:var(--prim);text-underline-offset:3px}
+footer{max-width:820px;margin:0 auto;padding:22px 20px 40px;border-top:1px solid var(--borda);font-size:.875rem;line-height:1.55;color:var(--suave)}
+@media (min-width:700px){#form{padding:36px 40px}main{padding-top:48px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
+<nav class="topo" aria-label="Site"><div><a href="/">Piloto Chargeback</a><a href="/blog/">Blog</a></div></nav>
 <main hidden>
 <h1 id="titulo">Organize as provas da sua disputa de chargeback</h1>
 <p id="o1"></p>
