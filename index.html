@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-c8ip4dFYpe1oH/gkm+uVmOa/XO/kXRFqgdvNbGTcSRU=' 'sha256-+RwPJY/Avlm7cmf2D1JkuoxHUvlGcm5bZq43j2KC4dk='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'; require-trusted-types-for 'script'; trusted-types 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-c8ip4dFYpe1oH/gkm+uVmOa/XO/kXRFqgdvNbGTcSRU=' 'sha256-J1NEG3RfMkeHu+cPkaGsYEdZGhMPc96Dhl3k5DVC/wE='; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; form-action 'none'; base-uri 'none'; require-trusted-types-for 'script'; trusted-types 'none'">
 <title>Organize as provas da sua disputa de chargeback</title>
 <style>
 /* Cores do blog (blog/index.html). CB-11 de 31/10: campos e botões com a fonte da página (16 px; abaixo disso o
@@ -1344,6 +1344,13 @@ function iniciar() {
   $('d1').addEventListener('change', atualizarBaixar);
   $('baixar').addEventListener('click', baixar);
   renderVinculos();
+
+  // CB-17 de 01/11: o link '/#form' do blog caía no topo, porque o #form fica oculto até o aceite A-1. A página leva ao
+  // A-1, que continua obrigatório: foco na caixa e o rótulo no meio da tela. Espera o load: depois do DOMContentLoaded,
+  // o navegador processa o '#form' e, com o alvo oculto, tira o foco de onde estiver.
+  if (location.hash === '#form') {
+    addEventListener('load', () => { $('a1').focus({ preventScroll: true }); $('a1').parentElement.scrollIntoView({ block: 'center' }); }, { once: true });
+  }
 }
 
 function renderFatos() {

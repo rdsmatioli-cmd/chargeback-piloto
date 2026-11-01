@@ -29,7 +29,8 @@ jobs:
       # Fluxo no Chrome do runner, com o formulário visível (o Lighthouse e o html-validate só veem o estado inicial):
       # recusas com a mensagem junto do campo e dentro da tela, fato, documentos, geração e invalidação, fonte >= 16 px
       # e alvos >= 44 px, em 390 e 1280 px, e axe-core 4.14.0 (npm pack, sha512 conferido) sem violação em cada etapa.
-      # Também sem JavaScript (<noscript>) e sem lookbehind em regex (aviso de navegador sem suporte).
+      # Também sem JavaScript (<noscript>), sem lookbehind em regex (aviso de navegador sem suporte), Trusted Types da CSP
+      # aplicados e /#form (link do blog) com foco no aceite A-1.
       # Local, da raiz: node .github/testes/fluxo-navegador.mjs (Chrome no PATH ou em CHROME_PATH).
       - name: Fluxo no Chrome e axe-core (formulário visível)
         run: node .github/testes/fluxo-navegador.mjs

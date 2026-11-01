@@ -428,3 +428,26 @@ test('CB-14: Trusted Types aplicados no app (innerHTML com texto é recusado)', 
     await p.fechar();
   }
 });
+
+// CB-17 de 01/11: o 'Monte o seu dossiê no formulário do piloto' do blog aponta para /#form, que fica oculto até o
+// aceite A-1; o usuário caía no topo. Agora o A-1 recebe o foco e vem para a tela; marcado, o formulário aparece.
+for (const tela of TELAS) {
+  test(`CB-17: /#form leva ao aceite A-1 em ${tela.nome}`, async () => {
+    const p = await abrir(tela, { caminho: '/#form' });
+    try {
+      assert.equal(await p.foco(), 'a1');
+      assert.ok(await p.naTela('a1'), 'caixa do A-1 na tela');
+      // O texto do A-1 começa na tela (a caixa fica no alto do rótulo).
+      assert.ok(await p.js(`(() => { const b = document.getElementById('a1-texto').getBoundingClientRect(); return b.top >= 0 && b.top < innerHeight / 2; })()`), 'início do A-1 na metade de cima da tela');
+      assert.equal(await p.visivel('form'), false);
+      await semViolacoes(p, '/#form');
+      const antes = await p.js('scrollY');
+      await p.clicar('a1', false);
+      assert.ok(await p.visivel('form'), 'A-1 mostra o formulário');
+      assert.equal(await p.js('scrollY'), antes, 'marcar o A-1 não faz a página saltar para o #form');
+      assert.deepEqual(p.erros, [], 'nenhum erro no console');
+    } finally {
+      await p.fechar();
+    }
+  });
+}

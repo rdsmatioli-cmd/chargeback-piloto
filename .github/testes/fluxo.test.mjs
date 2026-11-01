@@ -9,19 +9,20 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
-import { documentoDe, contextoDe, Evento } from './dom-minimo.mjs';
+import { documentoDe, contextoDe, dispararNaJanela, Evento } from './dom-minimo.mjs';
 
 const raiz = new URL('../../', import.meta.url);
 const html = readFileSync(new URL('index.html', raiz), 'utf8');
 const INTERNOS = ['estado', 'MATRIZ', 'TEXTOS', 'vedadosNaPagina', 'validarCNPJ'];
 
-function abrir() {
+function abrir({ hash = '' } = {}) {
   const doc = documentoDe(html);
-  const ctx = contextoDe(doc);
+  const ctx = contextoDe(doc, { hash });
   let src = html.match(/<script>("use strict";[\s\S]*?)<\/script>/)[1]; // o script principal (o primeiro <script> é o teste de suporte do CB-13)
   src = src.replace(/\}\)\(\);\s*$/, `globalThis.__t = { ${INTERNOS.map((n) => `${n}: typeof ${n} === 'undefined' ? undefined : ${n}`).join(', ')} };})();`);
   vm.createContext(ctx); vm.runInContext(src, ctx);
   doc.dispatchEvent(new Evento('DOMContentLoaded'));
+  dispararNaJanela(ctx, 'load');
   const $ = (id) => doc.getElementById(id);
   const el = (x) => (typeof x === 'string' ? $(x) : x);
   const disparar = (x, ...tipos) => { for (const t of tipos) el(x).dispatchEvent(new Evento(t)); };
@@ -78,6 +79,27 @@ test('fluxo: a página inicia no DOM mínimo e o aceite A-1 mostra o formulário
   assert.ok(p.$('form').hidden);
   p.marcar('a1');
   assert.equal(p.$('form').hidden, false);
+});
+
+// CB-17 de 01/11: o link '/#form' do blog caía no topo, porque o #form fica oculto até o aceite A-1. Agora a página
+// leva ao A-1 (foco e rolagem), que continua obrigatório; sem o hash, nada muda.
+test('CB-17: /#form põe o foco no aceite A-1 e o traz para a tela; o formulário só aparece com o aceite', () => {
+  const p = abrir({ hash: '#form' });
+  // Identidade, não deepEqual: a mensagem de falha do assert inspecionaria a árvore inteira (referências circulares).
+  assert.ok(p.doc.activeElement === p.$('a1'), 'foco no A-1');
+  assert.equal(p.doc.rolagens.length, 1, 'uma rolagem');
+  assert.ok(p.doc.rolagens[0].el === p.$('a1').parentElement, 'rolagem até o rótulo do A-1');
+  assert.equal(p.doc.rolagens[0].opcoes.block, 'center');
+  assert.ok(p.$('form').hidden);
+  p.marcar('a1');
+  assert.equal(p.$('form').hidden, false);
+});
+test('CB-17: sem o hash #form (ou com outro), a página abre sem foco nem rolagem', () => {
+  for (const hash of ['', '#a1', '#formulario', '#FORM']) {
+    const p = abrir({ hash });
+    assert.ok(p.doc.activeElement === p.doc.body, `${hash}: sem foco`);
+    assert.equal(p.doc.rolagens.length, 0, `${hash}: sem rolagem`);
+  }
 });
 
 // CB-03: o motivo não vem pré-selecionado e o dossiê não sai sem motivo escolhido.

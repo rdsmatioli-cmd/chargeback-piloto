@@ -163,12 +163,17 @@ export function documentoDe(html) {
   return doc;
 }
 
-// Contexto para o vm: document, Blob, URL e setTimeout síncrono (o paste e o revokeObjectURL usam).
-export function contextoDe(doc) {
+// Contexto para o vm: document, Blob, URL, location (só o hash; CB-17), ouvintes da janela (addEventListener global,
+// disparados por dispararNaJanela) e setTimeout síncrono (o paste e o revokeObjectURL usam).
+export function contextoDe(doc, { hash = '' } = {}) {
   const blobs = new Map();
   class Blob { constructor(partes = [], opcoes = {}) { this.partes = partes; this.type = opcoes.type || ''; } texto() { return this.partes.join(''); } }
   let n = 0;
   const URL = { createObjectURL(b) { const u = `blob:teste/${++n}`; blobs.set(u, b); return u; }, revokeObjectURL() {} };
-  return { document: doc, Blob, URL, console, setTimeout: (fn) => { fn(); return 0; }, clearTimeout() {}, blobs, Evento };
+  const janela = {};
+  return { document: doc, Blob, URL, location: { hash }, console, setTimeout: (fn) => { fn(); return 0; }, clearTimeout() {}, blobs, Evento,
+    addEventListener(tipo, fn) { (janela[tipo] ||= []).push(fn); }, janela };
 }
+// Evento na janela (como o load, que vem depois do DOMContentLoaded): roda e descarta os ouvintes daquele tipo.
+export function dispararNaJanela(ctx, tipo) { for (const fn of (ctx.janela[tipo] || []).splice(0)) fn(new Evento(tipo)); }
 export { Evento };
