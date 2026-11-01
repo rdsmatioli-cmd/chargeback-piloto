@@ -124,11 +124,21 @@ before(async () => {
   cdp = new CDP(ws);
   await cdp.abrir();
 });
-after(() => {
+// Fecha o Chrome pelo CDP e espera o processo sair antes de apagar o perfil: com o SIGKILL direto, os processos filhos
+// ainda gravavam em perfil/Default e o rmSync falhava com ENOTEMPTY (o arquivo de teste saía com erro, com os testes ok).
+// O rm ainda tenta de novo, para o que um filho gravar no último instante.
+const esperar = (ms) => new Promise((ok) => setTimeout(ok, ms));
+after(async () => {
+  const vivo = () => proc && proc.exitCode === null && proc.signalCode === null;
+  if (vivo()) {
+    const saiu = new Promise((ok) => proc.once('exit', ok));
+    cdp?.enviar('Browser.close').catch(() => {});
+    await Promise.race([saiu, esperar(5000)]);
+    if (vivo()) { proc.kill('SIGKILL'); await Promise.race([saiu, esperar(2000)]); }
+  }
   cdp?.fechar();
-  proc?.kill('SIGKILL');
   srv?.close();
-  rmSync(tmp, { recursive: true, force: true });
+  rmSync(tmp, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 });
 
 // Abre o app numa aba com a tela dada e devolve as ações do usuário e as consultas à página.
