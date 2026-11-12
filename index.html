@@ -34,12 +34,13 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .marca svg{width:38px;height:38px;flex:none}
 .nav-link{margin-left:auto;padding:10px 4px;color:var(--navy-2);text-decoration:none;font-size:15.5px;font-weight:600;border-radius:8px}
 .nav-link:hover{text-decoration:underline;text-underline-offset:4px}
+/* escora sem largura, pendurada no topo: com pouco texto, a caixa do aceite só começa depois do fim da ilustração.
+   Fica fora do main para o título continuar com as linhas equilibradas (text-wrap:balance). */
+.topo::after{content:"";float:right;width:0;height:556px}
 
 /* começo: título, apresentação e ilustração. O h1 é filho direto do main e recebe só texto do script,
    por isso fica inline: o marca-texto pega o trecho final da frase (53,85% em diante) em qualquer quebra. */
 main{position:relative;max-width:1200px;margin:0 auto;padding:44px calc(var(--pad) + var(--col)) 0 var(--pad);text-wrap:balance}
-/* escora sem largura: com pouco texto, a caixa do aceite só começa depois do fim da ilustração */
-main::before{content:"";float:right;width:0;height:512px}
 h1{display:inline;font-size:54px;line-height:60px;font-weight:800;letter-spacing:-.035em;color:var(--navy);background:linear-gradient(90deg,rgba(247,219,82,0) 53.85%,var(--marca) 53.85%) no-repeat 0 80%/100% .36em}
 .msg{margin-top:10px;font-size:14.5px;line-height:21px;color:var(--sutil);text-wrap:pretty}
 .msg.erro{color:var(--erro);font-weight:600}
@@ -187,7 +188,7 @@ h1{display:inline;font-size:54px;line-height:60px;font-weight:800;letter-spacing
 
 @container (max-width:1180px){
 body{--col:clamp(430px,43cqw,520px)}
-main::before{height:calc((var(--col) - 44px) * 1.062 + 26px)}
+.topo::after{height:calc((var(--col) - 44px) * 1.062 + 70px)}
 h1{font-size:46px;line-height:51px}
 .f-motivo{top:-2px;right:-18px;width:210px;gap:10px;padding:10px 14px 10px 10px}
 .f-motivo .ic{width:36px;height:36px}
@@ -200,7 +201,7 @@ h1{font-size:46px;line-height:51px}
 @container (max-width:1000px){
 main{padding-right:var(--pad)}
 .resto{margin-right:0}
-main::before{display:none}
+.topo::after{display:none}
 #o1{max-width:640px}
 .resto::before{border-radius:0 0 40px 40px;background:radial-gradient(620px 460px at 50% calc(100% - 400px),#FCFBFF 0,rgba(252,251,255,0) 70%),linear-gradient(180deg,#F5F3FB 0,#ECE8F7 100%)}
 .cena{position:relative;top:auto;right:auto;width:min(100%,500px);margin:36px auto 0}
@@ -294,7 +295,7 @@ noscript .msg.erro{max-width:1120px;margin:16px auto;padding:16px 20px;border-ra
 body:has(#sem-suporte:not([hidden])) .topo a{visibility:hidden}
 body:has(#sem-suporte:not([hidden])) .marca svg{visibility:visible}
 body:has(#sem-suporte:not([hidden])) main{padding-right:var(--pad)}
-body:has(#sem-suporte:not([hidden])) main::before{display:none}
+body:has(#sem-suporte:not([hidden])) .topo::after{display:none}
 @container (max-width:760px){
 .p1 .c-ped,.p1 .c-car,#pedido-erro,#ultimos4-erro{grid-area:auto}
 #aviso{flex-basis:100%}
