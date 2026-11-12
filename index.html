@@ -12,90 +12,459 @@
 <meta property="og:description" content="Organize as provas da sua disputa de chargeback. Você informa o motivo indicado pela sua adquirente e anexa seus documentos; a ferramenta lista as evidências pedidas para aquele motivo, monta a cronologia e gera um dossiê para você mesmo enviar pelo painel da sua adquirente. Grátis nesta fase. Não acessamos sua conta e não enviamos nada em seu nome. O resultado da disputa é decidido pelo banco emissor do cartão.">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:site_name" content="Piloto Chargeback">
+<meta name="theme-color" content="#EFECF8">
 <style>
-/* Cores do blog (blog/index.html). CB-11 de 31/10: campos e botões com a fonte da página (16 px; abaixo disso o
-   iOS dá zoom ao focar), alvo de toque de 44 px, campos de texto na largura toda e prévia vazia oculta. */
-:root{--txt:#0f1f19;--txt2:#4b5a53;--prim:#0a7a54;--tinta:#0b2b20;--suave:#eef6f3;--erro:#b00020}
-body{font-family:system-ui,sans-serif;line-height:1.5;max-width:760px;margin:2rem auto;padding:0 1rem;color:var(--txt);background:#fff}
-h1,h2{color:var(--tinta);line-height:1.25}
-fieldset{margin:.5rem 0}label{display:block;margin:.5rem 0}
-input,select,textarea,button{font:inherit;color:inherit;max-width:100%;box-sizing:border-box}
-input,select,button{min-height:44px}
-input,select,textarea{padding:.5rem;border:1px solid var(--txt2);border-radius:4px;background:#fff}
-input[type=text],input[type=date],select,textarea{display:block;width:100%;margin-top:.25rem}
-input[type=file]{display:block;width:100%;padding:0;border:0}
-input[type=file]::file-selector-button{font:inherit;min-height:44px;margin-right:.75rem;padding:.5rem 1rem;border:1px solid var(--txt2);border-radius:4px;background:#fff;color:var(--tinta)}
-input[type=checkbox]{flex:none;width:1.5rem;height:1.5rem;min-height:0;margin:0;accent-color:var(--prim)}
-label.opcao{display:flex;gap:.5rem;align-items:flex-start}
-button{padding:.5rem 1rem;border:1px solid var(--txt2);border-radius:4px;background:#fff;color:var(--tinta);cursor:pointer}
-#gerar,#baixar{background:var(--prim);border-color:var(--prim);color:#fff;font-weight:600}
-button:disabled{cursor:not-allowed;opacity:.6}
-:focus-visible{outline:3px solid var(--prim);outline-offset:2px}
-#lista-fatos li{margin:.25rem 0}#lista-fatos button{margin-left:.5rem}
-/* Revisão do lote 2: a legenda longa da evidência, em várias linhas (390 px), era cortada pela borda de cima do fieldset;
-   flutuando, ela fica dentro da caixa, acima das caixas de documento. */
-#vinculos legend{float:left;width:100%;padding:0;margin-bottom:.25rem}#vinculos legend+*{clear:both}
-/* CB-08 de 31/10: mensagem de campo logo depois dele; erro com aria-invalid. */
-.msg{margin:.25rem 0 .75rem;padding:.25rem .5rem;border-left:4px solid var(--txt2)}
-.msg.erro{border-left-color:var(--erro);color:var(--erro)}
-[aria-invalid=true]{border:2px solid var(--erro)}
-/* Revisão do lote 2: o input[type=file]{border:0} é mais específico; sem esta regra o #docs com erro não ganhava borda. */
-input[type=file][aria-invalid=true]{padding:.25rem;border:2px solid var(--erro);border-radius:4px}
-#aviso{border:1px solid var(--txt2);border-left:4px solid var(--prim);padding:.5rem;background:var(--suave)}
-#fato-status{margin:.25rem 0}
-pre{white-space:pre-wrap;border:1px solid #ccc;padding:.5rem}
+html{container-type:inline-size}
+body{margin:0;--navy:#0E2235;--navy-2:#1E3E59;--texto:#3B4859;--sutil:#5B6678;--linha:#E7E3F0;--linha-2:#EEEBF5;--lav:#F2F0FA;--lav-2:#E9E5F6;--lav-borda:#D8D0EA;--campo:#D3CCE6;--amarelo:#F2CC10;--amarelo-hv:#F6D640;--marca:#F7DB52;--ok:#23A05A;--ok-cl:#E2F2EA;--erro:#B00020;--erro-cl:#FBEAE8;--foco:#6E5BD8;--sombra:0 1px 2px rgba(14,34,53,.05),0 24px 48px -20px rgba(14,34,53,.22);--sombra-cartao:0 1px 2px rgba(14,34,53,.04),0 14px 30px -20px rgba(14,34,53,.2);--sombra-cta:0 10px 24px -8px rgba(216,179,0,.65),inset 0 -2px 0 rgba(0,0,0,.08);--fonte:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;--pad:40px;--col:560px;--fora:calc(var(--pad) + max(0px,(100cqw - 1200px)/2));position:relative;isolation:isolate;overflow-x:clip;font-family:var(--fonte);color:var(--texto);background:#fff;font-size:17px;line-height:27px;-webkit-font-smoothing:antialiased}
+*,*::before,*::after{box-sizing:border-box}
+h1,h2,p,fieldset,legend,pre{margin:0}
+fieldset{border:0;padding:0;min-width:0}
+legend{padding:0}
+ul{margin:0;padding:0;list-style:none}
+a{color:var(--navy-2)}
+button,input,select,textarea{font:inherit;color:inherit}
+p,li,legend,label{text-wrap:pretty}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--foco);outline-offset:3px}
+[hidden]{display:none!important}
+
+/* topo, sobre o fundo lavanda do começo da página */
+.topo{position:relative;z-index:2}
+.topo nav{display:flex;align-items:center;gap:28px;max-width:1200px;height:76px;margin:0 auto;padding-inline:var(--pad)}
+.marca{display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--navy);font-weight:800;font-size:20px;letter-spacing:-.02em;white-space:nowrap;border-radius:8px}
+.marca svg{width:38px;height:38px;flex:none}
+.nav-link{margin-left:auto;padding:10px 4px;color:var(--navy-2);text-decoration:none;font-size:15.5px;font-weight:600;border-radius:8px}
+.nav-link:hover{text-decoration:underline;text-underline-offset:4px}
+
+/* começo: título, apresentação e ilustração. O h1 é filho direto do main e recebe só texto do script,
+   por isso fica inline: o marca-texto pega o trecho final da frase (53,85% em diante) em qualquer quebra. */
+main{position:relative;max-width:1200px;margin:0 auto;padding:44px calc(var(--pad) + var(--col)) 0 var(--pad);text-wrap:balance}
+/* escora sem largura: com pouco texto, a caixa do aceite só começa depois do fim da ilustração */
+main::before{content:"";float:right;width:0;height:512px}
+h1{display:inline;font-size:54px;line-height:60px;font-weight:800;letter-spacing:-.035em;color:var(--navy);background:linear-gradient(90deg,rgba(247,219,82,0) 53.85%,var(--marca) 53.85%) no-repeat 0 80%/100% .36em}
+.msg{margin-top:10px;font-size:14.5px;line-height:21px;color:var(--sutil);text-wrap:pretty}
+.msg.erro{color:var(--erro);font-weight:600}
+#o1{margin-top:24px;font-size:18px;line-height:30px;text-wrap:pretty}
+.cena{position:absolute;top:-8px;right:var(--pad);width:calc(var(--col) - 44px);aspect-ratio:516/548}
+.cena svg.ilu{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.flut{position:absolute;z-index:2;display:flex;align-items:center;gap:13px;background:#fff;border-radius:16px;box-shadow:0 2px 4px rgba(14,34,53,.04),0 22px 44px -18px rgba(14,34,53,.34);padding:14px 18px 14px 14px;text-wrap:wrap}
+.flut b{display:block;font-size:15px;line-height:20px;font-weight:700;color:var(--navy)}
+.flut small{display:block;margin-top:2px;font-size:13.5px;line-height:18px;color:var(--sutil)}
+.ic{display:grid;place-items:center;width:42px;height:42px;border-radius:11px;flex:none}
+.ic svg,svg.i{width:21px;height:21px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ic-r{background:var(--erro-cl);color:var(--erro)}
+.f-motivo{top:2px;right:max(-40px,calc(16px - var(--fora)));width:280px}
+.f-evid{left:-28px;bottom:4px;display:block;width:284px;padding:16px 18px}
+.f-evid>b{margin-bottom:10px}
+.f-evid li{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--linha-2);font:500 13px/17px var(--mono);color:var(--navy);white-space:nowrap}
+.f-evid li svg{width:17px;height:17px;color:var(--ok);stroke-width:2.8}
+
+/* o resto da página volta a ocupar a largura inteira; o fundo lavanda do começo termina no meio da caixa do aceite */
+.resto{position:relative;clear:both;margin-right:calc(-1 * var(--col));text-wrap:wrap}
+.resto::before{content:"";position:absolute;z-index:-1;top:-1800px;height:1904px;left:calc(-1 * var(--fora));width:100cqw;border-radius:0 0 48px 48px;background:radial-gradient(760px 520px at 74% calc(100% - 330px),#FCFBFF 0,rgba(252,251,255,0) 70%),linear-gradient(180deg,#F5F3FB 0,#ECE8F7 100%)}
+
+/* caixa que sobrepõe o fim do fundo lavanda: garantia e aceite */
+.inicio-col{position:relative;z-index:3;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:36px;align-items:start;margin-top:100px;padding:30px 36px;background:#fff;border-radius:22px;box-shadow:var(--sombra)}
+.garantia-caixa{display:grid;grid-template-columns:46px minmax(0,1fr);gap:16px}
+.garantia-caixa .ic{width:46px;height:46px;background:var(--ok-cl);color:var(--ok)}
+#ag1{font-size:15.5px;line-height:25px}
+.opcao{display:grid;grid-template-columns:26px minmax(0,1fr);gap:14px;align-items:start;font-size:15.5px;line-height:25px;color:var(--navy);cursor:pointer}
+.opcao input{appearance:none;display:grid;place-items:center;width:24px;height:24px;margin:1px 0 0;border-radius:7px;border:2px solid var(--campo);background:#fff;font-size:16px;cursor:pointer}
+.opcao input:checked{background:var(--navy);border-color:var(--navy)}
+.opcao input:checked::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:translateY(-1px) rotate(45deg)}
+.opcao input:disabled{background:var(--lav);border-color:var(--lav-2);cursor:not-allowed}
+.opcao:has(input:disabled){color:var(--sutil);cursor:not-allowed}
+.opcao.inicio{padding:18px 20px;border-radius:16px;background:var(--lav);border:1.5px solid var(--lav-2)}
+.opcao.inicio:has(input:checked){background:#F6F4FC}
+
+/* mesa de trabalho: os quatro passos e, depois de gerar, o dossiê */
+#form{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;align-items:stretch;margin-top:64px;padding:60px 0 72px}
+#form::before{content:"";position:absolute;z-index:-1;top:0;bottom:0;left:calc(16px - var(--fora));width:calc(100cqw - 32px);border-radius:32px;background:linear-gradient(180deg,#F4F2FB 0,#ECE8F7 100%)}
+.passo{background:#fff;border-radius:20px;padding:26px 28px 28px;box-shadow:var(--sombra-cartao)}
+.passo h2{display:flex;align-items:center;gap:14px;font-size:22px;line-height:28px;font-weight:800;letter-spacing:-.02em;color:var(--navy);text-wrap:balance}
+.no{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--navy);color:#fff;font-weight:800;font-size:16.5px;letter-spacing:0;flex:none}
+.ponto{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.passo-corpo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 16px;margin-top:22px;align-items:end}
+.campo{display:grid;gap:7px;min-width:0;font-weight:650;font-size:14.5px;line-height:20px;color:var(--navy)}
+.campo.cheio{grid-column:1/-1}
+.campo input,.campo select,.campo textarea{width:100%;min-height:52px;padding:0 14px;border:1.5px solid var(--campo);border-radius:12px;font-size:16px;font-weight:400;color:var(--navy);background:#fff}
+.campo textarea{min-height:104px;padding:13px 14px;line-height:23px;resize:vertical}
+.campo input::placeholder{color:#667085}
+.campo input:hover,.campo select:hover,.campo textarea:hover{border-color:#B9B0D6}
+.campo [aria-invalid="true"]{border-color:var(--erro)}
+.campo.seletor{position:relative}
+.campo.seletor select{appearance:none;padding-right:44px;text-overflow:ellipsis}
+.campo.seletor svg{position:absolute;right:14px;bottom:17px;width:18px;height:18px;color:var(--navy-2);pointer-events:none}
+.passo-corpo>.msg,.passo-corpo>.opcao,.passo-corpo>.nota{grid-column:1/-1}
+.passo-corpo>.msg{margin-top:-10px}
+.opcao.declara{font-size:14.5px;line-height:22px}
+.nota{display:grid;grid-template-columns:20px minmax(0,1fr);gap:12px;font-size:13.5px;line-height:20px;color:var(--sutil)}
+.nota svg{width:18px;height:18px;margin-top:1px}
+.nota p+p{margin-top:6px}
+.nota.prazo{padding:14px 16px;border-radius:12px;background:#FFF6D6;font-size:14.5px;line-height:22px;color:#5B4300}
+.nota.prazo svg{width:20px;height:20px;color:#A87A00}
+#a2-texto{margin-top:16px;font-size:15px;line-height:23px}
+.p2 .passo-corpo{grid-template-columns:168px minmax(0,1fr);align-items:start}
+.bt{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 28px;border:0;border-radius:12px;font-weight:700;font-size:17px;line-height:20px;white-space:nowrap;cursor:pointer;text-decoration:none}
+.bt svg{width:20px;height:20px}
+.bt-a{background:var(--amarelo);color:var(--navy);box-shadow:var(--sombra-cta)}
+.bt-a:hover{background:var(--amarelo-hv)}
+.bt-b{min-height:48px;padding:0 20px;font-size:16px;font-weight:650;background:#fff;color:var(--navy);box-shadow:inset 0 0 0 1.5px var(--campo)}
+.bt-b:hover{box-shadow:inset 0 0 0 1.5px var(--navy-2)}
+.bt:disabled{background:var(--lav-2);color:#7A8597;box-shadow:none;cursor:not-allowed}
+#add-fato{grid-column:2;justify-self:start}
+#fato-status{grid-column:1/-1;font-size:14px;line-height:22px;color:var(--sutil)}
+#fato-status:empty{display:none}
+#lista-fatos{grid-column:1/-1;margin-top:6px}
+#lista-fatos:empty{display:none}
+#lista-fatos li{position:relative;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:0 0 18px 30px;font-size:15px;line-height:22px;color:var(--navy);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#lista-fatos li::before{content:"";position:absolute;left:3px;top:6px;width:11px;height:11px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px var(--ok-cl)}
+#lista-fatos li::after{content:"";position:absolute;left:7.5px;top:24px;bottom:2px;width:2px;border-radius:2px;background:var(--linha)}
+#lista-fatos li:last-child{padding-bottom:0}
+#lista-fatos li:last-child::after{display:none}
+#lista-fatos button{flex:none;min-height:44px;margin:-11px -10px -11px 0;padding:0 10px;border:0;border-radius:10px;background:none;color:var(--sutil);font-size:16px;font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+#lista-fatos button:hover{color:var(--erro);background:var(--erro-cl)}
+.p3{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,.42fr) minmax(0,1fr);gap:28px;align-items:center}
+.p3 .passo-corpo{display:block;margin-top:0}
+.zona{display:grid;grid-template-columns:44px minmax(0,1fr);gap:16px;align-items:center;padding:18px 20px;border:2px dashed var(--lav-borda);border-radius:16px;background:#FCFBFF}
+.zona>svg{width:44px;height:44px;padding:11px;border-radius:12px;background:var(--lav);color:var(--navy-2)}
+#docs{width:100%;min-width:0;min-height:44px;font-size:16px;color:var(--sutil)}
+#docs::file-selector-button{min-height:44px;margin-right:14px;padding:0 18px;border:0;border-radius:10px;background:#fff;color:var(--navy);box-shadow:inset 0 0 0 1.5px var(--campo);font:650 15px/18px var(--fonte);cursor:pointer}
+.zona .msg{grid-column:1/-1;margin-top:0}
+.p4{grid-column:1/-1}
+.p4 .passo-corpo{display:block}
+#vinculos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 40px}
+#vinculos:empty{display:none}
+#vinculos fieldset{position:relative;display:flex;flex-wrap:wrap;gap:8px;align-content:start;padding:16px 0 18px 34px;border-top:1px solid var(--linha-2)}
+#vinculos fieldset:nth-child(-n+2){border-top:0;padding-top:4px}
+#vinculos fieldset::before{content:"";position:absolute;left:0;top:17px;width:21px;height:21px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 2px var(--campo)}
+#vinculos fieldset:nth-child(-n+2)::before{top:5px}
+#vinculos fieldset:last-child{padding-bottom:4px}
+#vinculos fieldset:has(:checked)::before{background:var(--ok);box-shadow:none}
+#vinculos fieldset:has(:checked)::after{content:"";position:absolute;left:7.5px;top:21px;width:6px;height:10px;border:solid #fff;border-width:0 2.2px 2.2px 0;transform:rotate(45deg)}
+#vinculos fieldset:nth-child(-n+2):has(:checked)::after{top:9px}
+#vinculos legend{float:left;width:100%;margin-bottom:2px;font-size:14.5px;line-height:22px;color:var(--navy)}
+#vinculos label.opcao{display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:8px 12px 8px 9px;border-radius:12px;border:1.5px solid var(--linha);background:#fff;font:500 12.5px/16px var(--mono);color:var(--sutil);overflow-wrap:anywhere}
+#vinculos label.opcao input{width:24px;height:24px;margin:0;border-width:1.5px}
+#vinculos label.opcao input:checked{background:#fff;border-color:#fff}
+#vinculos label.opcao input:checked::after{border-color:var(--navy)}
+#vinculos label.opcao:hover{border-color:#B9B0D6}
+#vinculos label.opcao:has(:checked){border-color:var(--navy);background:var(--navy);color:#fff}
+#vinculos label.opcao:has(:focus-visible){outline:3px solid var(--foco);outline-offset:2px}
+#vinculos input:focus-visible{outline:0}
+.concluir{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px 20px;margin-top:8px}
+#gerar{min-width:340px}
+#form:has(#etapa-d1:not([hidden])) #gerar{background:#fff;box-shadow:inset 0 0 0 1.5px var(--campo)}
+#aviso{flex:1 1 320px;font-size:14.5px;line-height:22px;color:var(--erro);font-weight:600}
+
+/* o dossiê: folha presa por clipe, com a declaração e o botão no pé */
+.mesa{grid-column:1/-1;display:grid;justify-items:center;margin-top:34px}
+.folha{position:relative;width:min(100%,860px);background:#fff;border-radius:16px 16px 0 0;box-shadow:0 2px 4px rgba(14,34,53,.04),0 40px 70px -40px rgba(14,34,53,.45)}
+.folha::before{content:"";position:absolute;z-index:-1;inset:10px -12px -90px;border-radius:18px;background:#fff;opacity:.6;transform:rotate(-1.1deg)}
+.folha::after{content:"";position:absolute;left:52px;top:0;bottom:0;border-left:1.5px solid #F3DCD9}
+.clipe{position:absolute;z-index:1;left:20px;top:-22px;width:30px;height:74px}
+.selo{position:absolute;right:26px;top:22px;width:78px;height:78px;transform:rotate(-11deg)}
+#previa{position:relative;padding:40px 44px 40px 72px;font:500 13px/22px var(--mono);color:var(--navy);white-space:pre-wrap;overflow-wrap:anywhere}
+#previa::before{content:"";float:right;width:98px;height:68px}
+#previa::first-line{font-weight:800;font-size:14.5px;letter-spacing:.03em}
+#etapa-d1{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:22px 32px;align-items:center;width:min(100%,860px);padding:26px 44px 30px 72px;background:#FBFAFE;border-top:2px dashed var(--lav-borda);border-radius:0 0 16px 16px;box-shadow:0 40px 70px -40px rgba(14,34,53,.45)}
+#etapa-d1 .opcao{font-size:14.5px;line-height:22px;color:var(--texto)}
+#baixar{min-width:230px}
+
+/* termos e rodapé */
+.termos{margin-top:56px;border-top:1px solid var(--linha);border-bottom:1px solid var(--linha)}
+.termos summary{display:flex;align-items:center;justify-content:space-between;padding:22px 4px;cursor:pointer;list-style:none;font-weight:750;font-size:18px;line-height:28px;color:var(--navy);border-radius:8px}
+.termos summary::-webkit-details-marker{display:none}
+.termos summary svg{width:22px;height:22px;color:var(--navy-2);transition:transform .2s}
+.termos[open] summary svg{transform:rotate(180deg)}
+#termos{padding:0 4px 26px;display:grid;gap:12px;font-size:15px;line-height:24px;max-width:76ch}
+.rod{margin-top:72px;background:var(--navy);color:#AEBBCB;font-size:14px;line-height:23px}
+.rod-g{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr);gap:56px;align-items:center;max-width:1200px;margin:0 auto;padding:56px var(--pad)}
+.rod .marca{color:#fff}
+.rod p{max-width:60ch}
+.rod p+p{margin-top:12px}
+
+@media (prefers-reduced-motion:reduce){.termos summary svg{transition:none}}
+
+@container (max-width:1180px){
+body{--col:clamp(430px,43cqw,520px)}
+main::before{height:calc((var(--col) - 44px) * 1.062 + 26px)}
+h1{font-size:46px;line-height:51px}
+.f-motivo{top:-2px;right:-18px;width:210px;gap:10px;padding:10px 14px 10px 10px}
+.f-motivo .ic{width:36px;height:36px}
+.f-motivo b{font-size:13.5px;line-height:18px}
+.f-motivo small{font-size:12px;line-height:16px}
+.f-evid{left:-14px;bottom:-58px;width:282px}
+.p2 .passo-corpo{grid-template-columns:minmax(0,1fr)}
+#add-fato{grid-column:1}
+}
+@container (max-width:1000px){
+main{padding-right:var(--pad)}
+.resto{margin-right:0}
+main::before{display:none}
+#o1{max-width:640px}
+.resto::before{border-radius:0 0 40px 40px;background:radial-gradient(620px 460px at 50% calc(100% - 400px),#FCFBFF 0,rgba(252,251,255,0) 70%),linear-gradient(180deg,#F5F3FB 0,#ECE8F7 100%)}
+.cena{position:relative;top:auto;right:auto;width:min(100%,500px);margin:36px auto 0}
+.f-motivo{right:0}
+.f-evid{left:0}
+.inicio-col{grid-template-columns:minmax(0,1fr);gap:22px;margin-top:86px}
+#form{grid-template-columns:minmax(0,1fr)}
+.p3{grid-template-columns:minmax(0,1fr);gap:20px}
+#vinculos{grid-template-columns:minmax(0,1fr)}
+#vinculos fieldset:nth-child(2){border-top:1px solid var(--linha-2);padding-top:16px}
+#vinculos fieldset:nth-child(2)::before{top:17px}
+#vinculos fieldset:nth-child(2):has(:checked)::after{top:21px}
+.p2 .passo-corpo{grid-template-columns:168px minmax(0,1fr)}
+#add-fato{grid-column:2}
+}
+@container (max-width:760px){
+body{--pad:20px;font-size:16px;line-height:26px}
+.topo nav{height:66px}
+main{padding-top:26px}
+h1{font-size:35px;line-height:40px}
+#o1{font-size:16.5px;line-height:27px;margin-top:18px}
+.cena{margin-top:26px}
+.resto::before{height:1894px;border-radius:0 0 28px 28px}
+.f-motivo{display:none}
+.f-evid{position:relative;left:auto;bottom:auto;width:auto;margin:-34px 4px 0}
+.cena{aspect-ratio:auto}
+.cena svg.ilu{position:relative;inset:auto;display:block;width:100%;height:auto;aspect-ratio:516/548}
+.inicio-col{margin-top:34px;padding:22px 18px;border-radius:18px;gap:18px}
+.garantia-caixa{grid-template-columns:minmax(0,1fr);gap:12px}
+#form{display:block;margin-top:40px;padding:28px 0 40px}
+.passo+.passo{margin-top:14px}
+.concluir{position:sticky;bottom:0;z-index:5;margin:6px calc(-1 * var(--pad)) 0;padding:14px var(--pad) calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,rgba(238,235,248,0) 0,#EEEBF8 34%)}
+#form::before{left:calc(8px - var(--fora));width:calc(100cqw - 16px);border-radius:24px}
+.passo{padding:22px 18px 24px;border-radius:18px}
+.passo h2{font-size:20px;line-height:25px}
+.passo-corpo,.p2 .passo-corpo{grid-template-columns:minmax(0,1fr)}
+#add-fato{grid-column:1;justify-self:stretch}
+#lista-fatos li{flex-wrap:wrap;gap:0 12px}
+.zona{grid-template-columns:minmax(0,1fr);gap:12px;padding:16px}
+.zona>svg{display:none}
+#vinculos fieldset{padding-left:32px}
+#gerar{width:100%;min-width:0}
+.mesa{margin-top:24px}
+.folha::before{inset:8px -5px -60px}
+.folha::after{left:30px}
+.clipe{left:8px;top:-18px;width:24px;height:60px}
+.selo{right:14px;top:10px;width:46px;height:46px}
+#previa{padding:64px 16px 28px 42px;font-size:11.5px;line-height:19px}
+#previa::before{display:none}
+#previa::first-line{font-size:12.5px}
+#etapa-d1{grid-template-columns:minmax(0,1fr);padding:22px 16px 22px 42px}
+#baixar{width:100%;min-width:0}
+.termos{margin-top:36px}
+.rod{margin-top:48px}
+.rod-g{grid-template-columns:minmax(0,1fr);gap:24px;padding-block:40px}
+}
+@container (max-width:340px){
+.topo nav{gap:12px}
+.marca{font-size:18px}
+h1{font-size:31px;line-height:35px}
+#previa::first-line{font-size:11.5px;letter-spacing:0}
+}
+/* O que só existe na página de verdade (o board mostra um estado preenchido, sem erros nem avisos) */
+/* Antes de o script mostrar a página, o topo já sai lavanda: o fundo do começo cobre depois, sem troca de cor.
+   O espaço da barra de rolagem fica reservado, para o topo não andar de lado quando a página aparece. */
+html{scrollbar-gutter:stable;background:linear-gradient(180deg,#EFECF8 0,#EDEAF8 440px,#fff 600px) top/100% 600px no-repeat #fff}
+body{background:none}
+@media (max-width:1000px){html{background:linear-gradient(180deg,#F1EFF9 0,#EEEAF8 740px,#fff 900px) top/100% 900px no-repeat #fff}}
+.campo input[type=date]{min-width:0}
+.campo [aria-invalid="true"]{border:2px solid var(--erro)}
+/* Revisão do lote 2: o seletor de arquivos com erro ganha a borda de erro */
+#docs[aria-invalid="true"]{padding:6px;border:2px solid var(--erro);border-radius:12px}
+/* pedido e cartão lado a lado; a mensagem de cada um ocupa a linha de baixo sem desfazer o par */
+.p1 .c-ped{grid-area:1/1}
+.p1 .c-car{grid-area:1/2}
+#pedido-erro{grid-area:2/1/auto/-1}
+#ultimos4-erro{grid-area:3/1/auto/-1}
+/* sem motivo escolhido não há fonte a citar: o ícone some junto */
+.nota.fontes:not(:has(p:not([hidden]))){display:none}
+/* passo 4 antes de escolher o motivo e anexar documentos: só o título */
+.p4 .passo-corpo:has(#vinculos:empty){display:none}
+/* aviso geral, junto do botão: orienta, não é sempre erro */
+#aviso{flex:0 1 560px;padding:12px 16px;border-radius:12px;background:#FFF6D6;color:#5B4300;font-size:15px;line-height:22px;font-weight:600}
+/* CB-11: a prévia vazia fica oculta, e com ela a folha inteira */
 #previa:empty{display:none}
-footer{margin-top:2rem;font-size:.85rem;border-top:1px solid #ccc}
+.mesa:has(#previa:empty){display:none}
+/* CB-13: sem JavaScript e navegador sem suporte. No aviso de sem suporte ficam só o título e o aviso:
+   nome e links do topo somem por visibility (fora do innerText e do Tab); a marca continua. */
+noscript .msg.erro{max-width:1120px;margin:16px auto;padding:16px 20px;border-radius:14px;background:var(--erro-cl);font-size:16px;line-height:24px}
+#sem-suporte{margin:22px 0 56px;padding:16px 20px;border-radius:14px;background:var(--erro-cl);font-size:16px;line-height:24px}
+body:has(#sem-suporte:not([hidden])) .topo a{visibility:hidden}
+body:has(#sem-suporte:not([hidden])) .marca svg{visibility:visible}
+body:has(#sem-suporte:not([hidden])) main{padding-right:var(--pad)}
+body:has(#sem-suporte:not([hidden])) main::before{display:none}
+@container (max-width:760px){
+.p1 .c-ped,.p1 .c-car,#pedido-erro,#ultimos4-erro{grid-area:auto}
+#aviso{flex-basis:100%}
+}
 </style>
 </head>
 <body>
 <noscript><p class="msg erro">Esta ferramenta precisa de JavaScript ativado. Ative o JavaScript no navegador e recarregue a página.</p></noscript>
+<header class="topo"><nav aria-label="Site"><a href="/" class="marca"><svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#0E2235"/><path d="M22 14h15l9 9v27H22z" fill="#fff"/><path d="M37 14v9h9" fill="#D8D0EA"/><path d="M27 31h12M27 37h12M27 43h8" stroke="#B9B0D6" stroke-width="2.6" stroke-linecap="round"/><path d="M19 22v-8a5 5 0 0 1 10 0v13a3 3 0 0 1-6 0V16" fill="none" stroke="#F2CC10" stroke-width="3.2" stroke-linecap="round"/></svg>Piloto Chargeback</a><a href="/blog/" class="nav-link">Blog</a></nav></header>
 <main hidden>
 <h1 id="titulo">Organize as provas da sua disputa de chargeback</h1>
 <p id="sem-suporte" class="msg erro" hidden>Esta ferramenta não funciona nesta versão do navegador. Atualize o navegador ou abra a página em outro; no iPhone e no iPad, atualize o iOS para a versão 16.4 ou mais recente.</p>
 <p id="o1"></p>
-<p id="ag1"></p>
-<label class="opcao"><input type="checkbox" id="a1"> <span id="a1-texto"></span></label>
+<div class="cena" aria-hidden="true">
+<svg class="ilu" viewBox="34 -14 516 548">
+<defs>
+<radialGradient id="cb-brilho" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<linearGradient id="cb-base" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2F5C86"/><stop offset="1" stop-color="#16324E"/></linearGradient>
+<linearGradient id="cb-f4" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#F3F0FB"/></linearGradient>
+<linearGradient id="cb-f3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FBFAFF"/><stop offset="1" stop-color="#EEEAF8"/></linearGradient>
+<linearGradient id="cb-f2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F7F5FD"/><stop offset="1" stop-color="#E9E4F5"/></linearGradient>
+<linearGradient id="cb-f1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F3F0FB"/><stop offset="1" stop-color="#E3DEF2"/></linearGradient>
+<filter id="cb-blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="13"/></filter>
+<filter id="cb-som" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="9"/></filter>
+<rect id="cb-fo" width="250" height="176" rx="20"/>
+<rect id="cb-ba" x="-22" y="-22" width="294" height="220" rx="30"/>
+<rect id="cb-ab" x="0" y="-33" width="50" height="36" rx="9"/>
+<clipPath id="cb-rec"><use href="#cb-fo"/></clipPath>
+<clipPath id="cb-recb"><use href="#cb-ba"/></clipPath>
+</defs>
+<circle cx="292" cy="250" r="262" fill="url(#cb-brilho)"/>
+<ellipse cx="282" cy="512" rx="196" ry="20" fill="#0E2235" opacity=".3" filter="url(#cb-blur)"/>
+
+<!-- base: a pasta -->
+<g fill="#0B1D30"><use href="#cb-ba" transform="translate(0,16) matrix(.866 .5 -.866 .5 248 268)"/><use href="#cb-ba" transform="translate(0,14) matrix(.866 .5 -.866 .5 248 268)"/><use href="#cb-ba" transform="translate(0,12) matrix(.866 .5 -.866 .5 248 268)"/><use href="#cb-ba" transform="translate(0,10) matrix(.866 .5 -.866 .5 248 268)"/><use href="#cb-ba" transform="translate(0,8) matrix(.866 .5 -.866 .5 248 268)"/><use href="#cb-ba" transform="translate(0,6) matrix(.866 .5 -.866 .5 248 268)"/><use href="#cb-ba" transform="translate(0,4) matrix(.866 .5 -.866 .5 248 268)"/><use href="#cb-ba" transform="translate(0,2) matrix(.866 .5 -.866 .5 248 268)"/></g>
+<g transform="matrix(.866 .5 -.866 .5 248 268)">
+<use href="#cb-ba" fill="url(#cb-base)"/>
+<rect x="-10" y="-10" width="270" height="196" rx="22" fill="none" stroke="#fff" stroke-opacity=".14" stroke-width="1.5"/>
+<g clip-path="url(#cb-recb)"><rect x="18" y="18" width="250" height="176" rx="20" fill="#061321" opacity=".5" filter="url(#cb-som)"/></g>
+</g>
+
+<!-- passo 1: identificação -->
+<g fill="#B2A8D3"><use href="#cb-fo" transform="translate(0,7) matrix(.866 .5 -.866 .5 248 242)"/><use href="#cb-fo" transform="translate(0,5) matrix(.866 .5 -.866 .5 248 242)"/><use href="#cb-fo" transform="translate(0,3) matrix(.866 .5 -.866 .5 248 242)"/><use href="#cb-fo" transform="translate(0,1) matrix(.866 .5 -.866 .5 248 242)"/></g>
+<g transform="matrix(.866 .5 -.866 .5 248 242)">
+<use href="#cb-fo" fill="url(#cb-f1)"/>
+<g stroke-linecap="round" fill="none"><path d="M24 112h42M136 112h34" stroke="#B9B0D6" stroke-width="5"/></g>
+<rect x="20" y="122" width="104" height="34" rx="9" fill="#fff" stroke="#CFC8E8" stroke-width="1.5"/><rect x="132" y="122" width="98" height="34" rx="9" fill="#fff" stroke="#CFC8E8" stroke-width="1.5"/>
+<path d="M33 139h46M190 139h28" stroke="#1E3E59" stroke-width="6" stroke-linecap="round"/>
+<g fill="#8E84B8"><circle cx="146" cy="139" r="2.7"/><circle cx="156" cy="139" r="2.7"/><circle cx="166" cy="139" r="2.7"/><circle cx="176" cy="139" r="2.7"/></g>
+<g clip-path="url(#cb-rec)"><rect x="-64" y="-64" width="250" height="176" rx="20" fill="#0E2235" opacity=".26" filter="url(#cb-som)"/></g>
+</g>
+
+<g transform="matrix(.866 -.5 0 1 388.3 411)" font-family="system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif" font-size="20" font-weight="800" text-anchor="middle"><use href="#cb-ab" fill="#A79CCB" transform="translate(-2.4,1.2)"/><use href="#cb-ab" fill="#DCD5F0"/><text x="25" y="-9" fill="#1E3E59">1</text></g>
+
+<!-- passo 2: cronologia -->
+<g fill="#BBB2DA"><use href="#cb-fo" transform="translate(0,7) matrix(.866 .5 -.866 .5 248 164)"/><use href="#cb-fo" transform="translate(0,5) matrix(.866 .5 -.866 .5 248 164)"/><use href="#cb-fo" transform="translate(0,3) matrix(.866 .5 -.866 .5 248 164)"/><use href="#cb-fo" transform="translate(0,1) matrix(.866 .5 -.866 .5 248 164)"/></g>
+<g transform="matrix(.866 .5 -.866 .5 248 164)">
+<use href="#cb-fo" fill="url(#cb-f2)"/>
+<g fill="#DCD5F0"><rect x="18" y="108" width="48" height="16" rx="8"/><rect x="88" y="108" width="48" height="16" rx="8"/><rect x="158" y="108" width="48" height="16" rx="8"/></g>
+<path d="M42 148h140" stroke="#CFC8E8" stroke-width="4" stroke-linecap="round"/>
+<circle cx="42" cy="148" r="10" fill="#3DBE78"/><circle cx="112" cy="148" r="10" fill="#3DBE78"/><circle cx="182" cy="148" r="8.5" fill="#fff" stroke="#1E3E59" stroke-width="3"/>
+<path d="M38 151h4.5v-8.5M108 151h4.5v-8.5" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+<g clip-path="url(#cb-rec)"><rect x="-64" y="-64" width="250" height="176" rx="20" fill="#0E2235" opacity=".24" filter="url(#cb-som)"/></g>
+</g>
+
+<g transform="matrix(.866 -.5 0 1 388.3 333)" font-family="system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif" font-size="20" font-weight="800" text-anchor="middle"><use href="#cb-ab" fill="#A79CCB" transform="translate(-2.4,1.2)"/><use href="#cb-ab" fill="#DCD5F0"/><text x="25" y="-9" fill="#1E3E59">2</text></g>
+
+<!-- passo 3: documentos -->
+<g fill="#C5BDE2"><use href="#cb-fo" transform="translate(0,7) matrix(.866 .5 -.866 .5 248 86)"/><use href="#cb-fo" transform="translate(0,5) matrix(.866 .5 -.866 .5 248 86)"/><use href="#cb-fo" transform="translate(0,3) matrix(.866 .5 -.866 .5 248 86)"/><use href="#cb-fo" transform="translate(0,1) matrix(.866 .5 -.866 .5 248 86)"/></g>
+<g transform="matrix(.866 .5 -.866 .5 248 86)">
+<use href="#cb-fo" fill="url(#cb-f3)"/>
+<g fill="#fff" stroke="#CFC8E8" stroke-width="1.5"><rect x="20" y="106" width="48" height="58" rx="8"/><rect x="78" y="106" width="48" height="58" rx="8"/></g>
+<rect x="136" y="106" width="48" height="58" rx="8" fill="#E6F4EC" stroke="#B5DEC7" stroke-width="1.5"/>
+<path d="M29 122h30M29 134h22M29 146h27M87 122h30M87 134h26M87 146h18" stroke="#DCD5F0" stroke-width="4.5" stroke-linecap="round"/>
+<circle cx="150" cy="121" r="6" fill="#F2CC10"/><rect x="143" y="140" width="34" height="17" rx="5" fill="#3DBE78"/>
+<g clip-path="url(#cb-rec)"><rect x="-64" y="-64" width="250" height="176" rx="20" fill="#0E2235" opacity=".24" filter="url(#cb-som)"/></g>
+</g>
+
+<g transform="matrix(.866 -.5 0 1 388.3 255)" font-family="system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif" font-size="20" font-weight="800" text-anchor="middle"><use href="#cb-ab" fill="#A79CCB" transform="translate(-2.4,1.2)"/><use href="#cb-ab" fill="#DCD5F0"/><text x="25" y="-9" fill="#1E3E59">3</text></g>
+
+<!-- passo 4: o dossiê, com as evidências conferidas -->
+<g fill="#CFC8E8"><use href="#cb-fo" transform="translate(0,8) matrix(.866 .5 -.866 .5 248 8)"/><use href="#cb-fo" transform="translate(0,6) matrix(.866 .5 -.866 .5 248 8)"/><use href="#cb-fo" transform="translate(0,4) matrix(.866 .5 -.866 .5 248 8)"/><use href="#cb-fo" transform="translate(0,2) matrix(.866 .5 -.866 .5 248 8)"/></g>
+<g transform="matrix(.866 .5 -.866 .5 248 8)">
+<use href="#cb-fo" fill="url(#cb-f4)"/>
+<use href="#cb-fo" fill="none" stroke="#fff" stroke-width="1.5"/>
+<path d="M62 34h84" stroke="#1E3E59" stroke-width="8" stroke-linecap="round"/>
+<path d="M62 56h150M62 74h112" stroke="#DCD5F0" stroke-width="6" stroke-linecap="round"/>
+<path d="M82 106h56M82 128h74M82 150h44" stroke="#DCD5F0" stroke-width="6" stroke-linecap="round"/>
+<path d="M60 109h6v-12M60 131h6v-12M60 153h6v-12" fill="none" stroke="#23A05A" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+<g transform="rotate(-10 196 122)"><circle cx="196" cy="122" r="33" fill="#fff" fill-opacity=".7" stroke="#3DBE78" stroke-width="4"/><circle cx="196" cy="122" r="25" fill="none" stroke="#3DBE78" stroke-width="1.6" stroke-dasharray="3 4"/><path d="M185 131h11v-23" fill="none" stroke="#23A05A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+<path d="M24 50V8a10 10 0 0 1 20 0v46a6.5 6.5 0 0 1-13 0V16" fill="none" stroke="#C9A600" stroke-width="6" stroke-linecap="round" transform="translate(1.5,1.5)"/>
+<path d="M24 50V8a10 10 0 0 1 20 0v46a6.5 6.5 0 0 1-13 0V16" fill="none" stroke="#F2CC10" stroke-width="5.5" stroke-linecap="round"/>
+</g>
+<g transform="matrix(.866 -.5 0 1 388.3 177)" font-family="system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif" font-size="20" font-weight="800" text-anchor="middle"><use href="#cb-ab" fill="#C9A600" transform="translate(-2.4,1.2)"/><use href="#cb-ab" fill="#F2CC10"/><text x="25" y="-9" fill="#0E2235">4</text></g>
+</svg>
+<div class="flut f-motivo"><span class="ic ic-r"><svg viewBox="0 0 24 24"><path d="M12 4 2.5 20h19L12 4z"/><path d="M12 10v4M12 17h.01"/></svg></span><span><b>Motivo 13.1 da Visa</b><small>Mercadoria ou serviço não recebido</small></span></div>
+<div class="flut f-evid"><b>Evidências do motivo</b><ul><li><svg class="i" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>D1. rastreio-48213.pdf</li><li><svg class="i" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>D3. foto-entrega-48213.jpg</li></ul></div>
+</div>
+<div class="resto">
+<div class="inicio-col">
+<div class="garantia-caixa"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3z"/><path d="m9 12 2 2 4-4"/></svg></span><p id="ag1"></p></div>
+<label class="opcao inicio"><input type="checkbox" id="a1"> <span id="a1-texto"></span></label>
+</div>
 <section id="form" hidden>
-  <h2>1. Identificação</h2>
-  <label>Identificação do pedido <input type="text" id="pedido" autocomplete="off"></label>
-  <p id="pedido-erro" class="msg" hidden></p>
-  <label>4 últimos dígitos do cartão (opcional) <input type="text" id="ultimos4" inputmode="numeric" autocomplete="off"></label>
-  <p id="ultimos4-erro" class="msg" hidden></p>
-  <label>CNPJ (opcional) <input type="text" id="cnpj" autocomplete="off"></label>
-  <p id="cnpj-erro" class="msg" hidden></p>
-  <label class="opcao"><input type="checkbox" id="p1" disabled> <span id="p1-texto"></span></label>
-  <label>Gateway ou adquirente <select id="gateway"><option value="">(não informar)</option></select></label>
-  <label>Motivo indicado pela adquirente <select id="motivo"><option value="">(selecione o motivo)</option></select></label>
-  <p id="motivo-erro" class="msg" hidden></p>
-  <p id="fonte-motivo"></p>
-  <p id="secao-motivo" hidden></p>
-  <p id="obs-motivo" hidden></p>
-  <p id="rodape-elo" hidden></p>
-  <p id="rodape-prazos"></p>
-  <h2>2. Cronologia</h2>
-  <p id="a2-texto"></p>
-  <label>Data <input type="date" id="fato-data"></label>
-  <p id="fato-data-erro" class="msg" hidden></p>
-  <label>Fato <textarea id="fato-desc" rows="3"></textarea></label>
-  <p id="fato-desc-erro" class="msg" hidden></p>
-  <button type="button" id="add-fato">Adicionar fato</button>
-  <p id="fato-status" role="status"></p>
-  <ul id="lista-fatos"></ul>
-  <h2 id="docs-titulo">3. Documentos</h2>
-  <input type="file" id="docs" multiple aria-labelledby="docs-titulo">
-  <p id="docs-erro" class="msg" hidden></p>
-  <h2>4. Evidências do motivo</h2>
-  <div id="vinculos"></div>
-  <button type="button" id="gerar">Gerar dossiê</button>
-  <p id="aviso" role="alert" hidden></p>
-  <pre id="previa"></pre>
-  <div id="etapa-d1" hidden>
-    <label class="opcao"><input type="checkbox" id="d1"> <span id="d1-texto"></span></label>
-    <button type="button" id="baixar" disabled>Baixar dossiê</button>
+  <div class="passo p1">
+    <h2><span class="no">1<span class="ponto">.</span></span> Identificação</h2>
+    <div class="passo-corpo">
+      <label class="campo c-ped">Identificação do pedido <input type="text" id="pedido" autocomplete="off"></label>
+      <p id="pedido-erro" class="msg" hidden></p>
+      <label class="campo c-car">4 últimos dígitos do cartão (opcional) <input type="text" id="ultimos4" inputmode="numeric" autocomplete="off"></label>
+      <p id="ultimos4-erro" class="msg" hidden></p>
+      <label class="campo cheio">CNPJ (opcional) <input type="text" id="cnpj" autocomplete="off"></label>
+      <p id="cnpj-erro" class="msg" hidden></p>
+      <label class="opcao declara"><input type="checkbox" id="p1" disabled> <span id="p1-texto"></span></label>
+      <label class="campo seletor cheio">Gateway ou adquirente <select id="gateway"><option value="">(não informar)</option></select><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></label>
+      <label class="campo seletor cheio">Motivo indicado pela adquirente <select id="motivo"><option value="">(selecione o motivo)</option></select><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></label>
+      <p id="motivo-erro" class="msg" hidden></p>
+      <div class="nota fontes"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.5A1.5 1.5 0 0 1 4.5 4H9a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4.5A1.5 1.5 0 0 1 3 16.5zM21 5.5A1.5 1.5 0 0 0 19.5 4H15a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h5.5a1.5 1.5 0 0 0 1.5-1.5z"/></svg><div>
+        <p id="fonte-motivo"></p>
+        <p id="secao-motivo" hidden></p>
+        <p id="obs-motivo" hidden></p>
+        <p id="rodape-elo" hidden></p>
+      </div></div>
+      <div class="nota prazo"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><p id="rodape-prazos"></p></div>
+    </div>
+  </div>
+  <div class="passo p2">
+    <h2><span class="no">2<span class="ponto">.</span></span> Cronologia</h2>
+    <p id="a2-texto"></p>
+    <div class="passo-corpo">
+      <label class="campo">Data <input type="date" id="fato-data"></label>
+      <p id="fato-data-erro" class="msg" hidden></p>
+      <label class="campo">Fato <textarea id="fato-desc" rows="3"></textarea></label>
+      <p id="fato-desc-erro" class="msg" hidden></p>
+      <button type="button" id="add-fato" class="bt bt-b"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Adicionar fato</button>
+      <p id="fato-status" role="status"></p>
+      <ul id="lista-fatos"></ul>
+    </div>
+  </div>
+  <div class="passo p3">
+    <h2 id="docs-titulo"><span class="no">3<span class="ponto">.</span></span> Documentos</h2>
+    <div class="passo-corpo">
+      <div class="zona"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5l-7.8 7.8a5 5 0 0 1-7.1-7.1l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4l7.8-7.8"/></svg><input type="file" id="docs" multiple aria-labelledby="docs-titulo">
+      <p id="docs-erro" class="msg" hidden></p></div>
+    </div>
+  </div>
+  <div class="passo p4">
+    <h2><span class="no">4<span class="ponto">.</span></span> Evidências do motivo</h2>
+    <div class="passo-corpo">
+      <div id="vinculos"></div>
+    </div>
+  </div>
+  <div class="concluir">
+    <button type="button" id="gerar" class="bt bt-a"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>Gerar dossiê</button>
+    <p id="aviso" role="alert" hidden></p>
+  </div>
+  <div class="mesa">
+    <div class="folha">
+      <svg class="clipe" viewBox="0 0 30 74" aria-hidden="true"><path d="M6 52V15a9 9 0 0 1 18 0v44a6 6 0 0 1-12 0V22" fill="none" stroke="#C9A600" stroke-width="4.6" stroke-linecap="round" transform="translate(1,1.2)"/><path d="M6 52V15a9 9 0 0 1 18 0v44a6 6 0 0 1-12 0V22" fill="none" stroke="#F2CC10" stroke-width="4.2" stroke-linecap="round"/></svg>
+      <svg class="selo" viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="36" fill="#fff" stroke="#3DBE78" stroke-width="4"/><circle cx="40" cy="40" r="28" fill="none" stroke="#3DBE78" stroke-width="1.6" stroke-dasharray="3 4"/><path d="M26 41l10 10 19-22" fill="none" stroke="#23A05A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <pre id="previa"></pre>
+    </div>
+    <div id="etapa-d1" hidden>
+      <label class="opcao"><input type="checkbox" id="d1"> <span id="d1-texto"></span></label>
+      <button type="button" id="baixar" class="bt bt-a" disabled><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Baixar dossiê</button>
+    </div>
   </div>
 </section>
-<details><summary>Termos</summary><div id="termos"></div></details>
+<details class="termos"><summary>Termos<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div id="termos"></div></details>
+</div>
 </main>
 <script>
 // CB-13 de 01/11: o script principal usa lookbehind e \p{} em regex. O navegador sem suporte (Safari antes do 16.4)
@@ -109,7 +478,7 @@ footer{margin-top:2rem;font-size:.85rem;border-top:1px solid #ccc}
   m.hidden = false;
 })();
 </script>
-<footer hidden><p id="r1"></p><p id="r2"></p></footer>
+<footer class="rod" hidden><div class="rod-g"><a class="marca" href="/"><svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#1E3E59"/><path d="M22 14h15l9 9v27H22z" fill="#fff"/><path d="M37 14v9h9" fill="#D8D0EA"/><path d="M27 31h12M27 37h12M27 43h8" stroke="#B9B0D6" stroke-width="2.6" stroke-linecap="round"/><path d="M19 22v-8a5 5 0 0 1 10 0v13a3 3 0 0 1-6 0V16" fill="none" stroke="#F2CC10" stroke-width="3.2" stroke-linecap="round"/></svg>Piloto Chargeback</a><div><p id="r1"></p><p id="r2"></p></div></div></footer>
 <script>"use strict";
 (() => {
 // Gerado/alterado pelo build: PILOTO=true só em build de piloto (node build.mjs --piloto).
