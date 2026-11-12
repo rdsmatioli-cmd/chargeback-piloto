@@ -101,7 +101,7 @@ test('CB-14: todo símbolo de nível de topo do script principal é usado no scr
 // ---------- blog (CB-15 e CB-16) ----------
 const SITE = 'https://chargeback.contacertabr.com.br';
 const ler = (rel) => readFileSync(new URL(rel, raiz), 'utf8');
-const POSTS = ['o-que-e-chargeback'];
+const POSTS = ['o-que-e-chargeback', 'quem-paga-chargeback', 'como-evitar-chargeback', 'como-contestar-chargeback'];
 const BLOG = [{ rel: 'blog/index.html', url: `${SITE}/blog/` }, ...POSTS.map((p) => ({ rel: `blog/${p}/index.html`, url: `${SITE}/blog/${p}/` }))];
 const decodificar = (v) => v.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 function metas(h) {
@@ -184,7 +184,7 @@ test('CB-15: sitemap com lastmod em todas as URLs; o do post é o dateModified d
   const urls = [...s.matchAll(/<url><loc>([^<]+)<\/loc>(?:<lastmod>([^<]+)<\/lastmod>)?<\/url>/g)].map((m) => ({ loc: m[1], lastmod: m[2] }));
   assert.deepEqual(urls.map((u) => u.loc), BLOG.map((b) => b.url));
   for (const u of urls) assert.match(u.lastmod ?? '', /^\d{4}-\d{2}-\d{2}$/, `${u.loc} sem lastmod`);
-  assert.equal(urls[0].lastmod, '2026-10-16');
+  assert.equal(urls[0].lastmod, '2026-11-12'); // índice do blog: lote 2 (3 posts) em 12/11/2026
   for (const p of POSTS) {
     const art = jsonLd(ler(`blog/${p}/index.html`)).find((x) => x['@type'] === 'Article');
     assert.equal(urls.find((u) => u.loc === `${SITE}/blog/${p}/`).lastmod, art.dateModified);

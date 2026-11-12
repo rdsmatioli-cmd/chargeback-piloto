@@ -6,3 +6,6 @@
 
 - [Blog do Piloto Chargeback: guias sobre disputas no cartão](https://chargeback.contacertabr.com.br/blog/)
 - [O que é chargeback: como funciona, motivos e como contestar](https://chargeback.contacertabr.com.br/blog/o-que-e-chargeback/): O que é chargeback, como funciona a contestação no cartão, os códigos de motivo de Visa, Mastercard e Elo e as provas que o lojista pode guardar.
+- [Quem paga uma compra contestada no cartão: lojista, adquirente ou banco?](https://chargeback.contacertabr.com.br/blog/quem-paga-chargeback/): Em regra, quem paga o chargeback é o lojista: a adquirente debita o valor da venda. Veja quando o banco emissor fica com a perda e como recuperar o dinheiro.
+- [Como evitar chargeback: 12 medidas para loja online](https://chargeback.contacertabr.com.br/blog/como-evitar-chargeback/): 12 medidas para reduzir chargebacks na loja online: nome claro na fatura, 3-D Secure, entrega comprovada, reembolso rápido e provas guardadas desde a venda.
+- [Como contestar um chargeback: passo a passo com modelo de carta](https://chargeback.contacertabr.com.br/blog/como-contestar-chargeback/): Passo a passo para o lojista contestar um chargeback: ler o código de motivo, separar as provas, escrever a carta de resposta e enviar dentro do prazo.
