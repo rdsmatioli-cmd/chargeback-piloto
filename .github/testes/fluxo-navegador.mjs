@@ -513,6 +513,52 @@ for (const tela of TELAS_TAB) {
   });
 }
 
+// WCAG 2.4.11 (revisão de 14/11): o campo que já está na tela, mas embaixo da barra presa, também tem de subir ao receber
+// o foco. O Chrome só rola quando o campo está fora da área visível: no CI, em 700 x 900 px, o fato-desc parava assim,
+// coberto. O percurso com Tab acima depende de onde cada campo cai na tela (fontes e métricas mudam entre máquinas); este
+// teste põe o meio de cada controle na faixa da barra e dá o foco nele (a mesma rolagem do Tab; o Tab a partir da data
+// passaria pelos segmentos de dia, mês e ano).
+for (const tela of TELAS_TAB) {
+  test(`WCAG 2.4.11: campo visível sob a barra do Gerar sobe ao receber o foco em ${tela.nome}`, async () => {
+    const p = await abrir(tela);
+    try {
+      await p.clicar('a1');
+      const total = await p.js(`(window.__ctrls = [...document.querySelectorAll('#form :is(a[href],input,select,textarea,button)')]
+        .filter((e) => e.getClientRects().length && !e.disabled && e.tabIndex >= 0 && !e.closest('.concluir'))).length`);
+      assert.ok(total > 5, `controles do formulário: ${total}`);
+      const cobertos = [];
+      let testados = 0;
+      for (let i = 0; i < total; i++) {
+        const sobBarra = await p.js(`(() => {
+          const e = __ctrls[${i}], barra = document.querySelector('#form .concluir');
+          document.activeElement && document.activeElement.blur();
+          e.scrollIntoView({ block: 'center' });
+          const topo = barra.getBoundingClientRect().top;
+          if (topo >= innerHeight - 4) return false;
+          const r = e.getBoundingClientRect();
+          window.scrollBy(0, r.top + r.height / 2 - (topo + (innerHeight - topo) / 2));
+          const r2 = e.getBoundingClientRect(), t2 = barra.getBoundingClientRect().top;
+          return r2.top + r2.height / 2 > t2 && r2.top + r2.height / 2 < innerHeight;
+        })()`);
+        if (!sobBarra) continue;
+        const r = await p.js(`(() => {
+          const e = __ctrls[${i}], barra = document.querySelector('#form .concluir');
+          e.focus();
+          const b = e.getBoundingClientRect(), no = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
+          return { id: e.id || e.closest('[id]').id + ' ' + e.tagName.toLowerCase(), coberto: !no || barra.contains(no) };
+        })()`);
+        testados++;
+        if (r.coberto) cobertos.push(r.id);
+      }
+      assert.ok(testados >= 3, `controles testados: ${testados}`);
+      assert.deepEqual(cobertos, [], 'campos cobertos pela barra depois do Tab');
+      assert.deepEqual(p.erros, [], 'nenhum erro no console');
+    } finally {
+      await p.fechar();
+    }
+  });
+}
+
 // WCAG 1.4.11 (revisão de 12/11): a borda é o que identifica o campo de texto branco sobre o cartão branco e a caixa de
 // seleção desmarcada (appearance:none). Ela tem de ter contraste >= 3:1 com o fundo de fora (o do primeiro ancestral
 // com cor de fundo) e com o de dentro (o do próprio controle). Desabilitados e marcados ficam de fora (a marca é o fundo).

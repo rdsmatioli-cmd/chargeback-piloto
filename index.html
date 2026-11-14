@@ -312,13 +312,15 @@ body:has(#sem-suporte:not([hidden])) .topo::after{display:none}
 @container (max-width:760px){
 .p1 .c-ped,.p1 .c-car,#pedido-erro,#ultimos4-erro{grid-area:auto}
 #aviso{flex-basis:100%}
-/* Revisão de 12/11 (WCAG 2.2, 2.4.11): o controle que recebe o foco para acima da barra presa do Gerar, não embaixo dela.
-   Só nos passos: no Gerar, que fica na própria barra, a margem faria a página rolar à toa quando ele recebe o foco. */
-.passo :is(a[href],input,select,textarea,button){scroll-margin-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
 /* Com o aviso geral (termo vedado, cartão removido), a barra presa chegava a 40% da tela e cobria os campos a corrigir:
    enquanto ele aparece, a barra volta para o fim do formulário, como na tela larga. */
 .concluir:has(#aviso:not([hidden])){position:static}
 }
+/* Revisão de 12/11 (WCAG 2.2, 2.4.11, técnica C43): até 760 px a barra do Gerar fica presa no pé da tela. O scroll-padding
+   tira a faixa dela da área visível da página, então o campo que recebe o foco sobe acima da barra mesmo quando já estava
+   na tela, embaixo dela (o scroll-margin só agia quando o campo estava fora da tela). O html é o container: aqui vale a
+   largura da janela, com folga para a barra de rolagem do desktop. */
+@media (max-width:780px){html{scroll-padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}}
 </style>
 </head>
 <body>
