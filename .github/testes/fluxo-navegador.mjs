@@ -611,14 +611,16 @@ for (const tela of TELAS) {
 // RegExp sem lookbehind, saem da folha de estilo da página as regras @container, as com :has(), o container-type e os
 // @supports de container queries (falsos nesse navegador).
 const SEM_CONTAINER_NEM_HAS = `(() => {
-  let n = 0;
+  let n = 0, tiradosContainerType = 0;
   const limpar = (dono) => { for (let i = dono.cssRules.length - 1; i >= 0; i--) {
     const r = dono.cssRules[i];
-    if (r instanceof CSSContainerRule || (r instanceof CSSSupportsRule && /container/.test(r.conditionText)) || /:has\\(/.test(r.selectorText || '')) { dono.deleteRule(i); n++; }
-    else if (r.cssRules) limpar(r);
-    else if (r.style?.getPropertyValue('container-type')) { r.style.removeProperty('container-type'); n++; }
+    if (r instanceof CSSContainerRule || (r instanceof CSSSupportsRule && /container/.test(r.conditionText)) || /:has\\(/.test(r.selectorText || '')) { dono.deleteRule(i); n++; continue; }
+    // No Chrome toda regra de estilo tem cssRules (CSS aninhado), vazia ou não: o container-type sai antes de descer.
+    if (r.style?.getPropertyValue('container-type')) { r.style.removeProperty('container-type'); n++; tiradosContainerType++; }
+    if (r.cssRules?.length) limpar(r);
   } };
   for (const f of document.styleSheets) limpar(f);
+  if (!tiradosContainerType || getComputedStyle(document.documentElement).containerType !== 'normal') throw new Error('container-type não foi retirado');
   return n;
 })()`;
 for (const tela of TELAS) {
