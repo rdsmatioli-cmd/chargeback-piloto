@@ -558,3 +558,36 @@ for (const tela of TELAS) {
     }
   });
 }
+
+// CB-13, revisão de 12/11: o Safari antes do 15.4 não tem :has() nem container queries (estas só no 16), e é o público do
+// aviso de navegador sem suporte. Sem as duas, valia o layout de duas colunas em qualquer largura: no celular, o main
+// ficava com 600 px de padding à direita e o aviso, com 40 px de largura, uma palavra por linha. Aqui, depois do mesmo
+// RegExp sem lookbehind, saem da folha de estilo da página as regras @container, as com :has(), o container-type e os
+// @supports de container queries (falsos nesse navegador).
+const SEM_CONTAINER_NEM_HAS = `(() => {
+  let n = 0;
+  const limpar = (dono) => { for (let i = dono.cssRules.length - 1; i >= 0; i--) {
+    const r = dono.cssRules[i];
+    if (r instanceof CSSContainerRule || (r instanceof CSSSupportsRule && /container/.test(r.conditionText)) || /:has\\(/.test(r.selectorText || '')) { dono.deleteRule(i); n++; }
+    else if (r.cssRules) limpar(r);
+    else if (r.style?.getPropertyValue('container-type')) { r.style.removeProperty('container-type'); n++; }
+  } };
+  for (const f of document.styleSheets) limpar(f);
+  return n;
+})()`;
+for (const tela of TELAS) {
+  test(`CB-13: sem container queries nem :has() (Safari antes do 15.4), o aviso de navegador sem suporte cabe na tela em ${tela.nome}`, async () => {
+    const p = await abrir(tela, { antes: SEM_LOOKBEHIND, esperarMain: false });
+    try {
+      assert.ok(await p.visivel('sem-suporte'), '#sem-suporte visível');
+      assert.ok(await p.js(SEM_CONTAINER_NEM_HAS) > 10, 'regras @container e :has() retiradas');
+      const r = await p.js(`(() => { const a = document.getElementById('sem-suporte').getBoundingClientRect(); return { largura: Math.round(a.width), main: Math.round(document.querySelector('main').getBoundingClientRect().right), tela: innerWidth }; })()`);
+      assert.ok(r.main <= r.tela, `o main cabe na largura da tela (${r.main} > ${r.tela})`);
+      assert.ok(r.largura >= 280, `o aviso tem largura de leitura (${r.largura} px)`);
+      assert.ok(await p.naTela('sem-suporte'), 'o aviso está inteiro na tela');
+      assert.equal(await p.texto('o1'), '', 'o script principal não rodou');
+    } finally {
+      await p.fechar();
+    }
+  });
+}
