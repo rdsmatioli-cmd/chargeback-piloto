@@ -169,7 +169,7 @@ async function abrir(tela, { caminho = '/', semJs = false, antes = null, esperar
     return r.result.value;
   };
   const p = {
-    js, erros,
+    js, erros, sessionId,
     async fechar() { await cdp.enviar('Target.closeTarget', { targetId }); },
     // Clique de mouse no centro do elemento, depois de trazê-lo para a tela: se outro elemento o cobre, o clique
     // vai para o outro e o teste percebe.
@@ -506,6 +506,52 @@ for (const tela of TELAS_TAB) {
       const comAviso = await percorrerComTab(p);
       assert.ok(comAviso.vistos.some((id) => id.startsWith('vinculos')), `o Tab passou pelas evidências: ${comAviso.vistos.join(', ')}`);
       assert.deepEqual(comAviso.cobertos, [], 'com o aviso de termo vedado');
+      assert.deepEqual(p.erros, [], 'nenhum erro no console');
+    } finally {
+      await p.fechar();
+    }
+  });
+}
+
+// WCAG 1.4.11 (revisão de 12/11): a borda é o que identifica o campo de texto branco sobre o cartão branco e a caixa de
+// seleção desmarcada (appearance:none). Ela tem de ter contraste >= 3:1 com o fundo de fora (o do primeiro ancestral
+// com cor de fundo) e com o de dentro (o do próprio controle). Desabilitados e marcados ficam de fora (a marca é o fundo).
+const BORDAS_FRACAS = `(() => {
+  const rgba = (c) => { const m = c.match(/rgba?\\(([^)]+)\\)/); const [r, g, b, a = 1] = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return [r, g, b, a]; };
+  const sobre = ([r, g, b, a], [R, G, B]) => [r * a + R * (1 - a), g * a + G * (1 - a), b * a + B * (1 - a)];
+  const lum = (c) => { const [r, g, b] = c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const contraste = (x, y) => { const [a, b] = [lum(x), lum(y)].sort((m, n) => n - m); return (a + 0.05) / (b + 0.05); };
+  const fundo = (e) => { for (let n = e; n; n = n.parentElement) { const c = rgba(getComputedStyle(n).backgroundColor); if (c[3] > 0) return sobre(c, [255, 255, 255]); } return [255, 255, 255]; };
+  return [...document.querySelectorAll('#form input, #form select, #form textarea, .inicio-col input')]
+    .filter((e) => e.getClientRects().length && e.type !== 'file' && !e.disabled && !e.checked)
+    .flatMap((e) => {
+      const s = getComputedStyle(e), fora = fundo(e.parentElement), dentro = fundo(e), borda = sobre(rgba(s.borderTopColor), fora);
+      const r = Math.min(contraste(borda, fora), contraste(borda, dentro));
+      return r >= 3 ? [] : [\`\${e.id || e.closest('[id]').id + ' ' + e.type}: \${r.toFixed(2)}:1 (borda \${s.borderTopColor})\`];
+    });
+})()`;
+for (const tela of TELAS) {
+  test(`WCAG 1.4.11: borda dos campos e das caixas de seleção com contraste >= 3:1 em ${tela.nome}`, async () => {
+    const p = await abrir(tela);
+    try {
+      // Mouse fora dos controles: o estado normal primeiro.
+      const fora = async () => p.js(`document.querySelector('.topo').scrollIntoView()`).then(() => cdp.enviar('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1 }, p.sessionId));
+      await fora();
+      assert.deepEqual(await p.js(BORDAS_FRACAS), [], 'A-1 desmarcado');
+      await p.clicar('a1');
+      await p.escolher('motivo', await p.valorMotivo('Visa', '10.4'));
+      await p.anexar(['nota-fiscal.pdf', 'rastreio.pdf']);
+      await p.digitar('pedido', 'PED-1');
+      await p.clicar('gerar');
+      assert.ok(await p.visivel('etapa-d1'), 'D-1 visível');
+      await fora();
+      const vistos = await p.js(`[...document.querySelectorAll('#form input:not([type=file]):not(:disabled):not(:checked), #form select, #form textarea')].filter((e) => e.getClientRects().length).length`);
+      assert.ok(vistos >= 9, `campos, evidências e D-1 conferidos (${vistos})`);
+      assert.deepEqual(await p.js(BORDAS_FRACAS), [], 'formulário com evidências e D-1');
+      // Com o mouse em cima (hover), a borda não pode clarear abaixo de 3:1.
+      const c = await p.centro('pedido');
+      await cdp.enviar('Input.dispatchMouseEvent', { type: 'mouseMoved', x: c.x, y: c.y }, p.sessionId);
+      assert.deepEqual((await p.js(BORDAS_FRACAS)).filter((t) => t.startsWith('pedido')), [], 'pedido com hover');
       assert.deepEqual(p.erros, [], 'nenhum erro no console');
     } finally {
       await p.fechar();

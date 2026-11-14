@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#EFECF8">
 <style>
 html{container-type:inline-size}
-body{margin:0;--navy:#0E2235;--navy-2:#1E3E59;--texto:#3B4859;--sutil:#5B6678;--linha:#E7E3F0;--linha-2:#EEEBF5;--lav:#F2F0FA;--lav-2:#E9E5F6;--lav-borda:#D8D0EA;--campo:#D3CCE6;--amarelo:#F2CC10;--amarelo-hv:#F6D640;--marca:#F7DB52;--ok:#23A05A;--ok-cl:#E2F2EA;--erro:#B00020;--erro-cl:#FBEAE8;--foco:#6E5BD8;--sombra:0 1px 2px rgba(14,34,53,.05),0 24px 48px -20px rgba(14,34,53,.22);--sombra-cartao:0 1px 2px rgba(14,34,53,.04),0 14px 30px -20px rgba(14,34,53,.2);--sombra-cta:0 10px 24px -8px rgba(216,179,0,.65),inset 0 -2px 0 rgba(0,0,0,.08);--fonte:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;--pad:40px;--col:560px;--fora:calc(var(--pad) + max(0px,(100cqw - 1200px)/2));position:relative;isolation:isolate;overflow-x:clip;font-family:var(--fonte);color:var(--texto);background:#fff;font-size:17px;line-height:27px;-webkit-font-smoothing:antialiased}
+body{margin:0;--navy:#0E2235;--navy-2:#1E3E59;--texto:#3B4859;--sutil:#5B6678;--linha:#E7E3F0;--linha-2:#EEEBF5;--lav:#F2F0FA;--lav-2:#E9E5F6;--lav-borda:#D8D0EA;--campo:#D3CCE6;--borda-controle:#857AB0;--amarelo:#F2CC10;--amarelo-hv:#F6D640;--marca:#F7DB52;--ok:#23A05A;--ok-cl:#E2F2EA;--erro:#B00020;--erro-cl:#FBEAE8;--foco:#6E5BD8;--sombra:0 1px 2px rgba(14,34,53,.05),0 24px 48px -20px rgba(14,34,53,.22);--sombra-cartao:0 1px 2px rgba(14,34,53,.04),0 14px 30px -20px rgba(14,34,53,.2);--sombra-cta:0 10px 24px -8px rgba(216,179,0,.65),inset 0 -2px 0 rgba(0,0,0,.08);--fonte:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;--pad:40px;--col:560px;--fora:calc(var(--pad) + max(0px,(100cqw - 1200px)/2));position:relative;isolation:isolate;overflow-x:clip;font-family:var(--fonte);color:var(--texto);background:#fff;font-size:17px;line-height:27px;-webkit-font-smoothing:antialiased}
 *,*::before,*::after{box-sizing:border-box}
 h1,h2,p,fieldset,legend,pre{margin:0}
 fieldset{border:0;padding:0;min-width:0}
@@ -69,7 +69,7 @@ h1{display:inline;font-size:54px;line-height:60px;font-weight:800;letter-spacing
 .garantia-caixa .ic{width:46px;height:46px;background:var(--ok-cl);color:var(--ok)}
 #ag1{font-size:15.5px;line-height:25px}
 .opcao{display:grid;grid-template-columns:26px minmax(0,1fr);gap:14px;align-items:start;font-size:15.5px;line-height:25px;color:var(--navy);cursor:pointer}
-.opcao input{appearance:none;display:grid;place-items:center;width:24px;height:24px;margin:1px 0 0;border-radius:7px;border:2px solid var(--campo);background:#fff;font-size:16px;cursor:pointer}
+.opcao input{appearance:none;display:grid;place-items:center;width:24px;height:24px;margin:1px 0 0;border-radius:7px;border:2px solid var(--borda-controle);background:#fff;font-size:16px;cursor:pointer}
 .opcao input:checked{background:var(--navy);border-color:var(--navy)}
 .opcao input:checked::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:translateY(-1px) rotate(45deg)}
 .opcao input:disabled{background:var(--lav);border-color:var(--lav-2);cursor:not-allowed}
@@ -87,10 +87,12 @@ h1{display:inline;font-size:54px;line-height:60px;font-weight:800;letter-spacing
 .passo-corpo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 16px;margin-top:22px;align-items:end}
 .campo{display:grid;gap:7px;min-width:0;font-weight:650;font-size:14.5px;line-height:20px;color:var(--navy)}
 .campo.cheio{grid-column:1/-1}
-.campo input,.campo select,.campo textarea{width:100%;min-height:52px;padding:0 14px;border:1.5px solid var(--campo);border-radius:12px;font-size:16px;font-weight:400;color:var(--navy);background:#fff}
+/* Revisão de 12/11 (WCAG 1.4.11): a borda identifica o campo branco no cartão branco e a caixa desmarcada; --borda-controle
+   tem >= 3:1 no branco (3,88) e nos lavandas do formulário (3,44 em --lav). O --campo segue nos botões e nos enfeites. */
+.campo input,.campo select,.campo textarea{width:100%;min-height:52px;padding:0 14px;border:1.5px solid var(--borda-controle);border-radius:12px;font-size:16px;font-weight:400;color:var(--navy);background:#fff}
 .campo textarea{min-height:104px;padding:13px 14px;line-height:23px;resize:vertical}
 .campo input::placeholder{color:#667085}
-.campo input:hover,.campo select:hover,.campo textarea:hover{border-color:#B9B0D6}
+.campo input:hover,.campo select:hover,.campo textarea:hover{border-color:var(--navy-2)}
 .campo [aria-invalid="true"]{border-color:var(--erro)}
 .campo.seletor{position:relative}
 .campo.seletor select{appearance:none;padding-right:44px;text-overflow:ellipsis}
