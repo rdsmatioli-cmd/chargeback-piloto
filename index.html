@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#EFECF8">
 <style>
 html{container-type:inline-size}
-body{margin:0;--navy:#0E2235;--navy-2:#1E3E59;--texto:#3B4859;--sutil:#5B6678;--linha:#E7E3F0;--linha-2:#EEEBF5;--lav:#F2F0FA;--lav-2:#E9E5F6;--lav-borda:#D8D0EA;--campo:#D3CCE6;--amarelo:#F2CC10;--amarelo-hv:#F6D640;--marca:#F7DB52;--ok:#23A05A;--ok-cl:#E2F2EA;--erro:#B00020;--erro-cl:#FBEAE8;--foco:#6E5BD8;--sombra:0 1px 2px rgba(14,34,53,.05),0 24px 48px -20px rgba(14,34,53,.22);--sombra-cartao:0 1px 2px rgba(14,34,53,.04),0 14px 30px -20px rgba(14,34,53,.2);--sombra-cta:0 10px 24px -8px rgba(216,179,0,.65),inset 0 -2px 0 rgba(0,0,0,.08);--fonte:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;--pad:40px;--col:560px;--fora:calc(var(--pad) + max(0px,(100cqw - 1200px)/2));position:relative;isolation:isolate;overflow-x:clip;font-family:var(--fonte);color:var(--texto);background:#fff;font-size:17px;line-height:27px;-webkit-font-smoothing:antialiased}
+body{margin:0;--navy:#0E2235;--navy-2:#1E3E59;--texto:#3B4859;--sutil:#5B6678;--linha:#E7E3F0;--linha-2:#EEEBF5;--lav:#F2F0FA;--lav-2:#E9E5F6;--lav-borda:#D8D0EA;--campo:#D3CCE6;--borda-controle:#857AB0;--amarelo:#F2CC10;--amarelo-hv:#F6D640;--marca:#F7DB52;--ok:#23A05A;--ok-cl:#E2F2EA;--erro:#B00020;--erro-cl:#FBEAE8;--foco:#6E5BD8;--sombra:0 1px 2px rgba(14,34,53,.05),0 24px 48px -20px rgba(14,34,53,.22);--sombra-cartao:0 1px 2px rgba(14,34,53,.04),0 14px 30px -20px rgba(14,34,53,.2);--sombra-cta:0 10px 24px -8px rgba(216,179,0,.65),inset 0 -2px 0 rgba(0,0,0,.08);--fonte:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;--pad:40px;--col:560px;--fora:calc(var(--pad) + max(0px,(100cqw - 1200px)/2));position:relative;isolation:isolate;overflow-x:clip;font-family:var(--fonte);color:var(--texto);background:#fff;font-size:17px;line-height:27px;-webkit-font-smoothing:antialiased}
 *,*::before,*::after{box-sizing:border-box}
 h1,h2,p,fieldset,legend,pre{margin:0}
 fieldset{border:0;padding:0;min-width:0}
@@ -34,18 +34,15 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .marca svg{width:38px;height:38px;flex:none}
 .nav-link{margin-left:auto;padding:10px 4px;color:var(--navy-2);text-decoration:none;font-size:15.5px;font-weight:600;border-radius:8px}
 .nav-link:hover{text-decoration:underline;text-underline-offset:4px}
-/* escora sem largura, pendurada no topo: com pouco texto, a caixa do aceite só começa depois do fim da ilustração.
-   Fica fora do main para o título continuar com as linhas equilibradas (text-wrap:balance). */
-.topo::after{content:"";float:right;width:0;height:556px}
 
 /* começo: título, apresentação e ilustração. O h1 é filho direto do main e recebe só texto do script,
    por isso fica inline: o marca-texto pega o trecho final da frase (53,85% em diante) em qualquer quebra. */
-main{position:relative;max-width:1200px;margin:0 auto;padding:44px calc(var(--pad) + var(--col)) 0 var(--pad);text-wrap:balance}
+main{position:relative;max-width:1200px;margin:0 auto;padding:44px var(--pad) 0;text-wrap:balance}
 h1{display:inline;font-size:54px;line-height:60px;font-weight:800;letter-spacing:-.035em;color:var(--navy);background:linear-gradient(90deg,rgba(247,219,82,0) 53.85%,var(--marca) 53.85%) no-repeat 0 80%/100% .36em}
 .msg{margin-top:10px;font-size:14.5px;line-height:21px;color:var(--sutil);text-wrap:pretty}
 .msg.erro{color:var(--erro);font-weight:600}
 #o1{margin-top:24px;font-size:18px;line-height:30px;text-wrap:pretty}
-.cena{position:absolute;top:-8px;right:var(--pad);width:calc(var(--col) - 44px);aspect-ratio:516/548}
+.cena{position:relative;width:min(100%,500px);margin:36px auto 0;aspect-ratio:516/548}
 .cena svg.ilu{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .flut{position:absolute;z-index:2;display:flex;align-items:center;gap:13px;background:#fff;border-radius:16px;box-shadow:0 2px 4px rgba(14,34,53,.04),0 22px 44px -18px rgba(14,34,53,.34);padding:14px 18px 14px 14px;text-wrap:wrap}
 .flut b{display:block;font-size:15px;line-height:20px;font-weight:700;color:var(--navy)}
@@ -60,8 +57,21 @@ h1{display:inline;font-size:54px;line-height:60px;font-weight:800;letter-spacing
 .f-evid li svg{width:17px;height:17px;color:var(--ok);stroke-width:2.8}
 
 /* o resto da página volta a ocupar a largura inteira; o fundo lavanda do começo termina no meio da caixa do aceite */
-.resto{position:relative;clear:both;margin-right:calc(-1 * var(--col));text-wrap:wrap}
+.resto{position:relative;clear:both;text-wrap:wrap}
 .resto::before{content:"";position:absolute;z-index:-1;top:-1800px;height:1904px;left:calc(-1 * var(--fora));width:100cqw;border-radius:0 0 48px 48px;background:radial-gradient(760px 520px at 74% calc(100% - 330px),#FCFBFF 0,rgba(252,251,255,0) 70%),linear-gradient(180deg,#F5F3FB 0,#ECE8F7 100%)}
+
+/* CB-13, revisão de 12/11: a coluna única é o padrão, e as duas colunas (o main com a coluna da ilustração à direita,
+   a escora do topo e a .cena por cima) só valem com container queries, porque são elas que as desfazem até 1000 px.
+   Sem elas e sem :has() (Safari antes do 15.4, o público do aviso de navegador sem suporte), o celular ficava com o
+   layout da tela larga: 600 px de padding à direita e o aviso com 40 px de largura. */
+@supports (container-type:inline-size){
+/* escora sem largura, pendurada no topo: com pouco texto, a caixa do aceite só começa depois do fim da ilustração.
+   Fica fora do main para o título continuar com as linhas equilibradas (text-wrap:balance). */
+.topo::after{content:"";float:right;width:0;height:556px}
+main{padding-right:calc(var(--pad) + var(--col))}
+.cena{position:absolute;top:-8px;right:var(--pad);width:calc(var(--col) - 44px);margin:0}
+.resto{margin-right:calc(-1 * var(--col))}
+}
 
 /* caixa que sobrepõe o fim do fundo lavanda: garantia e aceite */
 .inicio-col{position:relative;z-index:3;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:36px;align-items:start;margin-top:100px;padding:30px 36px;background:#fff;border-radius:22px;box-shadow:var(--sombra)}
@@ -69,7 +79,7 @@ h1{display:inline;font-size:54px;line-height:60px;font-weight:800;letter-spacing
 .garantia-caixa .ic{width:46px;height:46px;background:var(--ok-cl);color:var(--ok)}
 #ag1{font-size:15.5px;line-height:25px}
 .opcao{display:grid;grid-template-columns:26px minmax(0,1fr);gap:14px;align-items:start;font-size:15.5px;line-height:25px;color:var(--navy);cursor:pointer}
-.opcao input{appearance:none;display:grid;place-items:center;width:24px;height:24px;margin:1px 0 0;border-radius:7px;border:2px solid var(--campo);background:#fff;font-size:16px;cursor:pointer}
+.opcao input{appearance:none;display:grid;place-items:center;width:24px;height:24px;margin:1px 0 0;border-radius:7px;border:2px solid var(--borda-controle);background:#fff;font-size:16px;cursor:pointer}
 .opcao input:checked{background:var(--navy);border-color:var(--navy)}
 .opcao input:checked::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:translateY(-1px) rotate(45deg)}
 .opcao input:disabled{background:var(--lav);border-color:var(--lav-2);cursor:not-allowed}
@@ -87,10 +97,12 @@ h1{display:inline;font-size:54px;line-height:60px;font-weight:800;letter-spacing
 .passo-corpo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 16px;margin-top:22px;align-items:end}
 .campo{display:grid;gap:7px;min-width:0;font-weight:650;font-size:14.5px;line-height:20px;color:var(--navy)}
 .campo.cheio{grid-column:1/-1}
-.campo input,.campo select,.campo textarea{width:100%;min-height:52px;padding:0 14px;border:1.5px solid var(--campo);border-radius:12px;font-size:16px;font-weight:400;color:var(--navy);background:#fff}
+/* Revisão de 12/11 (WCAG 1.4.11): a borda identifica o campo branco no cartão branco e a caixa desmarcada; --borda-controle
+   tem >= 3:1 no branco (3,88) e nos lavandas do formulário (3,44 em --lav). O --campo segue nos botões e nos enfeites. */
+.campo input,.campo select,.campo textarea{width:100%;min-height:52px;padding:0 14px;border:1.5px solid var(--borda-controle);border-radius:12px;font-size:16px;font-weight:400;color:var(--navy);background:#fff}
 .campo textarea{min-height:104px;padding:13px 14px;line-height:23px;resize:vertical}
 .campo input::placeholder{color:#667085}
-.campo input:hover,.campo select:hover,.campo textarea:hover{border-color:#B9B0D6}
+.campo input:hover,.campo select:hover,.campo textarea:hover{border-color:var(--navy-2)}
 .campo [aria-invalid="true"]{border-color:var(--erro)}
 .campo.seletor{position:relative}
 .campo.seletor select{appearance:none;padding-right:44px;text-overflow:ellipsis}
@@ -300,7 +312,15 @@ body:has(#sem-suporte:not([hidden])) .topo::after{display:none}
 @container (max-width:760px){
 .p1 .c-ped,.p1 .c-car,#pedido-erro,#ultimos4-erro{grid-area:auto}
 #aviso{flex-basis:100%}
+/* Com o aviso geral (termo vedado, cartão removido), a barra presa chegava a 40% da tela e cobria os campos a corrigir:
+   enquanto ele aparece, a barra volta para o fim do formulário, como na tela larga. */
+.concluir:has(#aviso:not([hidden])){position:static}
 }
+/* Revisão de 12/11 (WCAG 2.2, 2.4.11, técnica C43): até 760 px a barra do Gerar fica presa no pé da tela. O scroll-padding
+   tira a faixa dela da área visível da página, então o campo que recebe o foco sobe acima da barra mesmo quando já estava
+   na tela, embaixo dela (o scroll-margin só agia quando o campo estava fora da tela). O html é o container: aqui vale a
+   largura da janela, com folga para a barra de rolagem do desktop. */
+@media (max-width:780px){html{scroll-padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}}
 </style>
 </head>
 <body>

@@ -169,7 +169,7 @@ async function abrir(tela, { caminho = '/', semJs = false, antes = null, esperar
     return r.result.value;
   };
   const p = {
-    js, erros,
+    js, erros, sessionId,
     async fechar() { await cdp.enviar('Target.closeTarget', { targetId }); },
     // Clique de mouse no centro do elemento, depois de trazê-lo para a tela: se outro elemento o cobre, o clique
     // vai para o outro e o teste percebe.
@@ -194,6 +194,10 @@ async function abrir(tela, { caminho = '/', semJs = false, antes = null, esperar
     // select e data: o seletor nativo não se controla pelo CDP; valor e eventos como o navegador os dispara.
     async escolher(id, valor) {
       await js(`(() => { const e = document.getElementById(${JSON.stringify(id)}); e.focus(); e.value = ${JSON.stringify(valor)}; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); })()`);
+    },
+    // Tab do teclado (o Chrome move o foco e rola até o elemento, como no uso real).
+    async tab() {
+      for (const type of ['rawKeyDown', 'keyUp']) await env('Input.dispatchKeyEvent', { type, key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9, nativeVirtualKeyCode: 9 });
     },
     async anexar(nomes) {
       const arquivos = nomes.map((n) => { const f = join(tmp, n); writeFileSync(f, 'teste'); return f; });
@@ -456,6 +460,180 @@ for (const tela of TELAS) {
       assert.ok(await p.visivel('form'), 'A-1 mostra o formulário');
       assert.equal(await p.js('scrollY'), antes, 'marcar o A-1 não faz a página saltar para o #form');
       assert.deepEqual(p.erros, [], 'nenhum erro no console');
+    } finally {
+      await p.fechar();
+    }
+  });
+}
+
+// WCAG 2.2, 2.4.11 (revisão de 12/11): no celular, a barra do Gerar fica presa no pé da tela (.concluir sticky) e o
+// campo que recebia o foco pelo Tab parava embaixo dela (o Chrome só rola até o campo entrar na janela). Percorre o
+// formulário com Tab a partir do A-1 e confere, em cada controle focado antes da barra, que o ponto do meio dele é
+// dele, e não da barra. Também com o aviso de termo vedado em duas origens, que deixa a barra mais alta.
+const TELAS_TAB = [TELAS[0], { nome: '700 x 900 px', width: 700, height: 900, mobile: false, deviceScaleFactor: 1 }, { nome: '360 x 640 px', width: 360, height: 640, mobile: true, deviceScaleFactor: 3 }];
+async function percorrerComTab(p) {
+  await p.js(`document.getElementById('a1').focus()`);
+  const cobertos = [], vistos = [];
+  for (let i = 0; i < 80; i++) {
+    await p.tab();
+    const r = await p.js(`(() => {
+      const e = document.activeElement, barra = document.querySelector('#form .concluir');
+      if (!document.getElementById('form').contains(e)) return { fim: true };
+      if (barra.contains(e)) return { barra: true, id: e.id };
+      const b = e.getBoundingClientRect(), x = b.x + b.width / 2, y = b.y + b.height / 2, no = document.elementFromPoint(x, y);
+      return { id: e.id || e.closest('[id]').id + ' ' + e.tagName.toLowerCase(), coberto: !no || barra.contains(no), y: Math.round(y), barraTopo: Math.round(barra.getBoundingClientRect().top) };
+    })()`);
+    if (r.fim || r.barra) break;
+    vistos.push(r.id);
+    if (r.coberto) cobertos.push(`${r.id} (meio em y=${r.y}, barra a partir de y=${r.barraTopo})`);
+  }
+  return { cobertos, vistos };
+}
+for (const tela of TELAS_TAB) {
+  test(`WCAG 2.4.11: com Tab, nenhum campo focado fica sob a barra do Gerar em ${tela.nome}`, async () => {
+    const p = await abrir(tela);
+    try {
+      await p.clicar('a1');
+      const inicial = await percorrerComTab(p);
+      assert.ok(inicial.vistos.includes('pedido') && inicial.vistos.includes('docs'), `o Tab passou pelo formulário: ${inicial.vistos.join(', ')}`);
+      assert.deepEqual(inicial.cobertos, [], 'formulário vazio');
+      // Termo vedado no pedido e no nome de um documento: o aviso geral entra na barra.
+      await p.digitar('pedido', 'processo 77');
+      await p.escolher('motivo', await p.valorMotivo('Visa', '10.4'));
+      await p.anexar(['nota-fiscal.pdf', 'processo-entrega.pdf']);
+      await p.clicar('gerar');
+      assert.match(await p.texto('aviso'), /processo \(no pedido\).*processo-entrega\.pdf/);
+      const comAviso = await percorrerComTab(p);
+      assert.ok(comAviso.vistos.some((id) => id.startsWith('vinculos')), `o Tab passou pelas evidências: ${comAviso.vistos.join(', ')}`);
+      assert.deepEqual(comAviso.cobertos, [], 'com o aviso de termo vedado');
+      assert.deepEqual(p.erros, [], 'nenhum erro no console');
+    } finally {
+      await p.fechar();
+    }
+  });
+}
+
+// WCAG 2.4.11 (revisão de 14/11): o campo que já está na tela, mas embaixo da barra presa, também tem de subir ao receber
+// o foco. O Chrome só rola quando o campo está fora da área visível: no CI, em 700 x 900 px, o fato-desc parava assim,
+// coberto. O percurso com Tab acima depende de onde cada campo cai na tela (fontes e métricas mudam entre máquinas); este
+// teste põe o meio de cada controle na faixa da barra e dá o foco nele (a mesma rolagem do Tab; o Tab a partir da data
+// passaria pelos segmentos de dia, mês e ano).
+for (const tela of TELAS_TAB) {
+  test(`WCAG 2.4.11: campo visível sob a barra do Gerar sobe ao receber o foco em ${tela.nome}`, async () => {
+    const p = await abrir(tela);
+    try {
+      await p.clicar('a1');
+      const total = await p.js(`(window.__ctrls = [...document.querySelectorAll('#form :is(a[href],input,select,textarea,button)')]
+        .filter((e) => e.getClientRects().length && !e.disabled && e.tabIndex >= 0 && !e.closest('.concluir'))).length`);
+      assert.ok(total > 5, `controles do formulário: ${total}`);
+      const cobertos = [];
+      let testados = 0;
+      for (let i = 0; i < total; i++) {
+        const sobBarra = await p.js(`(() => {
+          const e = __ctrls[${i}], barra = document.querySelector('#form .concluir');
+          document.activeElement && document.activeElement.blur();
+          e.scrollIntoView({ block: 'center' });
+          const topo = barra.getBoundingClientRect().top;
+          if (topo >= innerHeight - 4) return false;
+          const r = e.getBoundingClientRect();
+          window.scrollBy(0, r.top + r.height / 2 - (topo + (innerHeight - topo) / 2));
+          const r2 = e.getBoundingClientRect(), t2 = barra.getBoundingClientRect().top;
+          return r2.top + r2.height / 2 > t2 && r2.top + r2.height / 2 < innerHeight;
+        })()`);
+        if (!sobBarra) continue;
+        const r = await p.js(`(() => {
+          const e = __ctrls[${i}], barra = document.querySelector('#form .concluir');
+          e.focus();
+          const b = e.getBoundingClientRect(), no = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
+          return { id: e.id || e.closest('[id]').id + ' ' + e.tagName.toLowerCase(), coberto: !no || barra.contains(no) };
+        })()`);
+        testados++;
+        if (r.coberto) cobertos.push(r.id);
+      }
+      assert.ok(testados >= 3, `controles testados: ${testados}`);
+      assert.deepEqual(cobertos, [], 'campos cobertos pela barra depois do Tab');
+      assert.deepEqual(p.erros, [], 'nenhum erro no console');
+    } finally {
+      await p.fechar();
+    }
+  });
+}
+
+// WCAG 1.4.11 (revisão de 12/11): a borda é o que identifica o campo de texto branco sobre o cartão branco e a caixa de
+// seleção desmarcada (appearance:none). Ela tem de ter contraste >= 3:1 com o fundo de fora (o do primeiro ancestral
+// com cor de fundo) e com o de dentro (o do próprio controle). Desabilitados e marcados ficam de fora (a marca é o fundo).
+const BORDAS_FRACAS = `(() => {
+  const rgba = (c) => { const m = c.match(/rgba?\\(([^)]+)\\)/); const [r, g, b, a = 1] = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return [r, g, b, a]; };
+  const sobre = ([r, g, b, a], [R, G, B]) => [r * a + R * (1 - a), g * a + G * (1 - a), b * a + B * (1 - a)];
+  const lum = (c) => { const [r, g, b] = c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const contraste = (x, y) => { const [a, b] = [lum(x), lum(y)].sort((m, n) => n - m); return (a + 0.05) / (b + 0.05); };
+  const fundo = (e) => { for (let n = e; n; n = n.parentElement) { const c = rgba(getComputedStyle(n).backgroundColor); if (c[3] > 0) return sobre(c, [255, 255, 255]); } return [255, 255, 255]; };
+  return [...document.querySelectorAll('#form input, #form select, #form textarea, .inicio-col input')]
+    .filter((e) => e.getClientRects().length && e.type !== 'file' && !e.disabled && !e.checked)
+    .flatMap((e) => {
+      const s = getComputedStyle(e), fora = fundo(e.parentElement), dentro = fundo(e), borda = sobre(rgba(s.borderTopColor), fora);
+      const r = Math.min(contraste(borda, fora), contraste(borda, dentro));
+      return r >= 3 ? [] : [\`\${e.id || e.closest('[id]').id + ' ' + e.type}: \${r.toFixed(2)}:1 (borda \${s.borderTopColor})\`];
+    });
+})()`;
+for (const tela of TELAS) {
+  test(`WCAG 1.4.11: borda dos campos e das caixas de seleção com contraste >= 3:1 em ${tela.nome}`, async () => {
+    const p = await abrir(tela);
+    try {
+      // Mouse fora dos controles: o estado normal primeiro.
+      const fora = async () => p.js(`document.querySelector('.topo').scrollIntoView()`).then(() => cdp.enviar('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1 }, p.sessionId));
+      await fora();
+      assert.deepEqual(await p.js(BORDAS_FRACAS), [], 'A-1 desmarcado');
+      await p.clicar('a1');
+      await p.escolher('motivo', await p.valorMotivo('Visa', '10.4'));
+      await p.anexar(['nota-fiscal.pdf', 'rastreio.pdf']);
+      await p.digitar('pedido', 'PED-1');
+      await p.clicar('gerar');
+      assert.ok(await p.visivel('etapa-d1'), 'D-1 visível');
+      await fora();
+      const vistos = await p.js(`[...document.querySelectorAll('#form input:not([type=file]):not(:disabled):not(:checked), #form select, #form textarea')].filter((e) => e.getClientRects().length).length`);
+      assert.ok(vistos >= 9, `campos, evidências e D-1 conferidos (${vistos})`);
+      assert.deepEqual(await p.js(BORDAS_FRACAS), [], 'formulário com evidências e D-1');
+      // Com o mouse em cima (hover), a borda não pode clarear abaixo de 3:1.
+      const c = await p.centro('pedido');
+      await cdp.enviar('Input.dispatchMouseEvent', { type: 'mouseMoved', x: c.x, y: c.y }, p.sessionId);
+      assert.deepEqual((await p.js(BORDAS_FRACAS)).filter((t) => t.startsWith('pedido')), [], 'pedido com hover');
+      assert.deepEqual(p.erros, [], 'nenhum erro no console');
+    } finally {
+      await p.fechar();
+    }
+  });
+}
+
+// CB-13, revisão de 12/11: o Safari antes do 15.4 não tem :has() nem container queries (estas só no 16), e é o público do
+// aviso de navegador sem suporte. Sem as duas, valia o layout de duas colunas em qualquer largura: no celular, o main
+// ficava com 600 px de padding à direita e o aviso, com 40 px de largura, uma palavra por linha. Aqui, depois do mesmo
+// RegExp sem lookbehind, saem da folha de estilo da página as regras @container, as com :has(), o container-type e os
+// @supports de container queries (falsos nesse navegador).
+const SEM_CONTAINER_NEM_HAS = `(() => {
+  let n = 0, tiradosContainerType = 0;
+  const limpar = (dono) => { for (let i = dono.cssRules.length - 1; i >= 0; i--) {
+    const r = dono.cssRules[i];
+    if (r instanceof CSSContainerRule || (r instanceof CSSSupportsRule && /container/.test(r.conditionText)) || /:has\\(/.test(r.selectorText || '')) { dono.deleteRule(i); n++; continue; }
+    // No Chrome toda regra de estilo tem cssRules (CSS aninhado), vazia ou não: o container-type sai antes de descer.
+    if (r.style?.getPropertyValue('container-type')) { r.style.removeProperty('container-type'); n++; tiradosContainerType++; }
+    if (r.cssRules?.length) limpar(r);
+  } };
+  for (const f of document.styleSheets) limpar(f);
+  if (!tiradosContainerType || getComputedStyle(document.documentElement).containerType !== 'normal') throw new Error('container-type não foi retirado');
+  return n;
+})()`;
+for (const tela of TELAS) {
+  test(`CB-13: sem container queries nem :has() (Safari antes do 15.4), o aviso de navegador sem suporte cabe na tela em ${tela.nome}`, async () => {
+    const p = await abrir(tela, { antes: SEM_LOOKBEHIND, esperarMain: false });
+    try {
+      assert.ok(await p.visivel('sem-suporte'), '#sem-suporte visível');
+      assert.ok(await p.js(SEM_CONTAINER_NEM_HAS) > 10, 'regras @container e :has() retiradas');
+      const r = await p.js(`(() => { const a = document.getElementById('sem-suporte').getBoundingClientRect(); return { largura: Math.round(a.width), main: Math.round(document.querySelector('main').getBoundingClientRect().right), tela: innerWidth }; })()`);
+      assert.ok(r.main <= r.tela, `o main cabe na largura da tela (${r.main} > ${r.tela})`);
+      assert.ok(r.largura >= 280, `o aviso tem largura de leitura (${r.largura} px)`);
+      assert.ok(await p.naTela('sem-suporte'), 'o aviso está inteiro na tela');
+      assert.equal(await p.texto('o1'), '', 'o script principal não rodou');
     } finally {
       await p.fechar();
     }
