@@ -195,6 +195,10 @@ async function abrir(tela, { caminho = '/', semJs = false, antes = null, esperar
     async escolher(id, valor) {
       await js(`(() => { const e = document.getElementById(${JSON.stringify(id)}); e.focus(); e.value = ${JSON.stringify(valor)}; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); })()`);
     },
+    // Tab do teclado (o Chrome move o foco e rola até o elemento, como no uso real).
+    async tab() {
+      for (const type of ['rawKeyDown', 'keyUp']) await env('Input.dispatchKeyEvent', { type, key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9, nativeVirtualKeyCode: 9 });
+    },
     async anexar(nomes) {
       const arquivos = nomes.map((n) => { const f = join(tmp, n); writeFileSync(f, 'teste'); return f; });
       const { root } = await env('DOM.getDocument', { depth: 0 });
@@ -455,6 +459,53 @@ for (const tela of TELAS) {
       await p.clicar('a1', false);
       assert.ok(await p.visivel('form'), 'A-1 mostra o formulário');
       assert.equal(await p.js('scrollY'), antes, 'marcar o A-1 não faz a página saltar para o #form');
+      assert.deepEqual(p.erros, [], 'nenhum erro no console');
+    } finally {
+      await p.fechar();
+    }
+  });
+}
+
+// WCAG 2.2, 2.4.11 (revisão de 12/11): no celular, a barra do Gerar fica presa no pé da tela (.concluir sticky) e o
+// campo que recebia o foco pelo Tab parava embaixo dela (o Chrome só rola até o campo entrar na janela). Percorre o
+// formulário com Tab a partir do A-1 e confere, em cada controle focado antes da barra, que o ponto do meio dele é
+// dele, e não da barra. Também com o aviso de termo vedado em duas origens, que deixa a barra mais alta.
+const TELAS_TAB = [TELAS[0], { nome: '700 x 900 px', width: 700, height: 900, mobile: false, deviceScaleFactor: 1 }, { nome: '360 x 640 px', width: 360, height: 640, mobile: true, deviceScaleFactor: 3 }];
+async function percorrerComTab(p) {
+  await p.js(`document.getElementById('a1').focus()`);
+  const cobertos = [], vistos = [];
+  for (let i = 0; i < 80; i++) {
+    await p.tab();
+    const r = await p.js(`(() => {
+      const e = document.activeElement, barra = document.querySelector('#form .concluir');
+      if (!document.getElementById('form').contains(e)) return { fim: true };
+      if (barra.contains(e)) return { barra: true, id: e.id };
+      const b = e.getBoundingClientRect(), x = b.x + b.width / 2, y = b.y + b.height / 2, no = document.elementFromPoint(x, y);
+      return { id: e.id || e.closest('[id]').id + ' ' + e.tagName.toLowerCase(), coberto: !no || barra.contains(no), y: Math.round(y), barraTopo: Math.round(barra.getBoundingClientRect().top) };
+    })()`);
+    if (r.fim || r.barra) break;
+    vistos.push(r.id);
+    if (r.coberto) cobertos.push(`${r.id} (meio em y=${r.y}, barra a partir de y=${r.barraTopo})`);
+  }
+  return { cobertos, vistos };
+}
+for (const tela of TELAS_TAB) {
+  test(`WCAG 2.4.11: com Tab, nenhum campo focado fica sob a barra do Gerar em ${tela.nome}`, async () => {
+    const p = await abrir(tela);
+    try {
+      await p.clicar('a1');
+      const inicial = await percorrerComTab(p);
+      assert.ok(inicial.vistos.includes('pedido') && inicial.vistos.includes('docs'), `o Tab passou pelo formulário: ${inicial.vistos.join(', ')}`);
+      assert.deepEqual(inicial.cobertos, [], 'formulário vazio');
+      // Termo vedado no pedido e no nome de um documento: o aviso geral entra na barra.
+      await p.digitar('pedido', 'processo 77');
+      await p.escolher('motivo', await p.valorMotivo('Visa', '10.4'));
+      await p.anexar(['nota-fiscal.pdf', 'processo-entrega.pdf']);
+      await p.clicar('gerar');
+      assert.match(await p.texto('aviso'), /processo \(no pedido\).*processo-entrega\.pdf/);
+      const comAviso = await percorrerComTab(p);
+      assert.ok(comAviso.vistos.some((id) => id.startsWith('vinculos')), `o Tab passou pelas evidências: ${comAviso.vistos.join(', ')}`);
+      assert.deepEqual(comAviso.cobertos, [], 'com o aviso de termo vedado');
       assert.deepEqual(p.erros, [], 'nenhum erro no console');
     } finally {
       await p.fechar();
